@@ -1,0 +1,6 @@
+export const LOCATION_TYPES = {
+  COUNTRY: 'COUNTRY',
+  STATE: 'STATE',
+  CITY: 'CITY',
+  LOCAL_AREA: 'LOCAL_AREA',
+};

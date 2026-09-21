@@ -1,0 +1,33 @@
+{
+  "name": "hospitality-guest-experience-platform",
+  "version": "1.0.0",
+  "description": "Multi-tenant Hospitality Guest Experience SaaS Platform (MERN + DynamoDB) with Geolocation & Subscription Service Controls",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "start": "npm run start --prefix backend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "seed": "npm run seed --prefix backend"
+  },
+  "keywords": [
+    "hospitality",
+    "guest-experience",
+    "pwa",
+    "mern",
+    "dynamodb",
+    "multi-tenant",
+    "geolocation",
+    "saas"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,12 @@
+export const PLAN_CODES = {
+  FREE: 'FREE',
+  BASIC: 'BASIC',
+  PREMIUM: 'PREMIUM',
+  ENTERPRISE: 'ENTERPRISE',
+};
+
+export const BILLING_CYCLES = {
+  MONTHLY: 'MONTHLY',
+  YEARLY: 'YEARLY',
+  LIFETIME: 'LIFETIME',
+};

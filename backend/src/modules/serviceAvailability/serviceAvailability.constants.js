@@ -1,0 +1,7 @@
+export const GEO_SCOPE_LEVELS = {
+  GLOBAL: 'GLOBAL',
+  COUNTRY: 'COUNTRY',
+  STATE: 'STATE',
+  CITY: 'CITY',
+  LOCAL_AREA: 'LOCAL_AREA',
+};
