@@ -7,8 +7,7 @@ export const ENV = {
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
   
   // Database Configuration
-  DB_ENGINE: process.env.DB_ENGINE || 'mongoose', // 'mongoose' | 'dynamodb'
-  MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/hospitality_platform',
+  DB_ENGINE: process.env.DB_ENGINE || 'dynamodb',
   
   // AWS DynamoDB Configuration
   AWS_REGION: process.env.AWS_REGION || 'us-east-1',
