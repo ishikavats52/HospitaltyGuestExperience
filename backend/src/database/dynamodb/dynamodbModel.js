@@ -34,39 +34,6 @@ function matchesFilter(item, filter = {}) {
   return true;
 }
 
-function makeChainableQuery(queryPromise, ModelClass) {
-  const p = queryPromise.then((res) => {
-    if (Array.isArray(res)) {
-      return res.map((i) => attachSaveMethod(i, ModelClass));
-    }
-    return attachSaveMethod(res, ModelClass);
-  });
-
-  p.populate = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-  p.sort = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-  p.limit = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-  p.skip = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-  p.select = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-  p.exec = function () {
-    return p;
-  };
-  p.lean = function () {
-    return makeChainableQuery(p, ModelClass);
-  };
-
-  return p;
-}
-
 function attachSaveMethod(item, ModelClass) {
   if (!item || typeof item !== 'object') return item;
   if (!item.save) {
@@ -82,6 +49,63 @@ function attachSaveMethod(item, ModelClass) {
   return item;
 }
 
+class Query {
+  constructor(executor, ModelClass) {
+    this._executor = executor;
+    this._ModelClass = ModelClass;
+    this._populates = [];
+  }
+
+  populate(...args) {
+    this._populates.push(args);
+    return this;
+  }
+
+  sort(...args) {
+    return this;
+  }
+
+  limit(...args) {
+    return this;
+  }
+
+  skip(...args) {
+    return this;
+  }
+
+  select(...args) {
+    return this;
+  }
+
+  lean(...args) {
+    return this;
+  }
+
+  exec() {
+    return this;
+  }
+
+  async _execute() {
+    const res = await this._executor();
+    if (Array.isArray(res)) {
+      return res.map((i) => attachSaveMethod(i, this._ModelClass));
+    }
+    return attachSaveMethod(res, this._ModelClass);
+  }
+
+  then(onFulfilled, onRejected) {
+    return this._execute().then(onFulfilled, onRejected);
+  }
+
+  catch(onRejected) {
+    return this._execute().catch(onRejected);
+  }
+
+  finally(onFinally) {
+    return this._execute().finally(onFinally);
+  }
+}
+
 export function createDynamoModel(modelName) {
   const pk = `ENTITY#${modelName.toUpperCase()}`;
 
@@ -95,51 +119,42 @@ export function createDynamoModel(modelName) {
       return modelName;
     }
 
-    static async find(filter = {}) {
-      return makeChainableQuery(
-        (async () => {
-          try {
-            const items = await DynamoDbRepository.queryByPk(pk);
-            if (items && items.length > 0) {
-              const matched = items.filter((item) => matchesFilter(item, filter));
-              if (matched.length > 0) return matched;
-            }
-          } catch (e) {}
-          return store.filter((item) => matchesFilter(item, filter));
-        })(),
-        Model
-      );
+    static find(filter = {}) {
+      return new Query(async () => {
+        try {
+          const items = await DynamoDbRepository.queryByPk(pk);
+          if (items && items.length > 0) {
+            const matched = items.filter((item) => matchesFilter(item, filter));
+            if (matched.length > 0) return matched;
+          }
+        } catch (e) {}
+        return store.filter((item) => matchesFilter(item, filter));
+      }, Model);
     }
 
-    static async findOne(filter = {}) {
-      return makeChainableQuery(
-        (async () => {
-          try {
-            const items = await DynamoDbRepository.queryByPk(pk);
-            if (items && items.length > 0) {
-              const matched = items.find((item) => matchesFilter(item, filter));
-              if (matched) return matched;
-            }
-          } catch (e) {}
-          return store.find((item) => matchesFilter(item, filter)) || null;
-        })(),
-        Model
-      );
+    static findOne(filter = {}) {
+      return new Query(async () => {
+        try {
+          const items = await DynamoDbRepository.queryByPk(pk);
+          if (items && items.length > 0) {
+            const matched = items.find((item) => matchesFilter(item, filter));
+            if (matched) return matched;
+          }
+        } catch (e) {}
+        return store.find((item) => matchesFilter(item, filter)) || null;
+      }, Model);
     }
 
-    static async findById(id) {
-      return makeChainableQuery(
-        (async () => {
-          if (!id) return null;
-          const strId = String(id);
-          try {
-            const item = await DynamoDbRepository.get(pk, `${modelName.toUpperCase()}#${strId}`);
-            if (item) return item;
-          } catch (e) {}
-          return store.find((item) => String(item._id) === strId || String(item.id) === strId) || null;
-        })(),
-        Model
-      );
+    static findById(id) {
+      return new Query(async () => {
+        if (!id) return null;
+        const strId = String(id);
+        try {
+          const item = await DynamoDbRepository.get(pk, `${modelName.toUpperCase()}#${strId}`);
+          if (item) return item;
+        } catch (e) {}
+        return store.find((item) => String(item._id) === strId || String(item.id) === strId) || null;
+      }, Model);
     }
 
     static async create(data) {
@@ -180,59 +195,83 @@ export function createDynamoModel(modelName) {
         : attachSaveMethod(createdItems[0], Model);
     }
 
-    static async findByIdAndUpdate(id, update, options = {}) {
-      const item = await this.findById(id);
-      if (!item) return null;
+    static findByIdAndUpdate(id, update, options = {}) {
+      return new Query(async () => {
+        const item = await Model.findById(id);
+        if (!item) return null;
 
-      const updatedFields = update.$set ? { ...update.$set } : { ...update };
-      delete updatedFields.$set;
+        const updatedFields = update.$set ? { ...update.$set } : { ...update };
+        delete updatedFields.$set;
 
-      Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
+        Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
 
-      try {
-        await DynamoDbRepository.put(item);
-      } catch (e) {}
+        try {
+          await DynamoDbRepository.put(item);
+        } catch (e) {}
 
-      return attachSaveMethod(item, Model);
+        return item;
+      }, Model);
     }
 
-    static async updateOne(filter, update) {
-      const item = await this.findOne(filter);
-      if (!item) return { matchedCount: 0, modifiedCount: 0 };
+    static findOneAndUpdate(filter, update, options = {}) {
+      return new Query(async () => {
+        const item = await Model.findOne(filter);
+        if (!item) return null;
 
-      const updatedFields = update.$set ? { ...update.$set } : { ...update };
-      delete updatedFields.$set;
+        const updatedFields = update.$set ? { ...update.$set } : { ...update };
+        delete updatedFields.$set;
 
-      Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
+        Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
 
-      try {
-        await DynamoDbRepository.put(item);
-      } catch (e) {}
+        try {
+          await DynamoDbRepository.put(item);
+        } catch (e) {}
 
-      return { matchedCount: 1, modifiedCount: 1 };
+        return item;
+      }, Model);
     }
 
-    static async deleteMany(filter = {}) {
-      if (Object.keys(filter).length === 0) {
-        const items = [...store];
-        store.length = 0;
-        for (const item of items) {
+    static updateOne(filter, update) {
+      return new Query(async () => {
+        const item = await Model.findOne(filter);
+        if (!item) return { matchedCount: 0, modifiedCount: 0 };
+
+        const updatedFields = update.$set ? { ...update.$set } : { ...update };
+        delete updatedFields.$set;
+
+        Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
+
+        try {
+          await DynamoDbRepository.put(item);
+        } catch (e) {}
+
+        return { matchedCount: 1, modifiedCount: 1 };
+      }, Model);
+    }
+
+    static deleteMany(filter = {}) {
+      return new Query(async () => {
+        if (Object.keys(filter).length === 0) {
+          const items = [...store];
+          store.length = 0;
+          for (const item of items) {
+            try {
+              await DynamoDbRepository.delete(pk, item.SK);
+            } catch (e) {}
+          }
+          return { deletedCount: items.length };
+        }
+
+        const toDelete = store.filter((item) => matchesFilter(item, filter));
+        for (const item of toDelete) {
+          const idx = store.findIndex((i) => i === item);
+          if (idx >= 0) store.splice(idx, 1);
           try {
             await DynamoDbRepository.delete(pk, item.SK);
           } catch (e) {}
         }
-        return { deletedCount: items.length };
-      }
-
-      const toDelete = store.filter((item) => matchesFilter(item, filter));
-      for (const item of toDelete) {
-        const idx = store.findIndex((i) => i === item);
-        if (idx >= 0) store.splice(idx, 1);
-        try {
-          await DynamoDbRepository.delete(pk, item.SK);
-        } catch (e) {}
-      }
-      return { deletedCount: toDelete.length };
+        return { deletedCount: toDelete.length };
+      }, Model);
     }
   };
 }
