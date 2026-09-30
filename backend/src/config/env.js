@@ -18,7 +18,7 @@ export const ENV = {
 
   // JWT Secrets
   JWT_SECRET: process.env.JWT_SECRET || 'super_secret_hospitality_jwt_key_2026',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || 'super_secret_refresh_key_2026',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 

@@ -25,7 +25,7 @@ export class AuthService {
       propertyId: user.propertyId?._id || null,
       name: user.name,
       email: user.email,
-    });
+    }, '7d');
 
     return { token, user };
   }

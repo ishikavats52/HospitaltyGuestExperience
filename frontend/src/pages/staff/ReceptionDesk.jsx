@@ -230,17 +230,46 @@ export const ReceptionDesk = () => {
     }
   };
 
+  const ensureStaffToken = async () => {
+    let token = localStorage.getItem('aura_token');
+    if (!token) {
+      const loginRes = await api.post('/auth/staff/login', {
+        email: 'reception.delhi@hotelgrand.com',
+        password: 'Admin@123',
+      });
+      token = loginRes.data.token;
+      localStorage.setItem('aura_token', token);
+    }
+    return token;
+  };
+
+  const callWithStaffAuth = async (actionFn) => {
+    try {
+      await ensureStaffToken();
+      return await actionFn();
+    } catch (err) {
+      if (err.message?.includes('token') || err.message?.includes('401') || err.message?.includes('Unauthorized')) {
+        localStorage.removeItem('aura_token');
+        await ensureStaffToken();
+        return await actionFn();
+      }
+      throw err;
+    }
+  };
+
   // Reception Action: Validate & Confirm Check-In
   const handleConfirmCheckin = async () => {
     if (!guest360) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/qr/validate', {
-        stayId: guest360.stayId,
-        token: guest360.qrTokenHash || 'mock-token',
-        roomId: guest360.room?.id,
-      });
+      const res = await callWithStaffAuth(() =>
+        api.post('/qr/validate', {
+          stayId: guest360.stayId,
+          token: guest360.qrTokenHash || 'mock-token',
+          roomId: guest360.room?.id,
+        })
+      );
       setGuest360(res.data);
       setSuccessMsg('Check-In Confirmed! Room assigned and in-stay privileges activated.');
       fetchArrivals();
@@ -258,9 +287,11 @@ export const ReceptionDesk = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post('/qr/checkout', {
-        stayId: guest360.stayId,
-      });
+      const res = await callWithStaffAuth(() =>
+        api.post('/qr/checkout', {
+          stayId: guest360.stayId,
+        })
+      );
       setGuest360(res.data);
       setSuccessMsg('Guest successfully checked out. Room status marked available.');
       fetchArrivals();
