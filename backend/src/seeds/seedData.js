@@ -317,8 +317,17 @@ export const seedDatabase = async (force = false) => {
     const fnbCategory = await MenuCategory.create({
       hotelId: hotelDelhi._id,
       propertyId: propDelhi._id,
-      name: 'Signature Indian Curries',
+      name: 'Signature Indian Curries & Mains',
       displayOrder: 1,
+      isActive: true,
+    });
+
+    const beverageCategory = await MenuCategory.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      name: 'Artisanal Beverages & Desserts',
+      displayOrder: 2,
+      isActive: true,
     });
 
     await MenuItem.create([
@@ -330,6 +339,7 @@ export const seedDatabase = async (force = false) => {
         description: 'Cottage cheese simmered in buttery satin tomato gravy with freshly baked naan',
         price: 450,
         isVeg: true,
+        isAvailable: true,
       },
       {
         hotelId: hotelDelhi._id,
@@ -339,6 +349,37 @@ export const seedDatabase = async (force = false) => {
         description: 'Slow-cooked black lentils simmered overnight with cream and smoked spices',
         price: 380,
         isVeg: true,
+        isAvailable: true,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        categoryId: fnbCategory._id,
+        name: 'Royal Awadhi Dum Biryani',
+        description: 'Fragrant long-grain basmati rice layered with royal aromatic spices & saffron',
+        price: 520,
+        isVeg: true,
+        isAvailable: true,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        categoryId: beverageCategory._id,
+        name: 'Adrak Masala Chai & Cookies',
+        description: 'Freshly brewed ginger cardamom tea served with house baked almond cookies',
+        price: 180,
+        isVeg: true,
+        isAvailable: true,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        categoryId: beverageCategory._id,
+        name: 'Warm Gulab Jamun with Saffron Rabri',
+        description: 'Golden fried milk dumplings served in reduced saffron infused cream',
+        price: 260,
+        isVeg: true,
+        isAvailable: true,
       },
     ]);
 
