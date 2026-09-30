@@ -127,16 +127,20 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
     }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
-    const hotel = stay.hotelId;
-    const subscription = await HotelSubscription.findOne({ hotelId: hotel._id }).populate('planId');
+    let hotel = stay.hotelId;
+    if (!hotel || typeof hotel === 'string' || !hotel.locationHierarchy) {
+      hotel = await Hotel.findById(hotel?._id || hotel) || await Hotel.findOne();
+    }
+    const resolvedHotelId = hotel?._id || stay.hotelId;
+    const subscription = await HotelSubscription.findOne({ hotelId: resolvedHotelId }).populate('planId');
     const planCode = subscription?.planId?.code || 'FREE';
 
     // Tier 1 - 4: Check Super Admin Location and Plan Eligibility
     const eligibleServices = await ServiceAvailabilityService.getEligibleServicesForHotel({
-      country: hotel.locationHierarchy.country,
-      state: hotel.locationHierarchy.state,
-      city: hotel.locationHierarchy.city,
-      localArea: hotel.locationHierarchy.localArea,
+      country: hotel?.locationHierarchy?.country || 'India',
+      state: hotel?.locationHierarchy?.state || 'Delhi',
+      city: hotel?.locationHierarchy?.city || 'Delhi',
+      localArea: hotel?.locationHierarchy?.localArea || null,
       planCode,
     });
 
@@ -154,7 +158,7 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
 
     // Tier 5: Check Hotel Admin Enablement
     const hotelConfig = await HotelService.findOne({
-      hotelId: hotel._id,
+      hotelId: resolvedHotelId,
       serviceId: serviceCatalogueId,
       enabled: true,
     });
@@ -171,7 +175,7 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
     const finalPrice = isFree ? 0 : hotelConfig.price;
 
     const request = await ServiceRequest.create({
-      hotelId: hotel._id,
+      hotelId: resolvedHotelId,
       propertyId: stay.propertyId,
       stayId: stay._id,
       roomId: stay.roomId,
