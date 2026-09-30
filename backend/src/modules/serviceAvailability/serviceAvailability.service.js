@@ -22,7 +22,10 @@ export class ServiceAvailabilityService {
    */
   static async getEligibleServicesForHotel({ country, state, city, localArea, planCode }) {
     // 1. Fetch all active services from catalogue
-    const allServices = await ServiceCatalogue.find({ status: 'ACTIVE' });
+    let allServices = await ServiceCatalogue.find({ status: 'ACTIVE' });
+    if (!allServices || allServices.length === 0) {
+      allServices = await ServiceCatalogue.find({});
+    }
 
     // 2. Query geo-rules matching location
     const geoRules = await ServiceAvailability.find({
