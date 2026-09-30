@@ -303,17 +303,17 @@ export const ReceptionDesk = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Front Office Operations
           </div>
-          <h1 className="title-gold" style={{ fontSize: '1.8rem', margin: '4px 0' }}>
+          <h1 className="title-gold page-title">
             Reception QR Scanner & Guest 360
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <p className="page-subtitle">
             Real-time camera QR scanner, in-stay check-in/out status, room assignment, live food orders & total folio bill.
           </p>
         </div>
@@ -350,10 +350,10 @@ export const ReceptionDesk = () => {
 
       {/* MAIN VIEW: SCANNER OR GUEST 360 CARD */}
       {!guest360 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '20px' }}>
           {/* CAMERA QR SCANNER PANEL */}
-          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.95rem' }}>
                 <Camera size={20} />
                 Live Camera QR Scanner
@@ -376,7 +376,7 @@ export const ReceptionDesk = () => {
                   ref={videoRef}
                   autoPlay
                   playsInline
-                  style={{ width: '100%', height: '280px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '260px', maxHeight: '50vh', objectFit: 'cover', display: 'block' }}
                 />
                 {/* Aiming Reticle Viewfinder */}
                 <div
@@ -410,7 +410,7 @@ export const ReceptionDesk = () => {
             ) : (
               <div
                 style={{
-                  padding: '36px 20px',
+                  padding: '28px 16px',
                   border: '2px dashed var(--border-color)',
                   borderRadius: 'var(--radius-sm)',
                   textAlign: 'center',
@@ -421,8 +421,8 @@ export const ReceptionDesk = () => {
                   gap: '14px',
                 }}
               >
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(224, 169, 109, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-light)' }}>
-                  <QrCode size={30} />
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(224, 169, 109, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-light)' }}>
+                  <QrCode size={28} />
                 </div>
                 <div>
                   <div style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>Scan Guest QR Pass</div>
@@ -431,17 +431,17 @@ export const ReceptionDesk = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
                   <button
                     type="button"
                     onClick={startCamera}
                     className="btn btn-gold"
-                    style={{ padding: '10px 18px', fontSize: '0.85rem' }}
+                    style={{ padding: '10px 18px', fontSize: '0.85rem', flex: '1 1 auto' }}
                   >
                     <Camera size={16} /> Open Camera Scanner
                   </button>
 
-                  <label className="btn btn-outline" style={{ padding: '10px 18px', fontSize: '0.85rem', cursor: 'pointer' }}>
+                  <label className="btn btn-outline" style={{ padding: '10px 18px', fontSize: '0.85rem', cursor: 'pointer', flex: '1 1 auto' }}>
                     <Upload size={16} /> Upload QR Photo
                     <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
                   </label>
@@ -460,7 +460,7 @@ export const ReceptionDesk = () => {
                   onClick={() => handleSelectArrival('BK-DELHI-101')}
                   disabled={loading}
                   className="btn btn-outline"
-                  style={{ fontSize: '0.8rem', padding: '8px 14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ fontSize: '0.8rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}
                 >
                   <Sparkles size={14} color="var(--gold-light)" />
                   Aarav Mehta (Suite 302 • BK-DELHI-101)
@@ -470,7 +470,7 @@ export const ReceptionDesk = () => {
           </div>
 
           {/* MANUAL PAYLOAD / TOKEN FALLBACK */}
-          <div className="glass-panel" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.95rem' }}>
               <FileText size={20} />
               Manual Token / Booking Lookup
@@ -519,12 +519,12 @@ export const ReceptionDesk = () => {
         </div>
       ) : (
         /* GUEST 360 FULL PROFILE DASHBOARD */
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           {/* Top Hero Banner */}
           <div
             className="glass-panel"
             style={{
-              padding: '24px',
+              padding: 'clamp(16px, 3vw, 24px)',
               background: 'linear-gradient(135deg, rgba(20, 30, 56, 0.95) 0%, rgba(13, 20, 36, 0.98) 100%)',
               borderColor: 'var(--gold-light)',
             }}
@@ -534,10 +534,10 @@ export const ReceptionDesk = () => {
                 <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   Guest 360 Real-Time Profile
                 </div>
-                <h2 className="title-gold" style={{ fontSize: '1.6rem', margin: '4px 0' }}>
+                <h2 className="title-gold page-title">
                   {guest360.guest?.name || 'Aarav Mehta'}
                 </h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', flexWrap: 'wrap' }}>
                   <span>Booking: <strong>{guest360.booking?.bookingNumber}</strong></span>
                   <span>•</span>
                   <span>Room: <strong style={{ color: '#fff' }}>{guest360.room?.roomNumber} ({guest360.room?.type})</strong></span>
@@ -546,7 +546,7 @@ export const ReceptionDesk = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
                 <span
                   className={`badge ${
                     guest360.status === 'STAY_ACTIVE'
@@ -555,7 +555,7 @@ export const ReceptionDesk = () => {
                       ? 'badge-gold'
                       : 'badge-gold'
                   }`}
-                  style={{ fontSize: '0.85rem', padding: '6px 12px' }}
+                  style={{ fontSize: '0.8rem', padding: '6px 12px' }}
                 >
                   {guest360.status === 'STAY_ACTIVE'
                     ? '● In-Stay Active'
@@ -573,7 +573,7 @@ export const ReceptionDesk = () => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
                 gap: '14px',
                 marginTop: '18px',
                 paddingTop: '16px',
@@ -623,9 +623,9 @@ export const ReceptionDesk = () => {
           </div>
 
           {/* 3-COLUMN DETAILS SECTION: KYC, DINING ORDERS, AND FOLIO BILL */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '18px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '18px' }}>
             {/* 1. KYC & GUEST IDENTITY */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <ShieldCheck size={18} />
@@ -685,7 +685,7 @@ export const ReceptionDesk = () => {
             </div>
 
             {/* 2. WHAT HE HAS ORDERED (IN-ROOM DINING) */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <Utensils size={18} />
@@ -747,7 +747,7 @@ export const ReceptionDesk = () => {
             </div>
 
             {/* 3. TOTAL FOLIO BILL STATEMENT */}
-            <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <Receipt size={18} />
@@ -804,7 +804,7 @@ export const ReceptionDesk = () => {
           <div
             className="glass-panel"
             style={{
-              padding: '18px 24px',
+              padding: 'clamp(14px, 3vw, 20px)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -817,14 +817,14 @@ export const ReceptionDesk = () => {
               Reception Desk Actions for <strong>{guest360.guest?.name}</strong>:
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', width: '100%' }}>
               {guest360.status !== 'STAY_ACTIVE' && guest360.status !== 'CHECKED_OUT' && (
                 <button
                   type="button"
                   onClick={handleConfirmCheckin}
                   disabled={loading}
                   className="btn btn-gold"
-                  style={{ padding: '10px 18px', fontSize: '0.85rem' }}
+                  style={{ padding: '10px 18px', fontSize: '0.85rem', flex: '1 1 auto' }}
                 >
                   <UserCheck size={16} /> Confirm & Authorize Check-In
                 </button>
@@ -836,7 +836,7 @@ export const ReceptionDesk = () => {
                   onClick={handleCheckoutGuest}
                   disabled={loading}
                   className="btn btn-outline"
-                  style={{ padding: '10px 18px', fontSize: '0.85rem', borderColor: '#F87171', color: '#F87171' }}
+                  style={{ padding: '10px 18px', fontSize: '0.85rem', borderColor: '#F87171', color: '#F87171', flex: '1 1 auto' }}
                 >
                   <LogOut size={16} /> Complete Checkout & Release Room
                 </button>
@@ -849,7 +849,7 @@ export const ReceptionDesk = () => {
                   setSuccessMsg(null);
                 }}
                 className="btn btn-outline"
-                style={{ padding: '10px 18px', fontSize: '0.85rem' }}
+                style={{ padding: '10px 18px', fontSize: '0.85rem', flex: '1 1 auto' }}
               >
                 <Camera size={16} /> Scan Next Guest QR
               </button>

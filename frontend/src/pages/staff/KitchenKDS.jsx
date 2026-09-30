@@ -41,15 +41,15 @@ export const KitchenKDS = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Culinary Operations
           </div>
-          <h1 className="title-gold" style={{ fontSize: '1.8rem' }}>
+          <h1 className="title-gold page-title">
             Kitchen Display System (KDS)
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <p className="page-subtitle">
             Live incoming guest food tickets and preparation pipeline.
           </p>
         </div>
@@ -68,7 +68,7 @@ export const KitchenKDS = () => {
           No active food orders in queue.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '16px' }}>
           {orders.map((order) => (
             <div key={order._id} className="glass-panel" style={{ padding: '18px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div>

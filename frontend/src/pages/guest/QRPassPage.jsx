@@ -23,15 +23,15 @@ export const QRPassPage = () => {
   }, [stayId]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '20px', width: '100%' }}>
       <div>
         <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Contactless Arrival Pass
         </div>
-        <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+        <h2 className="title-gold page-title">
           Digital Key & Check-In QR
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        <p className="page-subtitle">
           Present this secure pass at reception or contactless access kiosks.
         </p>
       </div>
@@ -39,7 +39,7 @@ export const QRPassPage = () => {
       <div
         className="glass-panel"
         style={{
-          padding: '28px',
+          padding: 'clamp(20px, 4vw, 28px)',
           width: '100%',
           maxWidth: '340px',
           display: 'flex',
@@ -61,13 +61,15 @@ export const QRPassPage = () => {
           <img
             src={stayData.qrPassUrl}
             alt="Digital Check-in Pass"
-            style={{ width: '200px', height: '200px', borderRadius: '12px', border: '4px solid #fff' }}
+            style={{ width: '100%', maxWidth: '200px', height: 'auto', aspectRatio: '1/1', borderRadius: '12px', border: '4px solid #fff' }}
           />
         ) : (
           <div
             style={{
-              width: '200px',
-              height: '200px',
+              width: '100%',
+              maxWidth: '200px',
+              aspectRatio: '1/1',
+              height: 'auto',
               background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
               display: 'flex',

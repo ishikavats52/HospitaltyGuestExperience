@@ -26,7 +26,7 @@ export const DashboardPage = () => {
             <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               Current Accommodation
             </div>
-            <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+            <h2 className="title-gold page-title">
               Room {stay?.roomId?.roomNumber || '302'}
             </h2>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -41,7 +41,7 @@ export const DashboardPage = () => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))',
             gap: '12px',
             paddingTop: '16px',
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
@@ -61,13 +61,13 @@ export const DashboardPage = () => {
         <div
           className="glass-panel"
           style={{
-            padding: '18px',
+            padding: '16px 18px',
             background: 'rgba(224, 169, 109, 0.1)',
             borderColor: 'var(--gold-light)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ flex: '1 1 200px' }}>
               <div style={{ fontWeight: 600, color: '#fff', fontSize: '0.95rem' }}>
                 Contactless Check-In Ready
               </div>
@@ -75,7 +75,7 @@ export const DashboardPage = () => {
                 Upload ID and generate your digital pass to bypass the lobby queue.
               </div>
             </div>
-            <Link to="/guest/checkin" className="btn btn-gold" style={{ padding: '8px 14px', fontSize: '0.8rem' }}>
+            <Link to="/guest/checkin" className="btn btn-gold" style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
               Check-In <ArrowRight size={14} />
             </Link>
           </div>
@@ -83,11 +83,11 @@ export const DashboardPage = () => {
       )}
 
       {/* Quick Action Grid */}
-      <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         Guest In-Stay Services
       </h3>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '12px' }}>
         <Link
           to="/guest/services"
           className="glass-panel"

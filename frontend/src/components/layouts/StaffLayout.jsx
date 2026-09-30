@@ -13,72 +13,77 @@ export const StaffLayout = () => {
   };
 
   const navTabStyle = ({ isActive }) => ({
-    display: 'flex',
+    display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '10px 20px',
+    padding: '9px 16px',
     borderRadius: 'var(--radius-sm)',
     color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-    background: isActive ? 'rgba(224, 169, 109, 0.15)' : 'transparent',
-    border: isActive ? '1px solid var(--border-color)' : '1px solid transparent',
+    background: isActive ? 'rgba(224, 169, 109, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+    border: isActive ? '1px solid var(--border-active)' : '1px solid var(--border-color)',
     textDecoration: 'none',
-    fontSize: '0.9rem',
+    fontSize: '0.85rem',
     fontWeight: 600,
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
     transition: 'all 0.2s',
   });
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+    <div className="staff-container">
       {/* Top Operations Nav */}
-      <header
-        style={{
-          padding: '16px 32px',
-          background: 'var(--bg-secondary)',
-          borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Hotel Staff Operations
+      <header className="staff-header">
+        <div className="staff-header-top">
+          <div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Hotel Staff Operations
+            </div>
+            <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', fontWeight: 700, color: '#fff' }}>
+              Live Task & Service Dispatch
+            </div>
           </div>
-          <div style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>
-            Live Task & Service Dispatch
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentUser?.name}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--gold-light)' }}>
+                {currentUser?.role?.replace('_', ' ')}
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="btn btn-outline"
+              style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+              title="Sign Out"
+            >
+              <LogOut size={14} /> Exit
+            </button>
           </div>
         </div>
 
-        <nav style={{ display: 'flex', gap: '8px' }}>
+        <nav className="staff-nav touch-scroll-x">
           <NavLink to="/staff/reception" style={navTabStyle}>
-            <QrCode size={18} /> Reception Desk & QR
+            <QrCode size={16} /> Reception Desk & QR
           </NavLink>
           <NavLink to="/staff/kitchen" style={navTabStyle}>
-            <ChefHat size={18} /> Kitchen KDS
+            <ChefHat size={16} /> Kitchen KDS
           </NavLink>
           <NavLink to="/staff/services" style={navTabStyle}>
-            <Sparkles size={18} /> Guest Services
+            <Sparkles size={16} /> Guest Services
           </NavLink>
           <NavLink to="/staff/billing" style={navTabStyle}>
-            <Receipt size={18} /> Folio Billing
+            <Receipt size={16} /> Folio Billing
           </NavLink>
         </nav>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{currentUser?.name}</div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)' }}>{currentUser?.role}</div>
-          </div>
-          <button onClick={handleLogout} className="btn btn-outline" style={{ padding: '8px 14px' }}>
-            <LogOut size={16} /> Exit
-          </button>
-        </div>
       </header>
 
       {/* Main Operations Body */}
-      <main style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
+      <main className="staff-main">
         <Outlet />
       </main>
     </div>
   );
 };
+

@@ -65,10 +65,10 @@ export const StaffLoginPage = () => {
           >
             <ShieldCheck size={28} />
           </div>
-          <h1 className="title-gold" style={{ fontSize: '1.6rem', marginBottom: '6px' }}>
+          <h1 className="title-gold page-title" style={{ marginBottom: '6px' }}>
             Operations & Portal Sign In
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+          <p className="page-subtitle">
             Access Super Admin Governance or Hotel Staff Portal
           </p>
         </div>
@@ -84,12 +84,12 @@ export const StaffLoginPage = () => {
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
             Quick Demo Accounts:
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(95px, 1fr))', gap: '6px' }}>
             <button
               type="button"
               onClick={() => handleQuickPreset('superadmin@platform.com')}
               className="btn btn-outline"
-              style={{ fontSize: '0.7rem', padding: '6px' }}
+              style={{ fontSize: '0.72rem', padding: '8px 4px', whiteSpace: 'nowrap' }}
             >
               Super Admin
             </button>
@@ -97,7 +97,7 @@ export const StaffLoginPage = () => {
               type="button"
               onClick={() => handleQuickPreset('admin.delhi@hotelgrand.com')}
               className="btn btn-outline"
-              style={{ fontSize: '0.7rem', padding: '6px' }}
+              style={{ fontSize: '0.72rem', padding: '8px 4px', whiteSpace: 'nowrap' }}
             >
               Hotel Admin
             </button>
@@ -105,7 +105,7 @@ export const StaffLoginPage = () => {
               type="button"
               onClick={() => handleQuickPreset('reception.delhi@hotelgrand.com')}
               className="btn btn-outline"
-              style={{ fontSize: '0.7rem', padding: '6px' }}
+              style={{ fontSize: '0.72rem', padding: '8px 4px', whiteSpace: 'nowrap' }}
             >
               Reception
             </button>

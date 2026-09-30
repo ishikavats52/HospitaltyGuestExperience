@@ -61,21 +61,21 @@ export const GeoRulesPage = () => {
         <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           SaaS Core Governance
         </div>
-        <h1 className="title-gold" style={{ fontSize: '1.8rem' }}>
+        <h1 className="title-gold page-title">
           Geolocation Service Availability Matrix
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+        <p className="page-subtitle">
           Centrally control which guest services are available in specific cities/locations, and designate Free Subscription entitlements.
         </p>
       </div>
 
       {/* Rule Creator */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
+      <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
         <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Plus size={18} color="var(--gold-light)" /> Configure Location Availability Rule
         </h3>
 
-        <form onSubmit={handleCreateRule} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'flex-end' }}>
+        <form onSubmit={handleCreateRule} className="grid-form-4">
           <div>
             <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Service
@@ -119,14 +119,14 @@ export const GeoRulesPage = () => {
             </label>
           </div>
 
-          <button type="submit" disabled={saving} className="btn btn-gold" style={{ height: '45px' }}>
+          <button type="submit" disabled={saving} className="btn btn-gold" style={{ height: '46px', width: '100%' }}>
             <Globe size={16} /> {saving ? 'Saving...' : 'Deploy Rule'}
           </button>
         </form>
       </div>
 
       {/* Rules Table */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
+      <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
           Active Location & Subscription Rules
         </h3>
@@ -136,60 +136,62 @@ export const GeoRulesPage = () => {
             Loading availability matrix...
           </div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Service Name</th>
-                <th>Category</th>
-                <th>City / Territory</th>
-                <th>Free Tier Entitled</th>
-                <th>Permitted Subscription Plans</th>
-                <th>Rule Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr key={rule._id}>
-                  <td style={{ fontWeight: 600, color: '#fff' }}>
-                    {rule.serviceId?.name || 'Master Service'}
-                  </td>
-                  <td>
-                    <span className="badge badge-gold">{rule.serviceId?.category}</span>
-                  </td>
-                  <td style={{ color: 'var(--gold-light)' }}>
-                    {rule.city || 'Global Default'}
-                  </td>
-                  <td>
-                    {rule.isFree ? (
-                      <span className="badge badge-free">Free Tier</span>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)' }}>Paid Only</span>
-                    )}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '4px' }}>
-                      {rule.allowedPlans?.map((p) => (
-                        <span key={p} className="badge badge-blue" style={{ fontSize: '0.7rem' }}>
-                          {p}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td>
-                    {rule.enabled ? (
-                      <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Check size={14} /> Active
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <X size={14} /> Disabled
-                      </span>
-                    )}
-                  </td>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Service Name</th>
+                  <th>Category</th>
+                  <th>City / Territory</th>
+                  <th>Free Tier Entitled</th>
+                  <th>Permitted Subscription Plans</th>
+                  <th>Rule Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rules.map((rule) => (
+                  <tr key={rule._id}>
+                    <td style={{ fontWeight: 600, color: '#fff' }}>
+                      {rule.serviceId?.name || 'Master Service'}
+                    </td>
+                    <td>
+                      <span className="badge badge-gold">{rule.serviceId?.category}</span>
+                    </td>
+                    <td style={{ color: 'var(--gold-light)' }}>
+                      {rule.city || 'Global Default'}
+                    </td>
+                    <td>
+                      {rule.isFree ? (
+                        <span className="badge badge-free">Free Tier</span>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Paid Only</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {rule.allowedPlans?.map((p) => (
+                          <span key={p} className="badge badge-blue" style={{ fontSize: '0.7rem' }}>
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      {rule.enabled ? (
+                        <span style={{ color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={14} /> Active
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <X size={14} /> Disabled
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

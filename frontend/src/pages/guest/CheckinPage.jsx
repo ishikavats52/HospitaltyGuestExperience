@@ -133,8 +133,10 @@ export const CheckinPage = () => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -147,8 +149,10 @@ export const CheckinPage = () => {
     const rect = canvas.getBoundingClientRect();
     const clientX = e.clientX || (e.touches && e.touches[0].clientX);
     const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.strokeStyle = '#E0A96D';
@@ -205,10 +209,10 @@ export const CheckinPage = () => {
         <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Seamless Pre-Arrival
         </div>
-        <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+        <h2 className="title-gold page-title">
           Contactless Mobile Check-In
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        <p className="page-subtitle">
           Real-time Aadhaar verification, live camera selfie & digital registration signature.
         </p>
       </div>
@@ -222,7 +226,7 @@ export const CheckinPage = () => {
       <form onSubmit={handleSubmitCheckin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {/* Step 1: Real-Time Government Identity Proof (Aadhaar/Passport) */}
         <div className="glass-panel" style={{ padding: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
               <FileText size={18} />
               <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Step 1: Aadhaar / Government ID Verification</span>
@@ -235,7 +239,7 @@ export const CheckinPage = () => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Document Type

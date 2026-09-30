@@ -8,16 +8,16 @@ export const SuperDashboard = () => {
         <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Executive Control
         </div>
-        <h1 className="title-gold" style={{ fontSize: '1.8rem' }}>
+        <h1 className="title-gold page-title">
           Platform SaaS Overview
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+        <p className="page-subtitle">
           Centralized governance of multi-tenant hotels, geographic location rules, and service catalog availability.
         </p>
       </div>
 
       {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <div className="grid-kpi">
         <div className="glass-panel" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Hotel Tenants</span>
@@ -56,11 +56,11 @@ export const SuperDashboard = () => {
       </div>
 
       {/* Tenant Hierarchy Spotlight */}
-      <div className="glass-panel" style={{ padding: '24px' }}>
+      <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
           Multi-Tenant Architecture Status
         </h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div className="grid-2col">
           <div style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontWeight: 600, color: '#fff' }}>Hotel Grand Delhi</span>

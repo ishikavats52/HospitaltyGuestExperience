@@ -62,10 +62,10 @@ export const ServicesPage = () => {
         <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {hotelInfo?.name || 'Hotel Grand Delhi'} • {hotelInfo?.location?.city || 'Delhi'}
         </div>
-        <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+        <h2 className="title-gold page-title">
           Available Guest Services
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        <p className="page-subtitle">
           Curated amenities based on your hotel's location and active subscription entitlements.
         </p>
       </div>
@@ -117,11 +117,11 @@ export const ServicesPage = () => {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {services.map(({ serviceCatalogue, isFreeEntitlement, hotelConfig }) => (
-            <div key={serviceCatalogue._id} className="glass-panel" style={{ padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, paddingRight: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 600, fontSize: '1rem', color: '#fff' }}>
+            <div key={serviceCatalogue._id} className="glass-panel" style={{ padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#fff' }}>
                       {serviceCatalogue.name}
                     </span>
                     {isFreeEntitlement || hotelConfig.isComplimentary ? (
@@ -141,7 +141,7 @@ export const ServicesPage = () => {
                 <button
                   onClick={() => handleRequestService(serviceCatalogue._id, serviceCatalogue.name)}
                   className="btn btn-gold"
-                  style={{ padding: '8px 14px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  style={{ padding: '8px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}
                   disabled={requestingId === serviceCatalogue._id}
                 >
                   {requestingId === serviceCatalogue._id ? 'Requesting...' : 'Request'}

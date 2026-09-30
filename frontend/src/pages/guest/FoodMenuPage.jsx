@@ -89,10 +89,10 @@ export const FoodMenuPage = () => {
         <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Culinary In-Room Dining
         </div>
-        <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+        <h2 className="title-gold page-title">
           Artisan Guest Menu
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        <p className="page-subtitle">
           Fresh gourmet specialties delivered promptly to your suite.
         </p>
       </div>
@@ -175,14 +175,15 @@ export const FoodMenuPage = () => {
           className="glass-panel"
           style={{
             position: 'sticky',
-            bottom: '75px',
-            padding: '16px 20px',
+            bottom: 'max(72px, calc(65px + env(safe-area-inset-bottom)))',
+            padding: '14px 18px',
             background: 'rgba(13, 20, 36, 0.98)',
             borderColor: 'var(--gold-light)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+            zIndex: 45,
           }}
         >
           <div>

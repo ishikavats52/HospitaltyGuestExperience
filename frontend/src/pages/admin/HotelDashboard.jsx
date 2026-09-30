@@ -11,15 +11,15 @@ export const HotelDashboard = () => {
         <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Hotel Operations Portal
         </div>
-        <h1 className="title-gold" style={{ fontSize: '1.8rem' }}>
+        <h1 className="title-gold page-title">
           Property Performance Overview
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+        <p className="page-subtitle">
           Real-time occupancy, guest service requests, dining orders, and folio settlements.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+      <div className="grid-kpi">
         <div className="glass-panel" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Occupancy</span>
@@ -59,3 +59,4 @@ export const HotelDashboard = () => {
     </div>
   );
 };
+

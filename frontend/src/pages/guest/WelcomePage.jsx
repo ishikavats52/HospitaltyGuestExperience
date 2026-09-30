@@ -57,10 +57,10 @@ export const WelcomePage = () => {
           >
             <KeyRound size={26} />
           </div>
-          <h1 className="title-gold" style={{ fontSize: '1.6rem', marginBottom: '6px' }}>
+          <h1 className="title-gold page-title" style={{ marginBottom: '6px' }}>
             Aura Hospitality
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+          <p className="page-subtitle">
             Contactless In-Stay Experience & Digital Pass
           </p>
         </div>

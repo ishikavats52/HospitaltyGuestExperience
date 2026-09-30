@@ -49,10 +49,10 @@ export const MyBillPage = () => {
         <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           Live Guest Folio
         </div>
-        <h2 className="title-gold" style={{ fontSize: '1.4rem' }}>
+        <h2 className="title-gold page-title">
           Statement & Settle
         </h2>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        <p className="page-subtitle">
           Real-time charges for room, dining, and hotel services.
         </p>
       </div>
@@ -72,7 +72,7 @@ export const MyBillPage = () => {
           Compiling folio statement...
         </div>
       ) : folio ? (
-        <div className="glass-panel" style={{ padding: '20px' }}>
+        <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px', marginBottom: '14px' }}>
             <div>
               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Folio Reference</div>

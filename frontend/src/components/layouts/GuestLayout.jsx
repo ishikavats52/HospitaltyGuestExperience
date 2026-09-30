@@ -17,11 +17,14 @@ export const GuestLayout = () => {
       {/* Top Luxury App Bar */}
       <header
         style={{
-          padding: '16px 20px',
+          padding: '14px 18px',
+          paddingTop: 'max(14px, env(safe-area-inset-top))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(7, 11, 25, 0.95)',
+          background: 'rgba(7, 11, 25, 0.96)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderBottom: '1px solid var(--border-color)',
           position: 'sticky',
           top: 0,
@@ -29,10 +32,10 @@ export const GuestLayout = () => {
         }}
       >
         <div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+          <div style={{ fontSize: '0.7rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Aura Guest Experience
           </div>
-          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>
+          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
             {currentUser?.guestName || 'Distinguished Guest'}
           </div>
         </div>
@@ -40,7 +43,7 @@ export const GuestLayout = () => {
         <button
           onClick={handleExit}
           className="btn btn-outline"
-          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+          style={{ padding: '6px 12px', fontSize: '0.75rem' }}
           title="Sign Out"
         >
           <LogOut size={14} /> Exit
@@ -48,7 +51,7 @@ export const GuestLayout = () => {
       </header>
 
       {/* Main Screen Content */}
-      <main style={{ flex: 1, padding: '20px 16px', paddingBottom: '90px', overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: '16px 14px', paddingBottom: '96px', overflowY: 'auto' }}>
         <Outlet />
       </main>
 
@@ -61,12 +64,14 @@ export const GuestLayout = () => {
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: '480px',
-          background: 'rgba(13, 20, 36, 0.96)',
+          background: 'rgba(13, 20, 36, 0.97)',
           backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderTop: '1px solid var(--border-color)',
           display: 'flex',
           justifyContent: 'space-around',
-          padding: '10px 0',
+          padding: '10px 4px',
+          paddingBottom: 'max(10px, env(safe-area-inset-bottom))',
           zIndex: 50,
         }}
       >
@@ -80,6 +85,7 @@ export const GuestLayout = () => {
             color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
             fontSize: '0.7rem',
             textDecoration: 'none',
+            padding: '4px 8px',
           })}
         >
           <Home size={20} />
@@ -96,6 +102,7 @@ export const GuestLayout = () => {
             color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
             fontSize: '0.7rem',
             textDecoration: 'none',
+            padding: '4px 8px',
           })}
         >
           <Sparkles size={20} />
@@ -112,6 +119,7 @@ export const GuestLayout = () => {
             color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
             fontSize: '0.7rem',
             textDecoration: 'none',
+            padding: '4px 8px',
           })}
         >
           <UtensilsCrossed size={20} />
@@ -128,6 +136,7 @@ export const GuestLayout = () => {
             color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
             fontSize: '0.7rem',
             textDecoration: 'none',
+            padding: '4px 8px',
           })}
         >
           <Receipt size={20} />
@@ -144,6 +153,7 @@ export const GuestLayout = () => {
             color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
             fontSize: '0.7rem',
             textDecoration: 'none',
+            padding: '4px 8px',
           })}
         >
           <QrCode size={20} />
@@ -153,3 +163,4 @@ export const GuestLayout = () => {
     </div>
   );
 };
+

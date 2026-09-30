@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Hotel, Sparkles, BedDouble, Utensils, Users, BarChart3, LogOut } from 'lucide-react';
+import { Hotel, Sparkles, BedDouble, Utensils, Users, BarChart3, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const AdminLayout = () => {
   const { currentUser, logout } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -16,7 +17,7 @@ export const AdminLayout = () => {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    padding: '10px 14px',
+    padding: '12px 14px',
     borderRadius: 'var(--radius-sm)',
     color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
     background: isActive ? 'rgba(224, 169, 109, 0.12)' : 'transparent',
@@ -29,45 +30,94 @@ export const AdminLayout = () => {
 
   return (
     <div className="admin-container">
-      {/* Sidebar */}
-      <aside className="admin-sidebar">
-        <div style={{ padding: '0 8px 20px', borderBottom: '1px solid var(--border-color)' }}>
+      {/* Mobile Top Header */}
+      <header className="admin-mobile-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            className="admin-mobile-toggle"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
-            <Hotel size={22} />
-            <span className="font-serif" style={{ fontSize: '1.1rem', fontWeight: 700 }}>HOTEL ADMIN</span>
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Property Management Suite
+            <Hotel size={18} />
+            <span className="font-serif" style={{ fontSize: '0.95rem', fontWeight: 700 }}>HOTEL ADMIN</span>
           </div>
         </div>
 
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--gold-light)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {currentUser?.name?.split(' ')[0]}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="btn btn-outline"
+            style={{ padding: '6px 10px', fontSize: '0.75rem' }}
+            title="Sign Out"
+          >
+            <LogOut size={14} />
+          </button>
+        </div>
+      </header>
+
+      {/* Backdrop for mobile drawer */}
+      <div
+        className={`admin-backdrop ${mobileOpen ? 'active' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+
+      {/* Sidebar Drawer */}
+      <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 8px 16px', borderBottom: '1px solid var(--border-color)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+              <Hotel size={22} />
+              <span className="font-serif" style={{ fontSize: '1.1rem', fontWeight: 700 }}>HOTEL ADMIN</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Property Management Suite
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="admin-mobile-toggle"
+            style={{ display: mobileOpen ? 'flex' : 'none', width: '32px', height: '32px' }}
+            aria-label="Close Navigation Menu"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px', flex: 1 }}>
-          <NavLink to="/admin/dashboard" style={navItemStyle}>
+          <NavLink to="/admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Hotel size={18} />
             <span>Dashboard</span>
           </NavLink>
 
-          <NavLink to="/admin/services" style={navItemStyle}>
+          <NavLink to="/admin/services" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Sparkles size={18} />
             <span>Eligible Services</span>
           </NavLink>
 
-          <NavLink to="/admin/rooms" style={navItemStyle}>
+          <NavLink to="/admin/rooms" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <BedDouble size={18} />
             <span>Rooms Inventory</span>
           </NavLink>
 
-          <NavLink to="/admin/menu" style={navItemStyle}>
+          <NavLink to="/admin/menu" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Utensils size={18} />
             <span>F&B Dining Menu</span>
           </NavLink>
 
-          <NavLink to="/admin/staff" style={navItemStyle}>
+          <NavLink to="/admin/staff" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Users size={18} />
             <span>Staff & Roles</span>
           </NavLink>
 
-          <NavLink to="/admin/reports" style={navItemStyle}>
+          <NavLink to="/admin/reports" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <BarChart3 size={18} />
             <span>Operational Reports</span>
           </NavLink>
@@ -75,8 +125,8 @@ export const AdminLayout = () => {
 
         <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
           <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 600 }}>{currentUser?.name}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>{currentUser?.email}</div>
-          <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '8px', fontSize: '0.8rem' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser?.email}</div>
+          <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '10px', fontSize: '0.8rem' }}>
             <LogOut size={16} /> Sign Out
           </button>
         </div>
@@ -89,3 +139,4 @@ export const AdminLayout = () => {
     </div>
   );
 };
+
