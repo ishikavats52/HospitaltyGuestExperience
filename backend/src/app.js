@@ -3,6 +3,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 
+import { ENV } from './config/env.js';
+
 // Middleware imports
 import { errorHandler } from './middleware/error.middleware.js';
 import { ApiResponse } from './utils/apiResponse.js';
@@ -38,21 +40,32 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('dev'));
 
-// API Health Check for AWS Load Balancer / Container Monitoring
-app.get('/health', (req, res) => {
+// Register Modular REST Endpoints
+const API_BASE = '/api/v1';
+
+// API Health Check for AWS Load Balancer / Container Monitoring / Vercel proxy
+app.get(['/health', `${API_BASE}/health`], (req, res) => {
   return ApiResponse.success(res, 'Hospitality Guest Experience Platform API is active', {
     status: 'UP',
     version: '1.0.0',
     uptime: `${Math.floor(process.uptime())}s`,
     memory: process.memoryUsage(),
-    engine: ENV.DB_ENGINE,
-    environment: ENV.NODE_ENV,
+    engine: ENV.DB_ENGINE || 'dynamodb',
+    environment: ENV.NODE_ENV || 'production',
     timestamp: new Date().toISOString(),
   });
 });
 
-// Register Modular REST Endpoints
-const API_BASE = '/api/v1';
+// Demo Data Seeder Endpoint (Callable anytime to re-populate full demo database)
+app.all(`${API_BASE}/seed`, async (req, res) => {
+  try {
+    const { seedDatabase } = await import('./seeds/seedData.js');
+    await seedDatabase(true);
+    return ApiResponse.success(res, 'Demo database seeded successfully with hotels, bookings, staff, and services');
+  } catch (err) {
+    return ApiResponse.error(res, `Failed to seed database: ${err.message}`, 500);
+  }
+});
 
 app.use(`${API_BASE}/auth`, authRoutes);
 app.use(`${API_BASE}/locations`, locationsRoutes);

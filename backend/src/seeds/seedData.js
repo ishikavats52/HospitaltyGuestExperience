@@ -15,9 +15,14 @@ import { Stay } from '../modules/stays/stays.model.js';
 import { MenuCategory, MenuItem } from '../modules/menu/menu.model.js';
 import { HotelService } from '../modules/services/services.model.js';
 
-export const seedDatabase = async () => {
+export const seedDatabase = async (force = false) => {
   try {
-    await connectDB();
+    const existingUsers = await User.find({});
+    if (!force && existingUsers && existingUsers.length > 0) {
+      console.log(`[Seeder] Database already populated with ${existingUsers.length} users. Skipping seed.`);
+      return;
+    }
+
     console.log('[Seeder] Starting data population...');
 
     // Clear existing records

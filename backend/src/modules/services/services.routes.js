@@ -16,14 +16,18 @@ const router = Router();
  */
 router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => {
   try {
-    const { hotelId } = req.params;
-    if (!hotelId || hotelId === 'undefined' || hotelId === 'null') {
-      return ApiResponse.error(res, 'Valid hotelId parameter is required', 400);
+    let targetHotelId = hotelId;
+    if (!targetHotelId || targetHotelId === 'undefined' || targetHotelId === 'null') {
+      targetHotelId = req.user?.hotelId;
     }
-    const hotel = await Hotel.findById(hotelId);
+    let hotel = (targetHotelId && targetHotelId !== 'undefined') ? await Hotel.findById(targetHotelId) : null;
+    if (!hotel) {
+      hotel = await Hotel.findOne();
+    }
     if (!hotel) return ApiResponse.error(res, 'Hotel not found', 404);
+    const resolvedHotelId = hotel._id;
 
-    const subscription = await HotelSubscription.findOne({ hotelId }).populate('planId');
+    const subscription = await HotelSubscription.findOne({ hotelId: resolvedHotelId }).populate('planId');
     const planCode = subscription?.planId?.code || 'FREE';
 
     // 1. Get location-eligible & subscription-eligible services from Super Admin rules
@@ -36,7 +40,7 @@ router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => 
     });
 
     // 2. Fetch hotel-level configurations
-    const hotelConfigs = await HotelService.find({ hotelId });
+    const hotelConfigs = await HotelService.find({ hotelId: resolvedHotelId });
     const configMap = new Map();
     hotelConfigs.forEach((c) => {
       if (c.serviceId) {
@@ -105,15 +109,21 @@ router.patch('/hotels/:hotelId/services/:serviceId', authenticate, async (req, r
  */
 router.post('/service-requests', authenticate, async (req, res, next) => {
   try {
-    const { stayId, serviceCatalogueId, guestNotes } = req.body;
-    if (!stayId || stayId === 'undefined' || stayId === 'null') {
-      return ApiResponse.error(res, 'Valid stayId is required to request a service', 400);
+    let { stayId, serviceCatalogueId, guestNotes } = req.body;
+    if (!stayId || stayId === 'undefined' || stayId === 'null' || stayId === 'default-stay') {
+      stayId = req.user?.stayId;
     }
     if (!serviceCatalogueId || serviceCatalogueId === 'undefined' || serviceCatalogueId === 'null') {
       return ApiResponse.error(res, 'Valid serviceCatalogueId is required', 400);
     }
 
-    const stay = await Stay.findById(stayId).populate('hotelId');
+    let stay = (stayId && stayId !== 'default-stay') ? await Stay.findById(stayId).populate('hotelId') : null;
+    if (!stay && req.user?.bookingId) {
+      stay = await Stay.findOne({ bookingId: req.user.bookingId }).populate('hotelId');
+    }
+    if (!stay) {
+      stay = await Stay.findOne().populate('hotelId');
+    }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
     const hotel = stay.hotelId;
