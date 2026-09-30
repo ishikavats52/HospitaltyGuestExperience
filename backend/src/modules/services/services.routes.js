@@ -16,6 +16,7 @@ const router = Router();
  */
 router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => {
   try {
+    const { hotelId } = req.params;
     let targetHotelId = hotelId;
     if (!targetHotelId || targetHotelId === 'undefined' || targetHotelId === 'null') {
       targetHotelId = req.user?.hotelId;
