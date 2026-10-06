@@ -58,10 +58,10 @@ export const GeoRulesPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
           SaaS Core Governance
         </div>
-        <h1 className="title-gold page-title">
+        <h1 className="title-gold page-title" style={{ fontSize: '2.1rem', margin: '4px 0' }}>
           Geolocation Service Availability Matrix
         </h1>
         <p className="page-subtitle">
@@ -70,14 +70,14 @@ export const GeoRulesPage = () => {
       </div>
 
       {/* Rule Creator */}
-      <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
-        <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#fff', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Plus size={18} color="var(--gold-light)" /> Configure Location Availability Rule
+      <div className="glass-panel animate-fade-in" style={{ padding: 'clamp(16px, 3vw, 24px)', backgroundColor: '#FFFFFF' }}>
+        <h3 style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Plus size={18} color="var(--gold-primary)" /> Configure Location Availability Rule
         </h3>
 
         <form onSubmit={handleCreateRule} className="grid-form-4">
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Service
             </label>
             <select
@@ -94,7 +94,7 @@ export const GeoRulesPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Target City
             </label>
             <select className="input-control" value={city} onChange={(e) => setCity(e.target.value)}>
@@ -106,7 +106,7 @@ export const GeoRulesPage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Free Subscription Tier
             </label>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '10px 0' }}>
@@ -115,7 +115,7 @@ export const GeoRulesPage = () => {
                 checked={isFree}
                 onChange={(e) => setIsFree(e.target.checked)}
               />
-              <span style={{ fontSize: '0.85rem', color: '#fff' }}>Include in Free Tier</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 500 }}>Include in Free Tier</span>
             </label>
           </div>
 
@@ -126,8 +126,8 @@ export const GeoRulesPage = () => {
       </div>
 
       {/* Rules Table */}
-      <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '16px' }}>
+      <div className="glass-panel animate-fade-in" style={{ padding: 'clamp(16px, 3vw, 24px)', backgroundColor: '#FFFFFF' }}>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>
           Active Location & Subscription Rules
         </h3>
 
@@ -151,13 +151,13 @@ export const GeoRulesPage = () => {
               <tbody>
                 {rules.map((rule) => (
                   <tr key={rule._id}>
-                    <td style={{ fontWeight: 600, color: '#fff' }}>
+                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
                       {rule.serviceId?.name || 'Master Service'}
                     </td>
                     <td>
                       <span className="badge badge-gold">{rule.serviceId?.category}</span>
                     </td>
-                    <td style={{ color: 'var(--gold-light)' }}>
+                    <td style={{ color: 'var(--gold-primary)', fontWeight: 600 }}>
                       {rule.city || 'Global Default'}
                     </td>
                     <td>

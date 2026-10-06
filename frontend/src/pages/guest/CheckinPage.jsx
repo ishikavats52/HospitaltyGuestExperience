@@ -155,7 +155,7 @@ export const CheckinPage = () => {
     const y = (clientY - rect.top) * scaleY;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#E0A96D';
+    ctx.strokeStyle = '#946E3A';
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -206,10 +206,10 @@ export const CheckinPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
           Seamless Pre-Arrival
         </div>
-        <h2 className="title-gold page-title">
+        <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
           Contactless Mobile Check-In
         </h2>
         <p className="page-subtitle">
@@ -218,18 +218,18 @@ export const CheckinPage = () => {
       </div>
 
       {error && (
-        <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.15)', color: '#F87171', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
+        <div style={{ padding: '12px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(186, 51, 51, 0.25)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmitCheckin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
         {/* Step 1: Real-Time Government Identity Proof (Aadhaar/Passport) */}
-        <div className="glass-panel" style={{ padding: '18px' }}>
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <FileText size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Step 1: Aadhaar / Government ID Verification</span>
+              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 1: Aadhaar / Government ID Verification</span>
             </div>
             {idVerified && (
               <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem' }}>
@@ -241,7 +241,7 @@ export const CheckinPage = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   Document Type
                 </label>
                 <select
@@ -259,7 +259,7 @@ export const CheckinPage = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                   {idType === 'AADHAAR' ? '12-Digit Aadhaar Number' : 'Document Number'}
                 </label>
                 <input
@@ -276,21 +276,21 @@ export const CheckinPage = () => {
 
             {/* Real-time Aadhaar / Document Upload Dropzone */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                 Upload Aadhaar / ID Front Photo
               </label>
               <div
                 style={{
-                  border: idImage ? '1px solid var(--gold-light)' : '1px dashed var(--border-color)',
+                  border: idImage ? '1px solid var(--gold-primary)' : '1px dashed var(--border-active)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '16px',
                   textAlign: 'center',
-                  background: 'rgba(255, 255, 255, 0.02)',
+                  background: 'var(--bg-tertiary)',
                   position: 'relative',
                 }}
               >
                 {idScanning ? (
-                  <div style={{ padding: '10px', color: 'var(--gold-light)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <div style={{ padding: '10px', color: 'var(--gold-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     <RefreshCw size={16} className="animate-spin" /> Performing OCR Real-Time Verification...
                   </div>
                 ) : idImage ? (
@@ -301,21 +301,21 @@ export const CheckinPage = () => {
                       style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
                     />
                     <div style={{ textAlign: 'left', flex: 1 }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>Aadhaar Card Uploaded</div>
-                      <div style={{ fontSize: '0.75rem', color: '#34D399', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Aadhaar Card Uploaded</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <CheckCircle2 size={12} /> Optical Verification Passed
                       </div>
                     </div>
-                    <label style={{ cursor: 'pointer', padding: '6px 10px', background: 'rgba(255,255,255,0.08)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--gold-light)' }}>
+                    <label style={{ cursor: 'pointer', padding: '6px 12px', background: 'var(--gold-soft)', border: '1px solid var(--border-active)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--gold-primary)', fontWeight: 600 }}>
                       Change
                       <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
                     </label>
                   </div>
                 ) : (
                   <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <Upload size={22} color="var(--gold-light)" />
-                    <span style={{ fontSize: '0.8rem', color: '#fff' }}>Click or drag Aadhaar Card image here</span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Supports JPG, PNG, WEBP up to 10MB</span>
+                    <Upload size={22} color="var(--gold-primary)" />
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 500 }}>Click or drag Aadhaar Card image here</span>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Supports JPG, PNG, WEBP up to 10MB</span>
                     <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
                   </label>
                 )}
@@ -325,11 +325,11 @@ export const CheckinPage = () => {
         </div>
 
         {/* Step 2: Real-Time Live Camera Selfie & Facial Liveness Verification */}
-        <div className="glass-panel" style={{ padding: '18px' }}>
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <Camera size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Step 2: Live Camera Selfie Capture</span>
+              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 2: Live Camera Selfie Capture</span>
             </div>
             {livenessScore && (
               <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem' }}>
@@ -339,21 +339,21 @@ export const CheckinPage = () => {
           </div>
 
           {cameraError && (
-            <div style={{ padding: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#F87171', borderRadius: '6px', fontSize: '0.75rem', marginBottom: '12px' }}>
+            <div style={{ padding: '10px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '6px', fontSize: '0.75rem', marginBottom: '12px' }}>
               {cameraError}
             </div>
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
             {cameraActive ? (
-              <div style={{ position: 'relative', width: '100%', maxWidth: '340px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--gold-light)' }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: '340px', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--gold-primary)' }}>
                 <video
                   ref={videoRef}
                   autoPlay
                   playsInline
                   style={{ width: '100%', display: 'block', background: '#000' }}
                 />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '2px dashed rgba(224, 169, 109, 0.6)', borderRadius: '50%', margin: '15px auto', width: '160px', height: '160px', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '2px dashed rgba(180, 140, 90, 0.8)', borderRadius: '50%', margin: '15px auto', width: '160px', height: '160px', pointerEvents: 'none' }} />
                 <button
                   type="button"
                   onClick={captureSelfie}
@@ -368,11 +368,11 @@ export const CheckinPage = () => {
                 <img
                   src={selfieImage}
                   alt="Captured Selfie Preview"
-                  style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '50%', border: '2px solid var(--gold-light)' }}
+                  style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '50%', border: '2px solid var(--gold-primary)' }}
                 />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>Live Face Verified</div>
-                  <div style={{ fontSize: '0.75rem', color: '#34D399', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Live Face Verified</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <UserCheck size={12} /> AI Face Liveness Match Passed ({livenessScore || 99.4}%)
                   </div>
                 </div>
@@ -390,19 +390,19 @@ export const CheckinPage = () => {
                 style={{
                   width: '100%',
                   padding: '24px',
-                  border: '1px dashed var(--border-color)',
+                  border: '1px dashed var(--border-active)',
                   borderRadius: 'var(--radius-sm)',
                   textAlign: 'center',
-                  background: 'rgba(255, 255, 255, 0.02)',
+                  background: 'var(--bg-tertiary)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '10px',
                 }}
               >
-                <Camera size={32} color="var(--gold-light)" />
-                <div style={{ fontSize: '0.85rem', color: '#fff' }}>Capture Real-Time Live Selfie</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                <Camera size={32} color="var(--gold-primary)" />
+                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>Capture Real-Time Live Selfie</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                   Use your device camera for real-time facial liveness verification
                 </div>
 
@@ -427,11 +427,11 @@ export const CheckinPage = () => {
         </div>
 
         {/* Step 3: Digital Signature Pad */}
-        <div className="glass-panel" style={{ padding: '18px' }}>
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <PenTool size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Step 3: Real-Time Guest Signature</span>
+              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 3: Real-Time Guest Signature</span>
             </div>
             {signatureImage && (
               <button
@@ -448,7 +448,7 @@ export const CheckinPage = () => {
             style={{
               border: '1px solid var(--border-color)',
               borderRadius: 'var(--radius-sm)',
-              background: '#0D1424',
+              background: '#FAF7F2',
               position: 'relative',
               touchAction: 'none',
             }}
@@ -467,7 +467,7 @@ export const CheckinPage = () => {
               style={{ width: '100%', height: '90px', display: 'block', cursor: 'crosshair' }}
             />
             {!signatureImage && !isDrawing && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'var(--text-muted)', fontSize: '0.75rem', pointerEvents: 'none' }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'var(--text-muted)', fontSize: '0.78rem', pointerEvents: 'none' }}>
                 Sign here with finger or mouse
               </div>
             )}
@@ -475,7 +475,7 @@ export const CheckinPage = () => {
         </div>
 
         {/* Step 4: Registration Consent */}
-        <div className="glass-panel" style={{ padding: '18px' }}>
+        <div className="glass-panel" style={{ padding: '18px', backgroundColor: '#FFFFFF' }}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
             <input
               type="checkbox"
@@ -483,7 +483,7 @@ export const CheckinPage = () => {
               onChange={(e) => setAgreed(e.target.checked)}
               style={{ marginTop: '3px' }}
             />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
               I hereby declare the Aadhaar and identity information provided is accurate and agree to the hotel house policies, contactless check-in protocols, and data protection terms.
             </span>
           </label>

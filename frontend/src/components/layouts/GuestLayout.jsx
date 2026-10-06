@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, UtensilsCrossed, Sparkles, Receipt, QrCode, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const GuestLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -17,37 +18,41 @@ export const GuestLayout = () => {
       {/* Top Luxury App Bar */}
       <header
         style={{
-          padding: '14px 18px',
-          paddingTop: 'max(14px, env(safe-area-inset-top))',
+          padding: '12px 18px',
+          paddingTop: 'max(12px, env(safe-area-inset-top))',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(7, 11, 25, 0.96)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: 'rgba(255, 255, 255, 0.94)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           borderBottom: '1px solid var(--border-color)',
+          boxShadow: 'var(--shadow-xs)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
         }}
       >
         <div>
-          <div style={{ fontSize: '0.7rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <div style={{ fontSize: '0.68rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
             Aura Guest Experience
           </div>
-          <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
             {currentUser?.guestName || 'Distinguished Guest'}
           </div>
         </div>
 
-        <button
-          onClick={handleExit}
-          className="btn btn-outline"
-          style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-          title="Sign Out"
-        >
-          <LogOut size={14} /> Exit
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ThemeSwitcher compact />
+          <button
+            onClick={handleExit}
+            className="btn btn-outline"
+            style={{ padding: '5px 10px', fontSize: '0.74rem' }}
+            title="Sign Out"
+          >
+            <LogOut size={13} /> Exit
+          </button>
+        </div>
       </header>
 
       {/* Main Screen Content */}
@@ -64,10 +69,11 @@ export const GuestLayout = () => {
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: '480px',
-          background: 'rgba(13, 20, 36, 0.97)',
+          background: 'rgba(255, 255, 255, 0.96)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderTop: '1px solid var(--border-color)',
+          boxShadow: '0 -4px 20px rgba(45, 35, 25, 0.06)',
           display: 'flex',
           justifyContent: 'space-around',
           padding: '10px 4px',
@@ -82,13 +88,15 @@ export const GuestLayout = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-            fontSize: '0.7rem',
+            color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+            fontWeight: isActive ? 600 : 500,
+            fontSize: '0.72rem',
             textDecoration: 'none',
             padding: '4px 8px',
+            transition: 'all 0.2s ease',
           })}
         >
-          <Home size={20} />
+          <Home size={20} strokeWidth={2.2} />
           <span>Stay</span>
         </NavLink>
 
@@ -99,13 +107,15 @@ export const GuestLayout = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-            fontSize: '0.7rem',
+            color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+            fontWeight: isActive ? 600 : 500,
+            fontSize: '0.72rem',
             textDecoration: 'none',
             padding: '4px 8px',
+            transition: 'all 0.2s ease',
           })}
         >
-          <Sparkles size={20} />
+          <Sparkles size={20} strokeWidth={2.2} />
           <span>Services</span>
         </NavLink>
 
@@ -116,13 +126,15 @@ export const GuestLayout = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-            fontSize: '0.7rem',
+            color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+            fontWeight: isActive ? 600 : 500,
+            fontSize: '0.72rem',
             textDecoration: 'none',
             padding: '4px 8px',
+            transition: 'all 0.2s ease',
           })}
         >
-          <UtensilsCrossed size={20} />
+          <UtensilsCrossed size={20} strokeWidth={2.2} />
           <span>Dining</span>
         </NavLink>
 
@@ -133,13 +145,15 @@ export const GuestLayout = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-            fontSize: '0.7rem',
+            color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+            fontWeight: isActive ? 600 : 500,
+            fontSize: '0.72rem',
             textDecoration: 'none',
             padding: '4px 8px',
+            transition: 'all 0.2s ease',
           })}
         >
-          <Receipt size={20} />
+          <Receipt size={20} strokeWidth={2.2} />
           <span>My Bill</span>
         </NavLink>
 
@@ -150,13 +164,15 @@ export const GuestLayout = () => {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '4px',
-            color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-            fontSize: '0.7rem',
+            color: isActive ? 'var(--gold-primary)' : 'var(--text-muted)',
+            fontWeight: isActive ? 600 : 500,
+            fontSize: '0.72rem',
             textDecoration: 'none',
             padding: '4px 8px',
+            transition: 'all 0.2s ease',
           })}
         >
-          <QrCode size={20} />
+          <QrCode size={20} strokeWidth={2.2} />
           <span>Digital Key</span>
         </NavLink>
       </nav>

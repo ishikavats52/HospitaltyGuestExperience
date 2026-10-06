@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { QrCode, ChefHat, Sparkles, Receipt, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const StaffLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -18,15 +19,16 @@ export const StaffLayout = () => {
     gap: '8px',
     padding: '9px 16px',
     borderRadius: 'var(--radius-sm)',
-    color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-    background: isActive ? 'rgba(224, 169, 109, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+    color: isActive ? 'var(--gold-dark)' : 'var(--text-secondary)',
+    background: isActive ? 'var(--gold-soft)' : '#FFFFFF',
     border: isActive ? '1px solid var(--border-active)' : '1px solid var(--border-color)',
     textDecoration: 'none',
     fontSize: '0.85rem',
     fontWeight: 600,
     whiteSpace: 'nowrap',
     flexShrink: 0,
-    transition: 'all 0.2s',
+    boxShadow: isActive ? 'var(--shadow-xs)' : 'none',
+    transition: 'all 0.2s ease',
   });
 
   return (
@@ -35,20 +37,21 @@ export const StaffLayout = () => {
       <header className="staff-header">
         <div className="staff-header-top">
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
               Hotel Staff Operations
             </div>
-            <div style={{ fontSize: 'clamp(1rem, 2.5vw, 1.2rem)', fontWeight: 700, color: '#fff' }}>
+            <div className="font-serif" style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontWeight: 700, color: 'var(--text-primary)' }}>
               Live Task & Service Dispatch
             </div>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <ThemeSwitcher compact />
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#fff', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {currentUser?.name}
               </div>
-              <div style={{ fontSize: '0.7rem', color: 'var(--gold-light)' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', fontWeight: 600 }}>
                 {currentUser?.role?.replace('_', ' ')}
               </div>
             </div>

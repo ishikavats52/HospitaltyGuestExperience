@@ -48,10 +48,10 @@ export const ServiceManager = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
           Hotel Operations Management
         </div>
-        <h1 className="title-gold page-title">
+        <h1 className="title-gold page-title" style={{ fontSize: '2.1rem', margin: '4px 0' }}>
           Eligible Hotel Services
         </h1>
         <p className="page-subtitle">
@@ -60,7 +60,7 @@ export const ServiceManager = () => {
       </div>
 
       {successMsg && (
-        <div style={{ padding: '12px 16px', background: 'rgba(16, 185, 129, 0.15)', color: '#34D399', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ padding: '12px 16px', background: 'var(--success-bg)', color: 'var(--success)', border: '1px solid rgba(28, 108, 67, 0.25)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Check size={18} /> {successMsg}
         </div>
       )}
@@ -70,7 +70,7 @@ export const ServiceManager = () => {
           Retrieving location-eligible services...
         </div>
       ) : (
-        <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 24px)' }}>
+        <div className="glass-panel animate-fade-in" style={{ padding: 'clamp(14px, 3vw, 24px)', backgroundColor: '#FFFFFF' }}>
           <div className="table-responsive">
             <table className="data-table">
               <thead>
@@ -87,8 +87,8 @@ export const ServiceManager = () => {
                 {data?.services?.map(({ serviceCatalogue, isFreeEntitlement, hotelConfig }) => (
                   <tr key={serviceCatalogue._id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: '#fff' }}>{serviceCatalogue.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{serviceCatalogue.description}</div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{serviceCatalogue.name}</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{serviceCatalogue.description}</div>
                     </td>
                     <td>
                       <span className="badge badge-gold">{serviceCatalogue.category}</span>

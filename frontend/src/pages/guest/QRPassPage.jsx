@@ -25,10 +25,10 @@ export const QRPassPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '20px', width: '100%' }}>
       <div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
           Contactless Arrival Pass
         </div>
-        <h2 className="title-gold page-title">
+        <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
           Digital Key & Check-In QR
         </h2>
         <p className="page-subtitle">
@@ -37,7 +37,7 @@ export const QRPassPage = () => {
       </div>
 
       <div
-        className="glass-panel"
+        className="glass-panel animate-fade-in"
         style={{
           padding: 'clamp(20px, 4vw, 28px)',
           width: '100%',
@@ -45,14 +45,16 @@ export const QRPassPage = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          backgroundColor: '#FFFFFF',
           borderColor: 'var(--border-active)',
+          boxShadow: 'var(--shadow-md)',
         }}
       >
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff' }}>
+          <div className="font-serif" style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
             {currentUser?.guestName || 'Aarav Mehta'}
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)' }}>
+          <div style={{ fontSize: '0.82rem', color: 'var(--gold-primary)', fontWeight: 500 }}>
             Booking: {currentUser?.booking?.bookingNumber || 'BK-DELHI-101'}
           </div>
         </div>
@@ -61,7 +63,7 @@ export const QRPassPage = () => {
           <img
             src={stayData.qrPassUrl}
             alt="Digital Check-in Pass"
-            style={{ width: '100%', maxWidth: '200px', height: 'auto', aspectRatio: '1/1', borderRadius: '12px', border: '4px solid #fff' }}
+            style={{ width: '100%', maxWidth: '200px', height: 'auto', aspectRatio: '1/1', borderRadius: '12px', border: '3px solid var(--border-color)', boxShadow: 'var(--shadow-xs)' }}
           />
         ) : (
           <div
@@ -70,14 +72,15 @@ export const QRPassPage = () => {
               maxWidth: '200px',
               aspectRatio: '1/1',
               height: 'auto',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: 'var(--bg-tertiary)',
+              border: '1px solid var(--border-color)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <QrCode size={80} color="var(--gold-light)" />
+            <QrCode size={80} color="var(--gold-primary)" />
           </div>
         )}
 
@@ -86,8 +89,9 @@ export const QRPassPage = () => {
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              padding: '8px 0',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              alignItems: 'center',
+              padding: '10px 0',
+              borderBottom: '1px solid var(--border-subtle)',
               fontSize: '0.85rem',
             }}
           >
@@ -101,20 +105,21 @@ export const QRPassPage = () => {
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              padding: '8px 0',
+              alignItems: 'center',
+              padding: '10px 0',
               fontSize: '0.85rem',
             }}
           >
             <span style={{ color: 'var(--text-secondary)' }}>Room Assigned</span>
-            <span style={{ fontWeight: 600, color: '#fff' }}>
+            <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
               Room {stayData?.roomId?.roomNumber || '302'}
             </span>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-        <ShieldCheck size={16} color="var(--gold-light)" /> Cryptographic single-use token protected
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+        <ShieldCheck size={16} color="var(--gold-primary)" /> Cryptographic single-use token protected
       </div>
     </div>
   );

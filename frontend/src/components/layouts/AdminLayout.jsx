@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Hotel, Sparkles, BedDouble, Utensils, Users, BarChart3, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const AdminLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -19,13 +20,13 @@ export const AdminLayout = () => {
     gap: '12px',
     padding: '12px 14px',
     borderRadius: 'var(--radius-sm)',
-    color: isActive ? 'var(--gold-light)' : 'var(--text-secondary)',
-    background: isActive ? 'rgba(224, 169, 109, 0.12)' : 'transparent',
-    border: isActive ? '1px solid var(--border-color)' : '1px solid transparent',
+    color: isActive ? 'var(--gold-dark)' : 'var(--text-secondary)',
+    background: isActive ? 'var(--gold-soft)' : 'transparent',
+    border: isActive ? '1px solid var(--border-active)' : '1px solid transparent',
     textDecoration: 'none',
     fontSize: '0.9rem',
-    fontWeight: 500,
-    transition: 'all 0.2s',
+    fontWeight: isActive ? 600 : 500,
+    transition: 'all 0.2s ease',
   });
 
   return (
@@ -41,14 +42,15 @@ export const AdminLayout = () => {
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
             <Hotel size={18} />
-            <span className="font-serif" style={{ fontSize: '0.95rem', fontWeight: 700 }}>HOTEL ADMIN</span>
+            <span className="font-serif" style={{ fontSize: '0.98rem', fontWeight: 700 }}>HOTEL ADMIN</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--gold-light)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <ThemeSwitcher compact />
+          <span style={{ fontSize: '0.78rem', color: 'var(--gold-primary)', fontWeight: 600, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {currentUser?.name?.split(' ')[0]}
           </span>
           <button
@@ -72,9 +74,9 @@ export const AdminLayout = () => {
       <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 8px 16px', borderBottom: '1px solid var(--border-color)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <Hotel size={22} />
-              <span className="font-serif" style={{ fontSize: '1.1rem', fontWeight: 700 }}>HOTEL ADMIN</span>
+              <span className="font-serif" style={{ fontSize: '1.2rem', fontWeight: 700 }}>HOTEL ADMIN</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
               Property Management Suite
@@ -123,10 +125,16 @@ export const AdminLayout = () => {
           </NavLink>
         </nav>
 
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-          <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 600 }}>{currentUser?.name}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser?.email}</div>
-          <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '10px', fontSize: '0.8rem' }}>
+        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Theme</span>
+            <ThemeSwitcher compact />
+          </div>
+          <div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{currentUser?.name}</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser?.email}</div>
+          </div>
+          <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '9px', fontSize: '0.8rem' }}>
             <LogOut size={16} /> Sign Out
           </button>
         </div>

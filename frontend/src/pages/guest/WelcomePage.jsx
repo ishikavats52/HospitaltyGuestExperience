@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KeyRound, ShieldCheck, ArrowRight } from 'lucide-react';
+import { KeyRound, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { ThemeSwitcher } from '../../components/ThemeSwitcher.jsx';
 import api from '../../services/api.js';
 
 export const WelcomePage = () => {
@@ -37,30 +38,80 @@ export const WelcomePage = () => {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
-        background: 'radial-gradient(circle at top, #141E38 0%, #070B19 100%)',
+        backgroundColor: 'var(--bg-primary)',
+        backgroundImage: 'radial-gradient(ellipse at 15% 10%, var(--gold-soft) 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, var(--bg-tertiary) 0%, transparent 60%)',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
       }}
     >
-      <div className="glass-panel" style={{ width: '100%', maxWidth: '420px', padding: '36px 28px' }}>
+      {/* Top Floating Theme Switcher for Instant Client Demo */}
+      <div style={{ position: 'absolute', top: '18px', right: '20px', zIndex: 50 }}>
+        <ThemeSwitcher />
+      </div>
+
+      {/* Decorative ambient background accents */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-10%',
+          right: '-5%',
+          width: '450px',
+          height: '450px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '-10%',
+          left: '-5%',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, var(--gold-glow) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <div
+        className="glass-panel animate-fade-in"
+        style={{
+          width: '100%',
+          maxWidth: '430px',
+          padding: '40px 32px',
+          backgroundColor: '#FFFFFF',
+          boxShadow: 'var(--shadow-lg)',
+          borderRadius: 'var(--radius-lg)',
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
         <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div
+            className="animate-float"
             style={{
-              width: '54px',
-              height: '54px',
+              width: '56px',
+              height: '56px',
               borderRadius: '50%',
-              background: 'rgba(224, 169, 109, 0.15)',
+              background: 'var(--gold-soft)',
+              border: '1px solid var(--border-active)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--gold-light)',
-              marginBottom: '12px',
+              color: 'var(--gold-primary)',
+              marginBottom: '14px',
+              boxShadow: 'var(--shadow-xs)',
             }}
           >
             <KeyRound size={26} />
           </div>
-          <h1 className="title-gold page-title" style={{ marginBottom: '6px' }}>
+          <h1 className="title-gold page-title" style={{ marginBottom: '6px', fontSize: '2.1rem' }}>
             Aura Hospitality
           </h1>
-          <p className="page-subtitle">
+          <p className="page-subtitle" style={{ fontSize: '0.88rem' }}>
             Contactless In-Stay Experience & Digital Pass
           </p>
         </div>
@@ -68,10 +119,11 @@ export const WelcomePage = () => {
         {error && (
           <div
             style={{
-              padding: '12px',
+              padding: '12px 14px',
               borderRadius: 'var(--radius-sm)',
-              background: 'rgba(239, 68, 68, 0.15)',
-              color: '#F87171',
+              background: 'var(--danger-bg)',
+              color: 'var(--danger)',
+              border: '1px solid rgba(186, 51, 51, 0.25)',
               fontSize: '0.85rem',
               marginBottom: '20px',
             }}
@@ -80,9 +132,9 @@ export const WelcomePage = () => {
           </div>
         )}
 
-        <form onSubmit={handleDirectAccess} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleDirectAccess} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Booking Reference
             </label>
             <input
@@ -96,7 +148,7 @@ export const WelcomePage = () => {
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Registered Mobile Number
             </label>
             <input
@@ -108,7 +160,7 @@ export const WelcomePage = () => {
             />
           </div>
 
-          <button type="submit" className="btn btn-gold" disabled={loading} style={{ marginTop: '8px' }}>
+          <button type="submit" className="btn btn-gold" disabled={loading} style={{ marginTop: '6px', padding: '12px' }}>
             {loading ? 'Entering Portal...' : 'Access My Stay Portal'} <ArrowRight size={16} />
           </button>
         </form>
@@ -127,7 +179,7 @@ export const WelcomePage = () => {
             gap: '6px',
           }}
         >
-          <ShieldCheck size={14} color="var(--gold-light)" /> 256-bit Encrypted Guest Session
+          <ShieldCheck size={15} color="var(--gold-primary)" /> 256-bit Encrypted Guest Session
         </div>
       </div>
     </div>

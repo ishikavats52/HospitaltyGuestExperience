@@ -335,14 +335,14 @@ export const ReceptionDesk = () => {
 
       {/* Notifications */}
       {error && (
-        <div style={{ padding: '14px', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#F87171', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '14px', background: 'var(--danger-bg)', border: '1px solid rgba(186, 51, 51, 0.25)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <AlertCircle size={20} />
           <div style={{ fontSize: '0.85rem' }}>{error}</div>
         </div>
       )}
 
       {successMsg && (
-        <div style={{ padding: '14px', background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#34D399', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ padding: '14px', background: 'var(--success-bg)', border: '1px solid rgba(28, 108, 67, 0.25)', color: 'var(--success)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', gap: '10px' }}>
           <CheckCircle2 size={20} />
           <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>{successMsg}</div>
         </div>
@@ -352,9 +352,9 @@ export const ReceptionDesk = () => {
       {!guest360 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '20px' }}>
           {/* CAMERA QR SCANNER PANEL */}
-          <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="glass-panel animate-fade-in" style={{ padding: 'clamp(16px, 3vw, 24px)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.95rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', fontWeight: 600, fontSize: '0.95rem' }}>
                 <Camera size={20} />
                 Live Camera QR Scanner
               </div>
@@ -371,7 +371,7 @@ export const ReceptionDesk = () => {
             </div>
 
             {isScanning ? (
-              <div style={{ position: 'relative', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--gold-light)', background: '#000' }}>
+              <div style={{ position: 'relative', width: '100%', borderRadius: '12px', overflow: 'hidden', border: '2px solid var(--gold-primary)', background: '#000' }}>
                 <video
                   ref={videoRef}
                   autoPlay
@@ -387,7 +387,7 @@ export const ReceptionDesk = () => {
                     transform: 'translate(-50%, -50%)',
                     width: '180px',
                     height: '180px',
-                    border: '2px solid #E0A96D',
+                    border: '2px solid var(--gold-primary)',
                     borderRadius: '16px',
                     boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.45)',
                     pointerEvents: 'none',
@@ -396,13 +396,13 @@ export const ReceptionDesk = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <div style={{ width: '100%', height: '2px', background: 'rgba(224, 169, 109, 0.8)', animation: 'pulse 1.5s infinite' }} />
+                  <div style={{ width: '100%', height: '2px', background: 'rgba(178, 139, 83, 0.9)', animation: 'pulse 1.5s infinite' }} />
                 </div>
                 <button
                   type="button"
                   onClick={stopCamera}
                   className="btn btn-outline"
-                  style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, background: 'rgba(0,0,0,0.7)', fontSize: '0.8rem' }}
+                  style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: 10, background: 'rgba(255,255,255,0.9)', color: 'var(--text-primary)', fontSize: '0.8rem' }}
                 >
                   <X size={14} /> Close Camera
                 </button>
@@ -411,21 +411,21 @@ export const ReceptionDesk = () => {
               <div
                 style={{
                   padding: '28px 16px',
-                  border: '2px dashed var(--border-color)',
+                  border: '2px dashed var(--border-active)',
                   borderRadius: 'var(--radius-sm)',
                   textAlign: 'center',
-                  background: 'rgba(255, 255, 255, 0.02)',
+                  background: 'var(--bg-tertiary)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '14px',
                 }}
               >
-                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(224, 169, 109, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-light)' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--gold-soft)', border: '1px solid var(--border-active)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-primary)' }}>
                   <QrCode size={28} />
                 </div>
                 <div>
-                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#fff' }}>Scan Guest QR Pass</div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Scan Guest QR Pass</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                     Point phone or laptop camera at the guest's digital check-in QR code
                   </div>
@@ -522,25 +522,26 @@ export const ReceptionDesk = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
           {/* Top Hero Banner */}
           <div
-            className="glass-panel"
+            className="glass-panel animate-fade-in"
             style={{
               padding: 'clamp(16px, 3vw, 24px)',
-              background: 'linear-gradient(135deg, rgba(20, 30, 56, 0.95) 0%, rgba(13, 20, 36, 0.98) 100%)',
-              borderColor: 'var(--gold-light)',
+              background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF6EE 100%)',
+              borderColor: 'var(--border-active)',
+              boxShadow: 'var(--shadow-md)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
               <div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
                   Guest 360 Real-Time Profile
                 </div>
-                <h2 className="title-gold page-title">
+                <h2 className="title-gold page-title" style={{ fontSize: '2rem', margin: '4px 0' }}>
                   {guest360.guest?.name || 'Aarav Mehta'}
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', flexWrap: 'wrap' }}>
                   <span>Booking: <strong>{guest360.booking?.bookingNumber}</strong></span>
                   <span>•</span>
-                  <span>Room: <strong style={{ color: '#fff' }}>{guest360.room?.roomNumber} ({guest360.room?.type})</strong></span>
+                  <span>Room: <strong style={{ color: 'var(--text-primary)' }}>{guest360.room?.roomNumber} ({guest360.room?.type})</strong></span>
                   <span>•</span>
                   <span>Floor: <strong>{guest360.room?.floor}</strong></span>
                 </div>
@@ -577,44 +578,44 @@ export const ReceptionDesk = () => {
                 gap: '14px',
                 marginTop: '18px',
                 paddingTop: '16px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                borderTop: '1px solid var(--border-subtle)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Clock size={18} color="var(--gold-light)" />
+                <Clock size={18} color="var(--gold-primary)" />
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Check-In Time</div>
-                  <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {guest360.checkedInAt ? new Date(guest360.checkedInAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Pending Arrival'}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <LogOut size={18} color="var(--gold-light)" />
+                <LogOut size={18} color="var(--gold-primary)" />
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Check-Out Status</div>
-                  <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     {guest360.checkedOutAt ? new Date(guest360.checkedOutAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'Expected 11:00 AM Departure'}
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <BedDouble size={18} color="var(--gold-light)" />
+                <BedDouble size={18} color="var(--gold-primary)" />
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Room Accommodation</div>
-                  <div style={{ fontSize: '0.85rem', color: '#fff', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
                     Suite #{guest360.room?.roomNumber} (Floor {guest360.room?.floor})
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <DollarSign size={18} color="var(--gold-light)" />
+                <DollarSign size={18} color="var(--gold-primary)" />
                 <div>
                   <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Total Folio Bill</div>
-                  <div style={{ fontSize: '0.95rem', color: 'var(--gold-light)', fontWeight: 700 }}>
+                  <div style={{ fontSize: '1.05rem', color: 'var(--gold-primary)', fontWeight: 700 }}>
                     ₹{guest360.billing?.grandTotal || 0}
                   </div>
                 </div>
@@ -625,9 +626,9 @@ export const ReceptionDesk = () => {
           {/* 3-COLUMN DETAILS SECTION: KYC, DINING ORDERS, AND FOLIO BILL */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '18px' }}>
             {/* 1. KYC & GUEST IDENTITY */}
-            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <ShieldCheck size={18} />
                   KYC & Identity Verification
                 </div>
@@ -641,23 +642,23 @@ export const ReceptionDesk = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Full Name:</span>
-                  <strong style={{ color: '#fff' }}>{guest360.guest?.name}</strong>
+                  <strong style={{ color: 'var(--text-primary)' }}>{guest360.guest?.name}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Contact Phone:</span>
-                  <span style={{ color: '#fff' }}>{guest360.guest?.phone}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{guest360.guest?.phone}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Email:</span>
-                  <span style={{ color: '#fff' }}>{guest360.guest?.email}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{guest360.guest?.email}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Document Type:</span>
-                  <span style={{ color: '#fff' }}>{guest360.guest?.idType}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>{guest360.guest?.idType}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>ID Number:</span>
-                  <span style={{ color: 'var(--gold-light)', fontFamily: 'monospace' }}>{guest360.guest?.idNumber}</span>
+                  <span style={{ color: 'var(--gold-primary)', fontFamily: 'monospace', fontWeight: 600 }}>{guest360.guest?.idNumber}</span>
                 </div>
               </div>
 
@@ -676,7 +677,7 @@ export const ReceptionDesk = () => {
                 {guest360.guest?.signatureUrl && (
                   <div>
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: '4px' }}>Digital Signature:</div>
-                    <div style={{ background: '#070B19', height: '80px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}>
+                    <div style={{ background: '#FAF7F2', height: '80px', borderRadius: '8px', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}>
                       <img src={guest360.guest.signatureUrl} alt="Signature" style={{ maxHeight: '100%', maxWidth: '100%' }} />
                     </div>
                   </div>
@@ -685,9 +686,9 @@ export const ReceptionDesk = () => {
             </div>
 
             {/* 2. WHAT HE HAS ORDERED (IN-ROOM DINING) */}
-            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <Utensils size={18} />
                   Food & In-Room Dining
                 </div>
@@ -703,20 +704,20 @@ export const ReceptionDesk = () => {
                       key={idx}
                       style={{
                         padding: '10px',
-                        background: 'rgba(255, 255, 255, 0.03)',
+                        background: 'var(--bg-tertiary)',
                         borderRadius: 'var(--radius-sm)',
                         border: '1px solid var(--border-color)',
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
                         <span>{ord.orderNumber}</span>
-                        <span style={{ color: 'var(--gold-light)' }}>₹{ord.totalAmount}</span>
+                        <span style={{ color: 'var(--gold-primary)' }}>₹{ord.totalAmount}</span>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                         {ord.items?.map((it) => `${it.name} (x${it.quantity})`).join(', ')}
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                        <span style={{ color: '#34D399' }}>● {ord.status || 'DELIVERED'}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        <span style={{ color: 'var(--success)', fontWeight: 600 }}>● {ord.status || 'DELIVERED'}</span>
                         <span>{ord.createdAt ? new Date(ord.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                       </div>
                     </div>
@@ -730,15 +731,15 @@ export const ReceptionDesk = () => {
 
               {/* Hotel Amenities requested */}
               {guest360.services && guest360.services.length > 0 && (
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '10px' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', fontWeight: 600, marginBottom: '6px' }}>
+                <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--gold-primary)', fontWeight: 600, marginBottom: '6px' }}>
                     Amenities Requested:
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {guest360.services.map((s, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                         <span>• {s.name}</span>
-                        <span style={{ color: s.isFree ? '#34D399' : '#fff' }}>{s.isFree ? 'Free' : `₹${s.price}`}</span>
+                        <span style={{ color: s.isFree ? 'var(--success)' : 'var(--text-primary)', fontWeight: 600 }}>{s.isFree ? 'Free' : `₹${s.price}`}</span>
                       </div>
                     ))}
                   </div>
@@ -747,9 +748,9 @@ export const ReceptionDesk = () => {
             </div>
 
             {/* 3. TOTAL FOLIO BILL STATEMENT */}
-            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.9rem' }}>
+            <div className="glass-panel" style={{ padding: 'clamp(14px, 3vw, 20px)', backgroundColor: '#FFFFFF', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', fontWeight: 600, fontSize: '0.9rem' }}>
                   <Receipt size={18} />
                   Live Folio Statement
                 </div>
@@ -761,23 +762,23 @@ export const ReceptionDesk = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Room Tariff ({guest360.booking?.bookingNumber}):</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>₹{guest360.billing?.roomTariff}</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>₹{guest360.billing?.roomTariff}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>In-Room Dining Total:</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>₹{guest360.billing?.foodTotal}</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>₹{guest360.billing?.foodTotal}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Hotel Services Total:</span>
-                  <span style={{ color: '#fff', fontWeight: 600 }}>₹{guest360.billing?.servicesTotal}</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>₹{guest360.billing?.servicesTotal}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px dashed var(--border-color)', paddingTop: '6px' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>Subtotal:</span>
-                  <span style={{ color: '#fff' }}>₹{guest360.billing?.subtotal}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>₹{guest360.billing?.subtotal}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ color: 'var(--text-secondary)' }}>GST Tax (12%):</span>
-                  <span style={{ color: '#fff' }}>₹{guest360.billing?.tax}</span>
+                  <span style={{ color: 'var(--text-primary)' }}>₹{guest360.billing?.tax}</span>
                 </div>
 
                 <div
@@ -785,14 +786,14 @@ export const ReceptionDesk = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     padding: '12px 14px',
-                    background: 'rgba(224, 169, 109, 0.12)',
+                    background: 'var(--gold-soft)',
                     borderRadius: 'var(--radius-sm)',
                     border: '1px solid var(--border-active)',
                     marginTop: '4px',
                   }}
                 >
-                  <span style={{ fontWeight: 700, color: '#fff' }}>Grand Total Folio:</span>
-                  <span style={{ fontWeight: 800, fontSize: '1.15rem', color: 'var(--gold-light)' }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Grand Total Folio:</span>
+                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--gold-primary)' }}>
                     ₹{guest360.billing?.grandTotal}
                   </span>
                 </div>

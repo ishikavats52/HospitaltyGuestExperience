@@ -59,10 +59,10 @@ export const ServicesPage = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
           {hotelInfo?.name || 'Hotel Grand Delhi'} • {hotelInfo?.location?.city || 'Delhi'}
         </div>
-        <h2 className="title-gold page-title">
+        <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
           Available Guest Services
         </h2>
         <p className="page-subtitle">
@@ -75,9 +75,9 @@ export const ServicesPage = () => {
           style={{
             padding: '12px 16px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: '#34D399',
+            background: 'var(--success-bg)',
+            border: '1px solid rgba(28, 108, 67, 0.25)',
+            color: 'var(--success)',
             fontSize: '0.85rem',
             display: 'flex',
             alignItems: 'center',
@@ -93,9 +93,9 @@ export const ServicesPage = () => {
           style={{
             padding: '12px 16px',
             borderRadius: 'var(--radius-sm)',
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: '#F87171',
+            background: 'var(--danger-bg)',
+            border: '1px solid rgba(186, 51, 51, 0.25)',
+            color: 'var(--danger)',
             fontSize: '0.85rem',
             display: 'flex',
             alignItems: 'center',
@@ -111,17 +111,17 @@ export const ServicesPage = () => {
           Evaluating 5-Tier Location & Plan Availability...
         </div>
       ) : services.length === 0 ? (
-        <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+        <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)', backgroundColor: '#FFFFFF' }}>
           No services currently enabled for this location.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           {services.map(({ serviceCatalogue, isFreeEntitlement, hotelConfig }) => (
-            <div key={serviceCatalogue._id} className="glass-panel" style={{ padding: '16px' }}>
+            <div key={serviceCatalogue._id} className="glass-panel" style={{ padding: '18px', backgroundColor: '#FFFFFF' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
                 <div style={{ flex: '1 1 200px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#fff' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
                       {serviceCatalogue.name}
                     </span>
                     {isFreeEntitlement || hotelConfig.isComplimentary ? (
@@ -130,18 +130,18 @@ export const ServicesPage = () => {
                       <span className="badge badge-gold">₹{hotelConfig.price}</span>
                     )}
                   </div>
-                  <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                     {serviceCatalogue.description}
                   </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                    <Clock size={12} /> Hours: {hotelConfig.operatingHours?.open} - {hotelConfig.operatingHours?.close}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                    <Clock size={13} color="var(--gold-primary)" /> Hours: {hotelConfig.operatingHours?.open} - {hotelConfig.operatingHours?.close}
                   </div>
                 </div>
 
                 <button
                   onClick={() => handleRequestService(serviceCatalogue._id, serviceCatalogue.name)}
                   className="btn btn-gold"
-                  style={{ padding: '8px 16px', fontSize: '0.8rem', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}
+                  style={{ padding: '8px 16px', fontSize: '0.82rem', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}
                   disabled={requestingId === serviceCatalogue._id}
                 >
                   {requestingId === serviceCatalogue._id ? 'Requesting...' : 'Request'}
