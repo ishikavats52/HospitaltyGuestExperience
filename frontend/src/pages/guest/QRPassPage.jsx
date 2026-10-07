@@ -22,6 +22,32 @@ export const QRPassPage = () => {
     fetchStay();
   }, [stayId]);
 
+  const isCheckedIn = stayData?.status === 'CHECKED_IN' || stayData?.status === 'STAY_ACTIVE';
+
+  if (!isCheckedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '40px 16px', gap: '16px', width: '100%' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--gold-soft)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-primary)' }}>
+          <QrCode size={30} />
+        </div>
+        <h2 className="title-gold" style={{ fontSize: '1.6rem', margin: 0 }}>
+          Digital Key Requires Check-In
+        </h2>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5 }}>
+          Your digital suite key pass and QR room access code will be cryptographically generated once your contactless check-in with Aadhaar and selfie is submitted.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.href = '/guest/checkin'}
+          className="btn btn-gold"
+          style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}
+        >
+          <span>Complete Check-In (Aadhaar & Selfie)</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '20px', width: '100%' }}>
       <div>

@@ -64,6 +64,27 @@ export const AuthProvider = ({ children }) => {
     return guestUser;
   };
 
+  const refreshSession = async () => {
+    const currentToken = localStorage.getItem('aura_token');
+    if (!currentToken) return null;
+    try {
+      const res = await api.get('/auth/me');
+      const user = res.data.user;
+      if (user && (user.isGuest || user.role === 'GUEST')) {
+        const derivedStayId = user.stayId || (typeof user.stay === 'string' ? user.stay : user.stay?._id);
+        user.stayId = derivedStayId;
+        if (!user.stay || typeof user.stay === 'string') {
+          user.stay = { _id: derivedStayId, hotelId: user.hotelId };
+        }
+      }
+      setCurrentUser(user);
+      return user;
+    } catch (err) {
+      console.warn('Session refresh failed:', err.message);
+      return null;
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('aura_token');
     localStorage.removeItem('aura_target_hotel_id');
@@ -79,6 +100,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         loginStaff,
         verifyGuestOtp,
+        refreshSession,
         logout,
         isAuthenticated: !!currentUser,
         isSuperAdmin: currentUser?.role === 'SUPER_ADMIN',

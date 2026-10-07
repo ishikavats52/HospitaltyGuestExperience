@@ -48,13 +48,38 @@ export const ServicesPage = () => {
         guestNotes: 'Requested via Guest PWA',
       });
 
-      setMessage(`Request for "${serviceName}" placed successfully! Service team notified.`);
     } catch (err) {
       setError(err.message || 'Service request failed');
     } finally {
       setRequestingId(null);
     }
   };
+
+  const isCheckedIn = currentUser?.stay?.status === 'CHECKED_IN' || currentUser?.stay?.status === 'STAY_ACTIVE';
+
+  if (!isCheckedIn) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '40px 16px', gap: '16px' }}>
+        <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--gold-soft)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-primary)' }}>
+          <AlertCircle size={32} />
+        </div>
+        <h2 className="title-gold" style={{ fontSize: '1.6rem', margin: 0 }}>
+          Check-In Required for Services
+        </h2>
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5 }}>
+          In-stay room amenities, housekeeping, and concierge services are activated upon check-in. Please upload your Aadhaar card and live selfie to unlock facilities.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.href = '/guest/checkin'}
+          className="btn btn-gold"
+          style={{ padding: '12px 24px', fontSize: '0.9rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}
+        >
+          <span>Complete Check-In (Aadhaar & Selfie)</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

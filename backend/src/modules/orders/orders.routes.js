@@ -40,9 +40,17 @@ router.post('/', authenticate, async (req, res, next) => {
         propertyId: req.user?.propertyId || 'PROP-DELHI-01',
         bookingId: req.user?.bookingId || 'BK-DELHI-101',
         roomId: 'ROOM-302',
-        status: 'STAY_ACTIVE',
+        status: 'BOOKING_CONFIRMED',
         folioBalance: 0,
       });
+    }
+
+    if (stay && stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
+      return ApiResponse.error(
+        res,
+        'Check-In verification required: Please complete contactless check-in with your Aadhaar card and selfie before placing in-room dining orders.',
+        403
+      );
     }
 
     const totalAmount = items.reduce((acc, it) => acc + it.price * it.quantity, 0);

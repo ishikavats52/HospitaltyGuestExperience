@@ -282,15 +282,37 @@ export const seedDatabase = async (force = false) => {
       status: 'AVAILABLE',
     });
 
-    // 11. Guest, Booking & Active Stay
+    const room305 = await Room.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      roomTypeId: deluxeType._id,
+      roomNumber: '305',
+      floor: 3,
+      status: 'OCCUPIED',
+    });
+
+    const room201 = await Room.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      roomTypeId: deluxeType._id,
+      roomNumber: '201',
+      floor: 2,
+      status: 'AVAILABLE',
+    });
+
+    // 11. Guest, Booking & Stays
+    // Guest 1: Aarav Mehta (New arrival, KYC Pending Check-in)
     const guestAarav = await Guest.create({
       hotelId: hotelDelhi._id,
       name: 'Aarav Mehta',
       email: 'aarav.mehta@example.com',
       phone: '9876543210',
-      idType: 'PASSPORT',
-      idNumber: 'Z5896321',
-      isVerified: true,
+      idType: 'AADHAAR',
+      idNumber: '412630822252',
+      isVerified: false,
+      idDocumentUrl: null,
+      selfieUrl: null,
+      signatureUrl: null,
     });
 
     const checkInDate = new Date();
@@ -316,6 +338,99 @@ export const seedDatabase = async (force = false) => {
       guestId: guestAarav._id,
       roomId: room302._id,
       status: 'BOOKING_CONFIRMED',
+      idType: 'AADHAAR',
+      idNumber: '412630822252',
+      idDocumentUrl: null,
+      selfieUrl: null,
+      signatureUrl: null,
+      isVerified: false,
+    });
+
+    // Guest 2: Priya Sharma (Checked-in with complete Aadhaar & Selfie KYC)
+    const guestPriya = await Guest.create({
+      hotelId: hotelDelhi._id,
+      name: 'Priya Sharma',
+      email: 'priya.sharma@example.com',
+      phone: '9811223344',
+      idType: 'AADHAAR',
+      idNumber: '891044321980',
+      isVerified: true,
+      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      selfieUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
+      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 25 Q 35 5, 65 25 T 110 20" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
+    });
+
+    const bookingPriya = await Booking.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      guestId: guestPriya._id,
+      bookingNumber: 'BK-DELHI-202',
+      phone: '9811223344',
+      roomTypeId: deluxeType._id,
+      checkInDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      checkOutDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      totalAmount: 9000,
+      status: 'CONFIRMED',
+    });
+
+    await Stay.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      bookingId: bookingPriya._id,
+      guestId: guestPriya._id,
+      roomId: room305._id,
+      status: 'CHECKED_IN',
+      checkedInAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+      idType: 'AADHAAR',
+      idNumber: '891044321980',
+      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      selfieUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
+      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 25 Q 35 5, 65 25 T 110 20" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
+      isVerified: true,
+    });
+
+    // Guest 3: Vikram Verma (Completed Stay - Checked Out)
+    const guestVikram = await Guest.create({
+      hotelId: hotelDelhi._id,
+      name: 'Vikram Verma',
+      email: 'vikram.verma@example.com',
+      phone: '9822334455',
+      idType: 'AADHAAR',
+      idNumber: '772199043218',
+      isVerified: true,
+      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      selfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 20 Q 30 10, 60 25 T 100 15" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
+    });
+
+    const bookingVikram = await Booking.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      guestId: guestVikram._id,
+      bookingNumber: 'BK-DELHI-098',
+      phone: '9822334455',
+      roomTypeId: deluxeType._id,
+      checkInDate: new Date(Date.now() - 48 * 60 * 60 * 1000),
+      checkOutDate: new Date(Date.now() - 4 * 60 * 60 * 1000),
+      totalAmount: 9000,
+      status: 'CONFIRMED',
+    });
+
+    await Stay.create({
+      hotelId: hotelDelhi._id,
+      propertyId: propDelhi._id,
+      bookingId: bookingVikram._id,
+      guestId: guestVikram._id,
+      roomId: room201._id,
+      status: 'CHECKED_OUT',
+      checkedInAt: new Date(Date.now() - 32 * 60 * 60 * 1000).toISOString(),
+      checkedOutAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+      idType: 'AADHAAR',
+      idNumber: '772199043218',
+      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
+      selfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
+      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 20 Q 30 10, 60 25 T 100 15" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
+      isVerified: true,
     });
 
     // 12. Menu Items

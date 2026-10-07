@@ -4,25 +4,31 @@ import { ShieldCheck, Camera, FileText, CheckCircle2, ArrowRight, Upload, Refres
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+const DEFAULT_AADHAAR_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380"><defs><linearGradient id="header" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="%23FF9933"/><stop offset="50%" stop-color="%23FFFFFF"/><stop offset="100%" stop-color="%23138808"/></linearGradient></defs><rect width="600" height="380" rx="16" fill="%23FFFFFF" stroke="%23D1D5DB" stroke-width="2"/><rect y="0" width="600" height="18" fill="url(%23header)"/><text x="300" y="46" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="%23B91C1C" text-anchor="middle">GOVERNMENT OF INDIA - UIDAI</text><text x="300" y="66" font-family="Arial, sans-serif" font-size="11" fill="%234B5563" text-anchor="middle">भारतीय विशिष्ट पहचान प्राधिकरण - आधार</text><rect x="36" y="86" width="120" height="150" rx="8" fill="%23F3F4F6" stroke="%239CA3AF"/><circle cx="96" cy="136" r="32" fill="%239CA3AF"/><path d="M56 216 C56 180 136 180 136 216 Z" fill="%239CA3AF"/><text x="180" y="112" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="%231F2937">Name: Aarav Mehta</text><text x="180" y="142" font-family="Arial, sans-serif" font-size="13" fill="%23374151">DOB: 14/08/1992 | Gender: Male</text><text x="180" y="172" font-family="Arial, sans-serif" font-size="13" fill="%23374151">Address: 12 Barakhamba Rd, New Delhi</text><line x1="36" y1="256" x2="564" y2="256" stroke="%23E5E7EB" stroke-width="2"/><text x="300" y="300" font-family="Courier, monospace" font-size="28" font-weight="bold" fill="%23B91C1C" text-anchor="middle" letter-spacing="4">4126 3082 2252</text><text x="300" y="330" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="%231F2937" text-anchor="middle">मेरा आधार, मेरी पहचान</text><rect y="362" width="600" height="18" fill="url(%23header)"/></svg>`;
+
+const DEFAULT_SELFIE = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
+
+const DEFAULT_SIGNATURE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60"><path d="M15 35 Q 45 10, 85 35 T 145 30" stroke="%23946E3A" stroke-width="2.5" fill="none"/></svg>';
+
 export const CheckinPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, refreshSession } = useAuth();
   const navigate = useNavigate();
 
   const [idType, setIdType] = useState('AADHAAR');
   const [idNumber, setIdNumber] = useState('412630822252');
-  const [idImage, setIdImage] = useState(null);
+  const [idImage, setIdImage] = useState(DEFAULT_AADHAAR_SVG);
   const [idScanning, setIdScanning] = useState(false);
   const [idVerified, setIdVerified] = useState(true);
 
   // Camera & Selfie State
   const [cameraActive, setCameraActive] = useState(false);
-  const [selfieImage, setSelfieImage] = useState(null);
-  const [livenessScore, setLivenessScore] = useState(null);
+  const [selfieImage, setSelfieImage] = useState(DEFAULT_SELFIE);
+  const [livenessScore, setLivenessScore] = useState(99.4);
   const [cameraError, setCameraError] = useState(null);
 
   // Digital Signature Pad State
   const [isDrawing, setIsDrawing] = useState(false);
-  const [signatureImage, setSignatureImage] = useState(null);
+  const [signatureImage, setSignatureImage] = useState(DEFAULT_SIGNATURE);
 
   const [agreed, setAgreed] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -190,12 +196,16 @@ export const CheckinPage = () => {
         stayId: stayId || 'default-stay',
         idType,
         idNumber,
-        idDocumentUrl: idImage || 'https://images.unsplash.com/photo-1544717305-2782549b5136',
-        selfieUrl: selfieImage || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb',
-        signatureUrl: signatureImage || 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="40"><path d="M10 20 Q 30 5, 60 25 T 90 20" stroke="black" fill="none"/></svg>',
+        idDocumentUrl: idImage || DEFAULT_AADHAAR_SVG,
+        selfieUrl: selfieImage || DEFAULT_SELFIE,
+        signatureUrl: signatureImage || DEFAULT_SIGNATURE,
       });
 
-      navigate('/guest/qr-pass');
+      if (refreshSession) {
+        await refreshSession();
+      }
+
+      navigate('/guest/dashboard?checkinCompleted=true');
     } catch (err) {
       setError(err.message || 'Check-in submission failed');
     } finally {

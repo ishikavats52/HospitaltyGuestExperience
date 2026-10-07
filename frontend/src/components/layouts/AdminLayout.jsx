@@ -144,7 +144,28 @@ export const AdminLayout = () => {
       <main className="admin-main">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation Bar for SmartPhones */}
+      <nav className="admin-mobile-bottom-nav">
+        <NavLink to="/admin/dashboard" className={({ isActive }) => `admin-bottom-tab ${isActive ? 'active' : ''}`}>
+          <Hotel size={18} />
+          <span>Overview</span>
+        </NavLink>
+        <NavLink to="/admin/rooms" className={({ isActive }) => `admin-bottom-tab ${isActive ? 'active' : ''}`}>
+          <BedDouble size={18} />
+          <span>Guests</span>
+        </NavLink>
+        <NavLink to="/admin/services" className={({ isActive }) => `admin-bottom-tab ${isActive ? 'active' : ''}`}>
+          <Sparkles size={18} />
+          <span>Services</span>
+        </NavLink>
+        <NavLink to="/admin/menu" className={({ isActive }) => `admin-bottom-tab ${isActive ? 'active' : ''}`}>
+          <Utensils size={18} />
+          <span>Dining</span>
+        </NavLink>
+      </nav>
     </div>
   );
 };
+
 

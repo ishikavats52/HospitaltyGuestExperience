@@ -127,7 +127,14 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
     }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
-    let hotel = stay.hotelId;
+    // Enforce check-in authentication & KYC verification
+    if (stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
+      return ApiResponse.error(
+        res,
+        'Check-In verification required: Please complete contactless check-in with your Aadhaar card and selfie before requesting in-stay services.',
+        403
+      );
+    }
     if (!hotel || typeof hotel === 'string' || !hotel.locationHierarchy) {
       hotel = await Hotel.findById(hotel?._id || hotel) || await Hotel.findOne();
     }
