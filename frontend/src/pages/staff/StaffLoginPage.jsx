@@ -111,12 +111,15 @@ export const StaffLoginPage = () => {
           >
             <ShieldCheck size={28} />
           </div>
-          <h1 className="title-gold page-title" style={{ marginBottom: '6px', fontSize: '2.1rem' }}>
-            Operations & Portal Sign In
-          </h1>
-          <p className="page-subtitle" style={{ fontSize: '0.88rem' }}>
-            Access Super Admin Governance or Hotel Admin Portal
-          </p>
+          <div className="dapd-header-title" style={{ fontSize: '1.9rem', marginBottom: '2px', letterSpacing: '0.08em' }}>
+            AURA SAAS
+          </div>
+          <div className="dapd-header-sub" style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
+            HOSPITALITY GOVERNANCE & OPERATIONS
+          </div>
+          <div className="dapd-header-tagline" style={{ fontSize: '0.88rem' }}>
+            Powering Strategic Hospitality Oversight
+          </div>
         </div>
 
         {paramEmail && (
@@ -220,6 +223,10 @@ export const StaffLoginPage = () => {
             {loading ? 'Authenticating...' : 'Sign In to Portal'} <ArrowRight size={16} />
           </button>
         </form>
+
+        <div className="dapd-footer-trust" style={{ marginTop: '22px', paddingBottom: 0 }}>
+          🔒 Secure • Reliable • Strategic
+        </div>
       </div>
     </div>
   );

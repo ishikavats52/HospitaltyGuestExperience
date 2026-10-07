@@ -108,12 +108,15 @@ export const WelcomePage = () => {
           >
             <KeyRound size={26} />
           </div>
-          <h1 className="title-gold page-title" style={{ marginBottom: '6px', fontSize: '2.1rem' }}>
-            Aura Hospitality
-          </h1>
-          <p className="page-subtitle" style={{ fontSize: '0.88rem' }}>
-            Contactless In-Stay Experience & Digital Pass
-          </p>
+          <div className="dapd-header-title" style={{ fontSize: '1.9rem', marginBottom: '2px', letterSpacing: '0.08em' }}>
+            AURA
+          </div>
+          <div className="dapd-header-sub" style={{ fontSize: '0.8rem', letterSpacing: '0.12em' }}>
+            HOSPITALITY GUEST EXPERIENCE
+          </div>
+          <div className="dapd-header-tagline" style={{ fontSize: '0.88rem' }}>
+            Powering Strategic Contactless Stays
+          </div>
         </div>
 
         {error && (
@@ -166,20 +169,15 @@ export const WelcomePage = () => {
         </form>
 
         <div
+          className="dapd-footer-trust"
           style={{
-            marginTop: '28px',
-            paddingTop: '20px',
+            marginTop: '24px',
+            paddingTop: '16px',
             borderTop: '1px solid var(--border-color)',
-            textAlign: 'center',
-            fontSize: '0.75rem',
-            color: 'var(--text-muted)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
+            fontSize: '0.8rem',
           }}
         >
-          <ShieldCheck size={15} color="var(--gold-primary)" /> 256-bit Encrypted Guest Session
+          🔒 Secure • Reliable • Strategic
         </div>
       </div>
     </div>

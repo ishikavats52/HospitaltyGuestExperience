@@ -33,13 +33,14 @@ export const GuestLayout = () => {
           zIndex: 40,
         }}
       >
-        <div>
-          <div style={{ fontSize: '0.68rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
-            Aura Guest Experience
-          </div>
-          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
+          <span style={{ fontSize: '1.05rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
             {currentUser?.guestName || 'Distinguished Guest'}
-          </div>
+          </span>
+          <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '1px' }}>
+            {currentUser?.roomNumber ? `Room ${currentUser.roomNumber}` : 'Hotel Guest'}
+          </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -56,8 +57,11 @@ export const GuestLayout = () => {
       </header>
 
       {/* Main Screen Content */}
-      <main style={{ flex: 1, padding: '16px 14px', paddingBottom: '96px', overflowY: 'auto' }}>
+      <main style={{ flex: 1, padding: '16px 14px', paddingBottom: '96px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
         <Outlet />
+        <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '20px' }}>
+          🔒 Secure • Reliable • Strategic
+        </div>
       </main>
 
       {/* Luxury Bottom Navigation Bar */}

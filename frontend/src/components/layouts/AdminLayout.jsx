@@ -31,38 +31,32 @@ export const AdminLayout = () => {
 
   return (
     <div className="admin-container">
-      {/* Mobile Top Header */}
-      <header className="admin-mobile-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      {/* Mobile Top Header (DAPD text format) */}
+      <header className="admin-mobile-header" style={{ padding: '14px 18px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
+          <span style={{ fontSize: '1.02rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
+            {currentUser?.name || 'Hotel Admin'}
+          </span>
+          <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '1px' }}>
+            {currentUser?.role?.replace('_', ' ') || 'Hotel Admin'}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ThemeSwitcher compact />
           <button
             type="button"
             className="admin-mobile-toggle"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle Navigation Menu"
+            style={{ width: '42px', height: '42px', borderRadius: '10px' }}
           >
             {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
-            <Hotel size={18} />
-            <span className="font-serif" style={{ fontSize: '0.98rem', fontWeight: 700 }}>HOTEL ADMIN</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ThemeSwitcher compact />
-          <span style={{ fontSize: '0.78rem', color: 'var(--gold-primary)', fontWeight: 600, maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {currentUser?.name?.split(' ')[0]}
-          </span>
-          <button
-            onClick={handleLogout}
-            className="btn btn-outline"
-            style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-            title="Sign Out"
-          >
-            <LogOut size={14} />
-          </button>
         </div>
       </header>
+
 
       {/* Backdrop for mobile drawer */}
       <div
@@ -141,8 +135,11 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Main View Area */}
-      <main className="admin-main">
+      <main className="admin-main" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
         <Outlet />
+        <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '32px' }}>
+          🔒 Secure • Reliable • Strategic
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation Bar for SmartPhones */}

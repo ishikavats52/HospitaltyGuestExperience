@@ -47,13 +47,14 @@ export const StaffLayout = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <ThemeSwitcher compact />
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {currentUser?.name}
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', fontWeight: 600 }}>
-                {currentUser?.role?.replace('_', ' ')}
-              </div>
+            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
+              <span style={{ fontSize: '0.92rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {currentUser?.name || 'Staff Member'}
+              </span>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                {currentUser?.role?.replace('_', ' ') || 'STAFF'}
+              </span>
             </div>
             <button
               onClick={handleLogout}
@@ -83,8 +84,11 @@ export const StaffLayout = () => {
       </header>
 
       {/* Main Operations Body */}
-      <main className="staff-main">
+      <main className="staff-main" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 120px)' }}>
         <Outlet />
+        <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '28px' }}>
+          🔒 Secure • Reliable • Strategic
+        </div>
       </main>
     </div>
   );
