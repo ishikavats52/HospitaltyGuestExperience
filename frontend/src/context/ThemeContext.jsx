@@ -2,12 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 export const HOSPITALITY_THEMES = [
   {
-    id: 'airbnb',
-    name: 'Airbnb Modern',
+    id: 'aura',
+    name: 'aura Modern',
     tagline: 'Iconic Coral & Teal',
     primary: '#FF385C',
     secondary: '#008489',
-    badge: 'Airbnb',
+    badge: 'aura',
     bg: '#F7F7F7',
   },
   {
@@ -43,7 +43,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [currentTheme, setCurrentTheme] = useState(() => {
-    return localStorage.getItem('hospitality_active_theme') || 'airbnb';
+    return localStorage.getItem('hospitality_active_theme') || 'aura';
   });
 
   useEffect(() => {

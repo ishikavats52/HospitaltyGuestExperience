@@ -1,24 +1,82 @@
-import React from 'react';
-import { BedDouble, Users, Sparkles, Utensils, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BedDouble, Users, Sparkles, Utensils, Building2, ShieldCheck, Mail, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
+import api from '../../services/api.js';
 
 export const HotelDashboard = () => {
   const { currentUser } = useAuth();
+  const [hotelInfo, setHotelInfo] = useState(null);
+
+  useEffect(() => {
+    const fetchHotel = async () => {
+      if (currentUser?.hotelId) {
+        try {
+          const res = await api.get(`/hotels/${currentUser.hotelId}`);
+          setHotelInfo(res.data);
+        } catch (_) {}
+      }
+    };
+    fetchHotel();
+  }, [currentUser?.hotelId]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
-          Hotel Operations Portal
+      {/* Welcome & Tenant Banner */}
+      <div
+        className="glass-panel animate-fade-in"
+        style={{
+          padding: '24px 28px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-active)',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #FAF7F2 100%)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px',
+        }}
+      >
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span className="badge badge-free" style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              HOTEL ADMIN SESSION ACTIVE
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Verified Credentials Access
+            </span>
+          </div>
+          <h1 className="title-gold" style={{ fontSize: '1.9rem', margin: '4px 0 6px 0', color: 'var(--text-primary)' }}>
+            Welcome, {currentUser?.name || 'Hotel Administrator'}
+          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Building2 size={16} color="var(--gold-primary)" />
+              <span>
+                Tenant:{' '}
+                <strong style={{ color: 'var(--text-primary)' }}>
+                  {hotelInfo?.name || 'Hotel Grand Operations'}
+                </strong>
+                {hotelInfo?.locationHierarchy?.city ? ` (${hotelInfo.locationHierarchy.city})` : ''}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Mail size={15} color="var(--gold-primary)" />
+              <span>{currentUser?.email}</span>
+            </div>
+          </div>
         </div>
-        <h1 className="title-gold page-title" style={{ fontSize: '2.1rem', margin: '4px 0' }}>
-          Property Performance Overview
-        </h1>
-        <p className="page-subtitle">
-          Real-time occupancy, guest service requests, dining orders, and folio settlements.
-        </p>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <Link to="/admin/services" className="btn btn-gold" style={{ fontSize: '0.85rem', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>Manage Services</span>
+            <ArrowRight size={14} />
+          </Link>
+        </div>
       </div>
 
+      {/* KPI Stats */}
       <div className="grid-kpi">
         <div className="glass-panel animate-fade-in" style={{ padding: '22px', backgroundColor: '#FFFFFF' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -67,4 +125,3 @@ export const HotelDashboard = () => {
     </div>
   );
 };
-

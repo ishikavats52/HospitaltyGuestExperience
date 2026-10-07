@@ -58,6 +58,7 @@ export default function App() {
           <Route path="/super-admin" element={<SuperAdminLayout />}>
             <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="dashboard" element={<SuperDashboard />} />
+            <Route path="admins" element={<SuperDashboard />} />
             <Route path="geo-rules" element={<GeoRulesPage />} />
             <Route path="locations" element={<GeoRulesPage />} />
             <Route path="catalogue" element={<GeoRulesPage />} />

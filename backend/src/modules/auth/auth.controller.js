@@ -1,4 +1,5 @@
 import { AuthService } from './auth.service.js';
+import { User } from '../users/users.model.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
 
 export class AuthController {
@@ -33,8 +34,28 @@ export class AuthController {
   }
 
   static async getMe(req, res) {
+    let userData = req.user || req.guest;
+    if (userData && userData.id && !userData.isGuest && userData.role !== 'GUEST') {
+      try {
+        const dbUser = await User.findById(userData.id);
+        if (dbUser) {
+          userData = {
+            ...userData,
+            _id: dbUser._id,
+            id: dbUser._id,
+            name: dbUser.name,
+            email: dbUser.email,
+            role: dbUser.role,
+            hotelId: dbUser.hotelId?._id || dbUser.hotelId || userData.hotelId || null,
+            propertyId: dbUser.propertyId?._id || dbUser.propertyId || userData.propertyId || null,
+            status: dbUser.status || 'ACTIVE',
+            phone: dbUser.phone || '',
+          };
+        }
+      } catch (_) {}
+    }
     return ApiResponse.success(res, 'Current session details', {
-      user: req.user || req.guest,
+      user: userData,
       tenant: req.tenant,
     });
   }

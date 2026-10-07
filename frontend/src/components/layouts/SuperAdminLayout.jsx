@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Globe, Layers, MapPin, CreditCard, Building2, LayoutDashboard, LogOut, ShieldCheck, Menu, X } from 'lucide-react';
+import { Globe, Layers, MapPin, CreditCard, Building2, LayoutDashboard, LogOut, ShieldCheck, Menu, X, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
@@ -97,6 +97,11 @@ export const SuperAdminLayout = () => {
           <NavLink to="/super-admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <LayoutDashboard size={18} />
             <span>Platform Overview</span>
+          </NavLink>
+
+          <NavLink to="/super-admin/admins" style={navItemStyle} onClick={() => setMobileOpen(false)}>
+            <UserCheck size={18} />
+            <span>Hotel Admins</span>
           </NavLink>
 
           <NavLink to="/super-admin/locations" style={navItemStyle} onClick={() => setMobileOpen(false)}>

@@ -1,23 +1,37 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, ArrowRight, Lock, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ShieldCheck, ArrowRight, Lock, Mail, Eye, EyeOff, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const StaffLoginPage = () => {
-  const [email, setEmail] = useState('admin.delhi@hotelgrand.com');
-  const [password, setPassword] = useState('Admin@123');
+  const [searchParams] = useSearchParams();
+  const paramEmail = searchParams.get('email');
+  const paramPass = searchParams.get('prefillPass');
+
+  const [email, setEmail] = useState(paramEmail || 'admin.delhi@hotelgrand.com');
+  const [password, setPassword] = useState(paramPass || 'Admin@123');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const { loginStaff } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (paramEmail) {
+      setEmail(paramEmail);
+    }
+    if (paramPass) {
+      setPassword(paramPass);
+    }
+  }, [paramEmail, paramPass]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const user = await loginStaff(email, password);
+      const user = await loginStaff(email.trim(), password);
       if (user.role === 'SUPER_ADMIN') {
         navigate('/super-admin/dashboard');
       } else if (user.role === 'HOTEL_ADMIN') {
@@ -26,7 +40,7 @@ export const StaffLoginPage = () => {
         navigate('/staff/reception');
       }
     } catch (err) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Login failed. Please verify your email and password.');
     } finally {
       setLoading(false);
     }
@@ -35,6 +49,7 @@ export const StaffLoginPage = () => {
   const handleQuickPreset = (presetEmail) => {
     setEmail(presetEmail);
     setPassword('Admin@123');
+    setError(null);
   };
 
   return (
@@ -77,7 +92,7 @@ export const StaffLoginPage = () => {
       />
 
       <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '440px', padding: '40px 32px', backgroundColor: '#FFFFFF', boxShadow: 'var(--shadow-lg)', position: 'relative', zIndex: 1 }}>
-        <div style={{ textAlign: 'center', marginBottom: '26px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div
             className="animate-float"
             style={{
@@ -100,13 +115,23 @@ export const StaffLoginPage = () => {
             Operations & Portal Sign In
           </h1>
           <p className="page-subtitle" style={{ fontSize: '0.88rem' }}>
-            Access Super Admin Governance or Hotel Staff Portal
+            Access Super Admin Governance or Hotel Admin Portal
           </p>
         </div>
 
+        {paramEmail && (
+          <div style={{ padding: '10px 14px', background: 'var(--success-bg)', color: 'var(--text-primary)', border: '1px solid rgba(16, 185, 129, 0.25)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CheckCircle2 size={16} color="var(--success)" />
+            <span>
+              Preloaded credentials for <strong>{paramEmail}</strong>.
+            </span>
+          </div>
+        )}
+
         {error && (
-          <div style={{ padding: '12px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(186, 51, 51, 0.25)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', marginBottom: '20px' }}>
-            {error}
+          <div style={{ padding: '12px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(186, 51, 51, 0.25)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
         )}
 
@@ -154,10 +179,14 @@ export const StaffLoginPage = () => {
                 className="input-control"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@hotel.com"
                 required
                 style={{ paddingLeft: '38px' }}
               />
               <Mail size={16} color="var(--gold-primary)" style={{ position: 'absolute', left: '12px', top: '15px' }} />
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Use the exact email assigned to your Hotel Admin profile.
             </div>
           </div>
 
@@ -167,14 +196,23 @@ export const StaffLoginPage = () => {
             </label>
             <div style={{ position: 'relative' }}>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="input-control"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter account password"
                 required
-                style={{ paddingLeft: '38px' }}
+                style={{ paddingLeft: '38px', paddingRight: '40px' }}
               />
               <Lock size={16} color="var(--gold-primary)" style={{ position: 'absolute', left: '12px', top: '15px' }} />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ position: 'absolute', right: '12px', top: '14px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
             </div>
           </div>
 

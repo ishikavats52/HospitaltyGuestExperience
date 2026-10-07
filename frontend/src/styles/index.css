@@ -1,16 +1,16 @@
 :root,
-[data-theme="airbnb"] {
-  /* Theme A: Airbnb Modern Stay (Iconic Coral #FF385C, Hospitality Teal #008489, Warm Sun Amber, Crisp Porcelain) */
+[data-theme="aura"] {
+  /* Theme A: aura Modern Stay (Iconic Coral #FF385C, Hospitality Teal #008489, Warm Sun Amber, Crisp Porcelain) */
   --bg-primary: #F7F7F7;
   --bg-secondary: #FFFFFF;
   --bg-tertiary: #F0F2F5;
   --bg-card: #FFFFFF;
   --bg-card-hover: #FFFFFF;
-  
+
   --border-color: #EBEBEB;
   --border-active: #DDDDDD;
   --border-subtle: #F2F2F2;
-  
+
   --gold-primary: #FF385C;
   --gold-light: #FF5A78;
   --gold-dark: #E00B41;
@@ -18,15 +18,15 @@
   --gold-glow: rgba(255, 56, 92, 0.22);
   --gold-gradient: linear-gradient(135deg, #FF385C 0%, #E00B41 100%);
   --gold-gradient-soft: linear-gradient(135deg, #FFF5F6 0%, #FFEBEF 100%);
-  
+
   --secondary-accent: #008489;
   --secondary-soft: #E6F7F7;
   --amber-accent: #FFB400;
-  
+
   --text-primary: #222222;
   --text-secondary: #5E5E5E;
   --text-muted: #767676;
-  
+
   --shadow-gold: 0 6px 20px -2px rgba(255, 56, 92, 0.32);
   --shadow-card-hover: 0 16px 36px -8px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(255, 56, 92, 0.08);
 
@@ -43,13 +43,13 @@
   /* Fonts */
   --font-serif: 'Cormorant Garamond', Garamond, Georgia, serif;
   --font-sans: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  
+
   /* Border Radii */
   --radius-sm: 10px;
   --radius-md: 18px;
   --radius-lg: 26px;
   --radius-full: 9999px;
-  
+
   /* Layered Diffused Shadows */
   --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
@@ -64,11 +64,11 @@
   --bg-tertiary: #F2ECE1;
   --bg-card: #FFFFFF;
   --bg-card-hover: #FFFFFF;
-  
+
   --border-color: #EADBCE;
   --border-active: #D9C3B0;
   --border-subtle: #F0E6DC;
-  
+
   --gold-primary: #D96B43;
   --gold-light: #E07A5F;
   --gold-dark: #B8502B;
@@ -76,15 +76,15 @@
   --gold-glow: rgba(217, 107, 67, 0.22);
   --gold-gradient: linear-gradient(135deg, #D96B43 0%, #C2542B 100%);
   --gold-gradient-soft: linear-gradient(135deg, #FDF7F3 0%, #F8EDE6 100%);
-  
+
   --secondary-accent: #4A7C59;
   --secondary-soft: #EDF5F0;
   --amber-accent: #E07A5F;
-  
+
   --text-primary: #2B2D42;
   --text-secondary: #535868;
   --text-muted: #7E8494;
-  
+
   --shadow-gold: 0 6px 20px -2px rgba(217, 107, 67, 0.32);
   --shadow-card-hover: 0 16px 36px -8px rgba(43, 45, 66, 0.10), 0 4px 12px rgba(217, 107, 67, 0.10);
 
@@ -99,11 +99,11 @@
   --bg-tertiary: #E8F1F2;
   --bg-card: #FFFFFF;
   --bg-card-hover: #FFFFFF;
-  
+
   --border-color: #D3E4E6;
   --border-active: #B2D3D6;
   --border-subtle: #E2EFF0;
-  
+
   --gold-primary: #028090;
   --gold-light: #00A896;
   --gold-dark: #056676;
@@ -111,15 +111,15 @@
   --gold-glow: rgba(2, 128, 144, 0.22);
   --gold-gradient: linear-gradient(135deg, #028090 0%, #00A896 100%);
   --gold-gradient-soft: linear-gradient(135deg, #F0FBFB 0%, #E3F5F5 100%);
-  
+
   --secondary-accent: #F4A261;
   --secondary-soft: #FEF3EB;
   --amber-accent: #E76F51;
-  
+
   --text-primary: #1A262F;
   --text-secondary: #485A65;
   --text-muted: #758A96;
-  
+
   --shadow-gold: 0 6px 20px -2px rgba(2, 128, 144, 0.32);
   --shadow-card-hover: 0 16px 36px -8px rgba(26, 38, 47, 0.10), 0 4px 12px rgba(2, 128, 144, 0.10);
 
@@ -134,11 +134,11 @@
   --bg-tertiary: #F3EFEA;
   --bg-card: #FFFFFF;
   --bg-card-hover: #FFFFFF;
-  
+
   --border-color: rgba(180, 150, 115, 0.22);
   --border-active: rgba(160, 120, 75, 0.48);
   --border-subtle: rgba(180, 150, 115, 0.12);
-  
+
   --gold-primary: #946E3A;
   --gold-light: #B28B53;
   --gold-dark: #745326;
@@ -146,15 +146,15 @@
   --gold-glow: rgba(178, 139, 83, 0.18);
   --gold-gradient: linear-gradient(135deg, #946E3A 0%, #B89158 100%);
   --gold-gradient-soft: linear-gradient(135deg, #FAF6F0 0%, #F3EDE2 100%);
-  
+
   --secondary-accent: #1C6C43;
   --secondary-soft: #EDF7F1;
   --amber-accent: #B28B53;
-  
+
   --text-primary: #1F1B18;
   --text-secondary: #5C554E;
   --text-muted: #8E847A;
-  
+
   --shadow-gold: 0 6px 20px -2px rgba(148, 110, 58, 0.28);
   --shadow-card-hover: 0 14px 34px -6px rgba(45, 35, 25, 0.12), 0 4px 12px rgba(178, 139, 83, 0.10);
 
@@ -172,7 +172,7 @@
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
-  background-image: 
+  background-image:
     radial-gradient(ellipse at 15% 10%, var(--gold-soft) 0%, transparent 50%),
     radial-gradient(ellipse at 85% 90%, var(--bg-tertiary) 0%, transparent 50%);
   background-attachment: fixed;
@@ -192,6 +192,7 @@ body {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -199,18 +200,24 @@ body {
 }
 
 @keyframes gentleFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-4px);
   }
 }
 
 @keyframes softPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
@@ -220,9 +227,11 @@ body {
   0% {
     box-shadow: 0 0 0 0 rgba(178, 139, 83, 0.3);
   }
+
   70% {
     box-shadow: 0 0 0 8px rgba(178, 139, 83, 0);
   }
+
   100% {
     box-shadow: 0 0 0 0 rgba(178, 139, 83, 0);
   }
@@ -245,9 +254,9 @@ body {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.28s ease,
-              background-color 0.28s ease;
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s ease,
+    background-color 0.28s ease;
 }
 
 .glass-panel:hover {
@@ -734,6 +743,7 @@ body {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
+
 .touch-scroll-x::-webkit-scrollbar {
   display: none;
 }
@@ -743,13 +753,16 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(180, 150, 115, 0.25);
   border-radius: 999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(180, 150, 115, 0.45);
 }

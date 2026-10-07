@@ -12,22 +12,57 @@ export class AuthService {
   }
 
   static async loginStaff({ email, password }) {
-    const user = await User.findOne({ email }).populate('hotelId').populate('propertyId');
-    if (!user) throw new Error('Invalid email or password');
+    if (!email || !password) {
+      throw new Error('Email and password are required');
+    }
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) throw new Error('Invalid email or password');
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Query user case-insensitively
+    let user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      const allUsers = await User.find();
+      user = allUsers.find((u) => u.email && u.email.toLowerCase() === normalizedEmail);
+    }
+
+    if (!user) {
+      throw new Error('Invalid email or password');
+    }
+
+    if (user.status === 'SUSPENDED') {
+      throw new Error('This account has been suspended. Please contact the platform administrator.');
+    }
+
+    const isMatch = await bcrypt.compare(password.trim(), user.passwordHash);
+    if (!isMatch) {
+      throw new Error('Invalid email or password');
+    }
+
+    const derivedHotelId = user.hotelId?._id || user.hotelId || null;
+    const derivedPropertyId = user.propertyId?._id || user.propertyId || null;
 
     const token = this.generateToken({
       id: user._id,
       role: user.role,
-      hotelId: user.hotelId?._id || null,
-      propertyId: user.propertyId?._id || null,
+      hotelId: derivedHotelId,
+      propertyId: derivedPropertyId,
       name: user.name,
       email: user.email,
     }, '7d');
 
-    return { token, user };
+    const safeUser = {
+      _id: user._id,
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      hotelId: derivedHotelId,
+      propertyId: derivedPropertyId,
+      phone: user.phone || '',
+      status: user.status || 'ACTIVE',
+    };
+
+    return { token, user: safeUser };
   }
 
   static async sendGuestOtp({ bookingNumber, phone }) {
