@@ -214,4 +214,237 @@ export class UsersController {
       next(err);
     }
   }
+
+  /**
+   * Hotel Admin / Super Admin gets all staff/employees for their hotel
+   */
+  static async getStaff(req, res, next) {
+    try {
+      const hotelId = req.tenant.isSuperAdmin && !req.tenant.hotelId ? null : req.tenant.hotelId;
+      const allUsers = await User.find();
+
+      let staffUsers = allUsers.filter((u) => {
+        // Exclude super admins from staff list
+        if (u.role === USER_ROLES.SUPER_ADMIN) return false;
+        // If hotel admin, only show users belonging to this hotel
+        if (hotelId) {
+          const userHotelId = u.hotelId?._id || u.hotelId;
+          return String(userHotelId) === String(hotelId);
+        }
+        return true;
+      });
+
+      const properties = await Property.find();
+
+      const enrichedStaff = staffUsers.map((staff) => {
+        const propId = staff.propertyId?._id || staff.propertyId;
+        const property = properties.find((p) => String(p._id) === String(propId));
+
+        return {
+          _id: staff._id,
+          name: staff.name,
+          email: staff.email,
+          role: staff.role,
+          phone: staff.phone || '',
+          status: staff.status || 'ACTIVE',
+          hotelId: staff.hotelId?._id || staff.hotelId,
+          propertyId: propId || null,
+          propertyName: property ? property.name : 'Main Wing / Property',
+          createdAt: staff.createdAt,
+        };
+      });
+
+      return ApiResponse.success(res, 'Hotel staff members fetched', enrichedStaff);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Hotel Admin / Super Admin creates a new Employee / Staff account in DynamoDB
+   */
+  static async createStaff(req, res, next) {
+    try {
+      const { name, email, password, role, propertyId, phone } = req.body;
+
+      if (!name || !name.trim()) {
+        return ApiResponse.error(res, 'Employee full name is required', 400);
+      }
+      if (!email || !email.trim()) {
+        return ApiResponse.error(res, 'Valid work email is required', 400);
+      }
+      if (!password || password.trim().length < 6) {
+        return ApiResponse.error(res, 'Password must be at least 6 characters long', 400);
+      }
+
+      const allowedRoles = [
+        USER_ROLES.RECEPTION,
+        USER_ROLES.KITCHEN,
+        USER_ROLES.HOUSEKEEPING,
+        USER_ROLES.ACCOUNTS,
+        USER_ROLES.HOTEL_ADMIN,
+      ];
+
+      const staffRole = role && allowedRoles.includes(role.toUpperCase())
+        ? role.toUpperCase()
+        : USER_ROLES.RECEPTION;
+
+      // Determine hotelId from tenant or body
+      let targetHotelId = req.tenant.hotelId || req.body.hotelId;
+      if (!targetHotelId && req.user?.hotelId) {
+        targetHotelId = req.user.hotelId?._id || req.user.hotelId;
+      }
+
+      if (!targetHotelId) {
+        return ApiResponse.error(res, 'Hotel assignment required for staff creation', 400);
+      }
+
+      const hotel = await Hotel.findById(targetHotelId);
+      if (!hotel) {
+        return ApiResponse.error(res, 'Assigned hotel tenant does not exist', 404);
+      }
+
+      let property = null;
+      if (propertyId) {
+        property = await Property.findById(propertyId);
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      // Check if email already exists
+      const allUsers = await User.find();
+      const existingUser = allUsers.find(
+        (u) => u.email && u.email.toLowerCase() === normalizedEmail
+      );
+      if (existingUser) {
+        return ApiResponse.error(
+          res,
+          `An account with email '${normalizedEmail}' already exists. Please choose a different email.`,
+          400
+        );
+      }
+
+      // Hash password
+      const passwordHash = await bcrypt.hash(password.trim(), 10);
+
+      // Create new Employee in DynamoDB
+      const newStaff = await User.create({
+        name: name.trim(),
+        email: normalizedEmail,
+        passwordHash,
+        phone: phone ? phone.trim() : '',
+        role: staffRole,
+        hotelId: String(hotel._id),
+        propertyId: property ? String(property._id) : (req.user?.propertyId || null),
+        status: 'ACTIVE',
+        createdBy: req.user?.id || req.user?._id || 'ADMIN',
+        createdAt: new Date().toISOString(),
+      });
+
+      const responseData = {
+        _id: newStaff._id,
+        name: newStaff.name,
+        email: newStaff.email,
+        role: newStaff.role,
+        hotelId: newStaff.hotelId,
+        hotelName: hotel.name,
+        propertyId: newStaff.propertyId,
+        propertyName: property ? property.name : 'Main Wing',
+        phone: newStaff.phone,
+        status: newStaff.status,
+        createdAt: newStaff.createdAt,
+      };
+
+      return ApiResponse.success(
+        res,
+        `Employee account created successfully for '${newStaff.name}' with role ${newStaff.role}`,
+        responseData,
+        201
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Delete an Employee account
+   */
+  static async deleteStaff(req, res, next) {
+    try {
+      const { id } = req.params;
+      const staff = await User.findById(id);
+      if (!staff) {
+        return ApiResponse.error(res, 'Employee account not found', 404);
+      }
+
+      if (staff.role === USER_ROLES.SUPER_ADMIN) {
+        return ApiResponse.error(res, 'Cannot delete Super Admin account', 403);
+      }
+
+      await User.deleteMany({ _id: id });
+      return ApiResponse.success(res, `Employee account '${staff.name}' deleted successfully`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Toggle Employee status (ACTIVE / SUSPENDED)
+   */
+  static async toggleStaffStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const staff = await User.findById(id);
+      if (!staff) {
+        return ApiResponse.error(res, 'Employee account not found', 404);
+      }
+
+      const nextStatus = staff.status === 'SUSPENDED' ? 'ACTIVE' : 'SUSPENDED';
+      staff.status = nextStatus;
+      if (staff.save) {
+        await staff.save();
+      } else {
+        await User.findByIdAndUpdate(id, { status: nextStatus });
+      }
+
+      return ApiResponse.success(res, `Employee status updated to ${nextStatus}`, {
+        _id: staff._id,
+        status: nextStatus,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Reset Employee password
+   */
+  static async resetStaffPassword(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.trim().length < 6) {
+        return ApiResponse.error(res, 'New password must be at least 6 characters long', 400);
+      }
+
+      const staff = await User.findById(id);
+      if (!staff) {
+        return ApiResponse.error(res, 'Employee account not found', 404);
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword.trim(), 10);
+      staff.passwordHash = passwordHash;
+      if (staff.save) {
+        await staff.save();
+      } else {
+        await User.findByIdAndUpdate(id, { passwordHash });
+      }
+
+      return ApiResponse.success(res, `Password reset successfully for employee ${staff.name}`);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
+

@@ -124,8 +124,15 @@ export function createDynamoModel(modelName) {
         try {
           const items = await DynamoDbRepository.queryByPk(pk);
           if (items && items.length > 0) {
-            const matched = items.filter((item) => matchesFilter(item, filter));
-            if (matched.length > 0) return matched;
+            for (const item of items) {
+              const strId = String(item._id || item.id);
+              const existingIdx = store.findIndex((s) => String(s._id || s.id) === strId);
+              if (existingIdx >= 0) {
+                store[existingIdx] = { ...store[existingIdx], ...item };
+              } else {
+                store.push(item);
+              }
+            }
           }
         } catch (e) {}
         return store.filter((item) => matchesFilter(item, filter));
@@ -137,8 +144,15 @@ export function createDynamoModel(modelName) {
         try {
           const items = await DynamoDbRepository.queryByPk(pk);
           if (items && items.length > 0) {
-            const matched = items.find((item) => matchesFilter(item, filter));
-            if (matched) return matched;
+            for (const item of items) {
+              const strId = String(item._id || item.id);
+              const existingIdx = store.findIndex((s) => String(s._id || s.id) === strId);
+              if (existingIdx >= 0) {
+                store[existingIdx] = { ...store[existingIdx], ...item };
+              } else {
+                store.push(item);
+              }
+            }
           }
         } catch (e) {}
         return store.find((item) => matchesFilter(item, filter)) || null;
@@ -151,11 +165,20 @@ export function createDynamoModel(modelName) {
         const strId = String(id);
         try {
           const item = await DynamoDbRepository.get(pk, `${modelName.toUpperCase()}#${strId}`);
-          if (item) return item;
+          if (item) {
+            const existingIdx = store.findIndex((s) => String(s._id || s.id) === strId);
+            if (existingIdx >= 0) {
+              store[existingIdx] = { ...store[existingIdx], ...item };
+            } else {
+              store.push(item);
+            }
+            return item;
+          }
         } catch (e) {}
         return store.find((item) => String(item._id) === strId || String(item.id) === strId) || null;
       }, Model);
     }
+
 
     static async create(data) {
       const isArray = Array.isArray(data);

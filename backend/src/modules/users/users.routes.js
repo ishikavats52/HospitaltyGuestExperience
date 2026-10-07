@@ -16,14 +16,10 @@ router.patch('/admins/:id/status', authenticate, requireSuperAdmin, UsersControl
 router.patch('/admins/:id/password', authenticate, requireSuperAdmin, UsersController.resetAdminPassword);
 
 // Hotel Staff Management (Hotel Admin & Super Admin)
-router.get('/staff', authenticate, enforceTenantIsolation, requireHotelAdmin, async (req, res, next) => {
-  try {
-    const filter = req.tenant.isSuperAdmin && !req.tenant.hotelId ? {} : { hotelId: req.tenant.hotelId };
-    const staff = await User.find(filter, '-passwordHash').populate('propertyId', 'name');
-    return ApiResponse.success(res, 'Staff members fetched', staff);
-  } catch (err) {
-    next(err);
-  }
-});
+router.get('/staff', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.getStaff);
+router.post('/staff', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.createStaff);
+router.delete('/staff/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.deleteStaff);
+router.patch('/staff/:id/status', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.toggleStaffStatus);
+router.patch('/staff/:id/password', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.resetStaffPassword);
 
 export default router;

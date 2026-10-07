@@ -25,6 +25,7 @@ import { GeoRulesPage } from './pages/superadmin/GeoRulesPage.jsx';
 // Pages - Hotel Admin
 import { HotelDashboard } from './pages/admin/HotelDashboard.jsx';
 import { ServiceManager } from './pages/admin/ServiceManager.jsx';
+import { StaffManager } from './pages/admin/StaffManager.jsx';
 
 // Pages - Staff
 import { StaffLoginPage } from './pages/staff/StaffLoginPage.jsx';
@@ -73,7 +74,7 @@ export default function App() {
             <Route path="services" element={<ServiceManager />} />
             <Route path="rooms" element={<HotelDashboard />} />
             <Route path="menu" element={<HotelDashboard />} />
-            <Route path="staff" element={<HotelDashboard />} />
+            <Route path="staff" element={<StaffManager />} />
             <Route path="reports" element={<HotelDashboard />} />
           </Route>
 

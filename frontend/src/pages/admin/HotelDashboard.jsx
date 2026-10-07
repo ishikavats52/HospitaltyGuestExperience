@@ -253,12 +253,17 @@ export const HotelDashboard = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link to="/admin/staff" className="btn btn-outline" style={{ fontSize: '0.85rem', padding: '9px 15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Users size={14} />
+            <span>Staff & Roles</span>
+          </Link>
           <Link to="/admin/services" className="btn btn-gold" style={{ fontSize: '0.85rem', padding: '9px 15px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>Manage Services</span>
             <ArrowRight size={14} />
           </Link>
         </div>
+
       </div>
 
       {/* ------------------------------------------------------------- */}
