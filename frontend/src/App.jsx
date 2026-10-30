@@ -21,16 +21,26 @@ import { MyBillPage } from './pages/guest/MyBillPage.jsx';
 // Pages - Super Admin
 import { SuperDashboard } from './pages/superadmin/SuperDashboard.jsx';
 import { GeoRulesPage } from './pages/superadmin/GeoRulesPage.jsx';
+import { LocationsPage } from './pages/superadmin/LocationsPage.jsx';
+import { CataloguePage } from './pages/superadmin/CataloguePage.jsx';
+import { PlansPage } from './pages/superadmin/PlansPage.jsx';
 
 // Pages - Hotel Admin
 import { HotelDashboard } from './pages/admin/HotelDashboard.jsx';
-import { ServiceManager } from './pages/admin/ServiceManager.jsx';
+import { PropertyManager } from './pages/admin/PropertyManager.jsx';
+import { RoomManager } from './pages/admin/RoomManager.jsx';
 import { StaffManager } from './pages/admin/StaffManager.jsx';
+import { MenuManager } from './pages/admin/MenuManager.jsx';
+import { ServiceManager } from './pages/admin/ServiceManager.jsx';
+import { ReportsPage } from './pages/admin/ReportsPage.jsx';
+import { BillingPage } from './pages/admin/BillingPage.jsx';
 
 // Pages - Staff
 import { StaffLoginPage } from './pages/staff/StaffLoginPage.jsx';
 import { ReceptionDesk } from './pages/staff/ReceptionDesk.jsx';
 import { KitchenKDS } from './pages/staff/KitchenKDS.jsx';
+import { HousekeepingView } from './pages/staff/HousekeepingView.jsx';
+import { AccountsFolio } from './pages/staff/AccountsFolio.jsx';
 
 export default function App() {
   return (
@@ -61,21 +71,23 @@ export default function App() {
             <Route path="dashboard" element={<SuperDashboard />} />
             <Route path="admins" element={<SuperDashboard />} />
             <Route path="geo-rules" element={<GeoRulesPage />} />
-            <Route path="locations" element={<GeoRulesPage />} />
-            <Route path="catalogue" element={<GeoRulesPage />} />
-            <Route path="plans" element={<GeoRulesPage />} />
+            <Route path="locations" element={<LocationsPage />} />
+            <Route path="catalogue" element={<CataloguePage />} />
+            <Route path="plans" element={<PlansPage />} />
             <Route path="hotels" element={<SuperDashboard />} />
           </Route>
 
           {/* Hotel Admin Management Portal */}
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<HotelDashboard />} />
-            <Route path="services" element={<ServiceManager />} />
-            <Route path="rooms" element={<HotelDashboard />} />
-            <Route path="menu" element={<HotelDashboard />} />
+            <Route index element={<Navigate to="/admin/properties" replace />} />
+            <Route path="properties" element={<PropertyManager />} />
+            <Route path="rooms" element={<RoomManager />} />
             <Route path="staff" element={<StaffManager />} />
-            <Route path="reports" element={<HotelDashboard />} />
+            <Route path="menu" element={<MenuManager />} />
+            <Route path="services" element={<ServiceManager />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="dashboard" element={<HotelDashboard />} />
           </Route>
 
           {/* Hotel Staff Operational Queues */}
@@ -83,8 +95,11 @@ export default function App() {
             <Route index element={<Navigate to="/staff/reception" replace />} />
             <Route path="reception" element={<ReceptionDesk />} />
             <Route path="kitchen" element={<KitchenKDS />} />
-            <Route path="services" element={<ServiceManager />} />
-            <Route path="billing" element={<HotelDashboard />} />
+            <Route path="housekeeping" element={<HousekeepingView />} />
+            <Route path="accounts" element={<AccountsFolio />} />
+            {/* Backward compatibility aliases */}
+            <Route path="services" element={<HousekeepingView />} />
+            <Route path="billing" element={<AccountsFolio />} />
           </Route>
 
           {/* Fallback */}

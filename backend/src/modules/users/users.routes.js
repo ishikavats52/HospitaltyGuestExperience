@@ -10,6 +10,7 @@ const router = Router();
 
 // Super Admin: Hotel Admin Profile Management Endpoints
 router.get('/admins', authenticate, requireSuperAdmin, UsersController.getAdmins);
+router.get('/admins/:id/details', authenticate, requireSuperAdmin, UsersController.getAdminDetails);
 router.post('/admins', authenticate, requireSuperAdmin, UsersController.createAdmin);
 router.delete('/admins/:id', authenticate, requireSuperAdmin, UsersController.deleteAdmin);
 router.patch('/admins/:id/status', authenticate, requireSuperAdmin, UsersController.toggleAdminStatus);

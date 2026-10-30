@@ -5,6 +5,7 @@ import { authenticate } from '../../middleware/auth.middleware.js';
 const router = Router();
 
 router.post('/staff/login', AuthController.loginStaff);
+router.post('/super-admin/login', AuthController.loginStaff);
 router.post('/guest/send-otp', AuthController.sendGuestOtp);
 router.post('/guest/verify-otp', AuthController.verifyGuestOtp);
 router.get('/me', authenticate, AuthController.getMe);

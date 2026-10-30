@@ -86,7 +86,7 @@ export const seedDatabase = async (force = false) => {
       features: ['All Basic Features', 'Spa & Concierge Addons', 'Unlimited Rooms'],
     });
 
-    // 4. Central Service Catalogue
+    // 4. Central Service Catalogue (All enabled for Free Subscription by SaaS Super Admin)
     const roomService = await ServiceCatalogue.create({
       name: 'Room Service & Linen Refresh',
       code: 'ROOM_SERVICE',
@@ -106,7 +106,7 @@ export const seedDatabase = async (force = false) => {
       description: 'Professional laundry and steam press',
       icon: 'shirt',
       status: 'ACTIVE',
-      isFreeByDefault: false,
+      isFreeByDefault: true,
       eligiblePlans: ['FREE', 'BASIC', 'PREMIUM'],
       createdBy: superAdmin._id,
     });
@@ -118,8 +118,8 @@ export const seedDatabase = async (force = false) => {
       description: 'Private luxury sedan transfer to and from international terminal',
       icon: 'car',
       status: 'ACTIVE',
-      isFreeByDefault: false,
-      eligiblePlans: ['BASIC', 'PREMIUM'],
+      isFreeByDefault: true,
+      eligiblePlans: ['FREE', 'BASIC', 'PREMIUM'],
       createdBy: superAdmin._id,
     });
 
@@ -130,16 +130,16 @@ export const seedDatabase = async (force = false) => {
       description: 'Traditional 60-min herbal oil rejuvenating massage therapy',
       icon: 'heart-pulse',
       status: 'ACTIVE',
-      isFreeByDefault: false,
-      eligiblePlans: ['PREMIUM'],
+      isFreeByDefault: true,
+      eligiblePlans: ['FREE', 'BASIC', 'PREMIUM'],
       createdBy: superAdmin._id,
     });
 
     const localTour = await ServiceCatalogue.create({
-      name: 'Taj Mahal Heritage Guided Tour',
+      name: 'Heritage Guided City Tour',
       code: 'LOCAL_TOUR',
       category: 'CONCIERGE',
-      description: 'Official archaeological guide walking tour of monuments',
+      description: 'Official archaeological guide walking tour of local monuments and heritage',
       icon: 'compass',
       status: 'ACTIVE',
       isFreeByDefault: true,
@@ -147,21 +147,45 @@ export const seedDatabase = async (force = false) => {
       createdBy: superAdmin._id,
     });
 
-    // 5. Geolocation Rules (Delhi vs Agra rules as specified in Section 5)
-    // Delhi rules:
-    await ServiceAvailability.create([
-      { serviceId: roomService._id, city: 'Delhi', enabled: true, isFree: true, allowedPlans: ['FREE', 'BASIC', 'PREMIUM'] },
-      { serviceId: laundryService._id, city: 'Delhi', enabled: true, isFree: true, allowedPlans: ['FREE', 'BASIC', 'PREMIUM'] },
-      { serviceId: airportPickup._id, city: 'Delhi', enabled: true, isFree: false, allowedPlans: ['BASIC', 'PREMIUM'] },
-      { serviceId: spaWellness._id, city: 'Delhi', enabled: true, isFree: false, allowedPlans: ['PREMIUM'] },
-    ]);
+    const luggagePorter = await ServiceCatalogue.create({
+      name: 'Luggage & Bellhop Assistance',
+      code: 'LUGGAGE',
+      category: 'CONCIERGE',
+      description: 'Baggage delivery, check-in luggage storage and bellhop handling',
+      icon: 'package',
+      status: 'ACTIVE',
+      isFreeByDefault: true,
+      eligiblePlans: ['FREE', 'BASIC', 'PREMIUM'],
+      createdBy: superAdmin._id,
+    });
 
-    // Agra rules:
-    await ServiceAvailability.create([
-      { serviceId: roomService._id, city: 'Agra', enabled: true, isFree: true, allowedPlans: ['FREE', 'BASIC', 'PREMIUM'] },
-      { serviceId: localTour._id, city: 'Agra', enabled: true, isFree: true, allowedPlans: ['FREE', 'BASIC', 'PREMIUM'] },
-      { serviceId: airportPickup._id, city: 'Agra', enabled: false, allowedPlans: [] }, // Explicitly disabled
-    ]);
+    // 5. Geolocation Rules (All services made available for geolocations by SaaS Super Admin, entitled for Free Subscription)
+    const allCatalogueServices = [roomService, laundryService, airportPickup, spaWellness, localTour, luggagePorter];
+    const cities = ['Delhi', 'Agra', 'Mumbai', 'Jaipur'];
+
+    for (const city of cities) {
+      for (const s of allCatalogueServices) {
+        await ServiceAvailability.create({
+          serviceId: s._id,
+          city,
+          country: 'India',
+          enabled: true,
+          isFree: true,
+          allowedPlans: ['FREE', 'BASIC', 'PREMIUM'],
+        });
+      }
+    }
+
+    // Global default fallback rule for all services
+    for (const s of allCatalogueServices) {
+      await ServiceAvailability.create({
+        serviceId: s._id,
+        country: 'India',
+        enabled: true,
+        isFree: true,
+        allowedPlans: ['FREE', 'BASIC', 'PREMIUM'],
+      });
+    }
 
     // 6. Hotel Tenants
     // Hotel 1: Grand Delhi (on Free Plan)
@@ -243,7 +267,7 @@ export const seedDatabase = async (force = false) => {
       role: 'KITCHEN',
     });
 
-    // 9. Hotel Service Enablements
+    // 9. Hotel Service Enablements (Hotel Admin enabled services)
     await HotelService.create([
       {
         hotelId: hotelDelhi._id,
@@ -258,7 +282,39 @@ export const seedDatabase = async (force = false) => {
         propertyId: propDelhi._id,
         serviceId: laundryService._id,
         enabled: true,
-        isComplimentary: true, // Free in Delhi
+        isComplimentary: true,
+        price: 0,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        serviceId: airportPickup._id,
+        enabled: true,
+        isComplimentary: false,
+        price: 800,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        serviceId: spaWellness._id,
+        enabled: true,
+        isComplimentary: false,
+        price: 1500,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        serviceId: localTour._id,
+        enabled: true,
+        isComplimentary: true,
+        price: 0,
+      },
+      {
+        hotelId: hotelDelhi._id,
+        propertyId: propDelhi._id,
+        serviceId: luggagePorter._id,
+        enabled: true,
+        isComplimentary: true,
         price: 0,
       },
     ]);
@@ -273,31 +329,72 @@ export const seedDatabase = async (force = false) => {
       amenities: ['King Bed', 'High Speed WiFi', 'City View', 'Mini Bar'],
     });
 
+    const defaultRoomAmenities = [
+      'King Size Plush Bed',
+      'Smart 4K Ultra-HD TV',
+      'High-Speed Wi-Fi 6',
+      'Mini Bar & Refrigerator',
+      'Climate Controlled AC',
+      'Private City View Balcony',
+      'Electronic Safe Locker',
+    ];
+
+    const defaultRoomInventory = [
+      { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
+      { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
+      { name: 'Luxury Cotton Bathrobes', quantity: 2, category: 'Linen' },
+      { name: 'Nespresso Pods & Kettle Set', quantity: 1, category: 'Appliances' },
+      { name: 'High-Velocity Hair Dryer', quantity: 1, category: 'Appliances' },
+      { name: 'RFID Smart Room Keys', quantity: 2, category: 'Access' },
+    ];
+
     const room302 = await Room.create({
       hotelId: hotelDelhi._id,
       propertyId: propDelhi._id,
       roomTypeId: deluxeType._id,
+      roomTypeName: 'Deluxe Heritage Suite',
+      pricePerNight: 4500,
       roomNumber: '302',
       floor: 3,
       status: 'AVAILABLE',
+      images: [
+        'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
+        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+      ],
+      amenities: defaultRoomAmenities,
+      inventory: defaultRoomInventory,
     });
 
     const room305 = await Room.create({
       hotelId: hotelDelhi._id,
       propertyId: propDelhi._id,
       roomTypeId: deluxeType._id,
+      roomTypeName: 'Deluxe Heritage Suite',
+      pricePerNight: 4500,
       roomNumber: '305',
       floor: 3,
       status: 'OCCUPIED',
+      images: [
+        'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80',
+      ],
+      amenities: defaultRoomAmenities,
+      inventory: defaultRoomInventory,
     });
 
     const room201 = await Room.create({
       hotelId: hotelDelhi._id,
       propertyId: propDelhi._id,
       roomTypeId: deluxeType._id,
+      roomTypeName: 'Deluxe Heritage Suite',
+      pricePerNight: 4200,
       roomNumber: '201',
       floor: 2,
       status: 'AVAILABLE',
+      images: [
+        'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
+      ],
+      amenities: defaultRoomAmenities,
+      inventory: defaultRoomInventory,
     });
 
     // 11. Guest, Booking & Stays

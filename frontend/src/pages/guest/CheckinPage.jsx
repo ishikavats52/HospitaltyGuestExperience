@@ -1,74 +1,102 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Camera, FileText, CheckCircle2, ArrowRight, Upload, RefreshCw, PenTool, AlertCircle, Sparkles, UserCheck, Eye } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  FileText,
+  Camera,
+  PenTool,
+  CheckCircle2,
+  ArrowRight,
+  Upload,
+  RefreshCw,
+  AlertCircle,
+  QrCode,
+  Sparkles,
+  X,
+  Eye,
+} from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-
-const DEFAULT_AADHAAR_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="380" viewBox="0 0 600 380"><defs><linearGradient id="header" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="%23FF9933"/><stop offset="50%" stop-color="%23FFFFFF"/><stop offset="100%" stop-color="%23138808"/></linearGradient></defs><rect width="600" height="380" rx="16" fill="%23FFFFFF" stroke="%23D1D5DB" stroke-width="2"/><rect y="0" width="600" height="18" fill="url(%23header)"/><text x="300" y="46" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="%23B91C1C" text-anchor="middle">GOVERNMENT OF INDIA - UIDAI</text><text x="300" y="66" font-family="Arial, sans-serif" font-size="11" fill="%234B5563" text-anchor="middle">भारतीय विशिष्ट पहचान प्राधिकरण - आधार</text><rect x="36" y="86" width="120" height="150" rx="8" fill="%23F3F4F6" stroke="%239CA3AF"/><circle cx="96" cy="136" r="32" fill="%239CA3AF"/><path d="M56 216 C56 180 136 180 136 216 Z" fill="%239CA3AF"/><text x="180" y="112" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="%231F2937">Name: Aarav Mehta</text><text x="180" y="142" font-family="Arial, sans-serif" font-size="13" fill="%23374151">DOB: 14/08/1992 | Gender: Male</text><text x="180" y="172" font-family="Arial, sans-serif" font-size="13" fill="%23374151">Address: 12 Barakhamba Rd, New Delhi</text><line x1="36" y1="256" x2="564" y2="256" stroke="%23E5E7EB" stroke-width="2"/><text x="300" y="300" font-family="Courier, monospace" font-size="28" font-weight="bold" fill="%23B91C1C" text-anchor="middle" letter-spacing="4">4126 3082 2252</text><text x="300" y="330" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="%231F2937" text-anchor="middle">मेरा आधार, मेरी पहचान</text><rect y="362" width="600" height="18" fill="url(%23header)"/></svg>`;
-
-const DEFAULT_SELFIE = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80';
-
-const DEFAULT_SIGNATURE = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="60"><path d="M15 35 Q 45 10, 85 35 T 145 30" stroke="%23946E3A" stroke-width="2.5" fill="none"/></svg>';
 
 export const CheckinPage = () => {
   const { currentUser, refreshSession } = useAuth();
   const navigate = useNavigate();
 
+  const stay = currentUser?.stay;
+  const isAlreadyCheckedIn = stay?.status === 'CHECKED_IN' || stay?.status === 'STAY_ACTIVE';
+
+  // ID Document State
   const [idType, setIdType] = useState('AADHAAR');
-  const [idNumber, setIdNumber] = useState('412630822252');
-  const [idImage, setIdImage] = useState(DEFAULT_AADHAAR_SVG);
-  const [idScanning, setIdScanning] = useState(false);
-  const [idVerified, setIdVerified] = useState(true);
+  const [idNumber, setIdNumber] = useState(currentUser?.stay?.idNumber || '');
+  const [idImage, setIdImage] = useState(null);
+  const [idFileName, setIdFileName] = useState('');
 
   // Camera & Selfie State
   const [cameraActive, setCameraActive] = useState(false);
-  const [selfieImage, setSelfieImage] = useState(DEFAULT_SELFIE);
-  const [livenessScore, setLivenessScore] = useState(99.4);
+  const [selfieImage, setSelfieImage] = useState(null);
   const [cameraError, setCameraError] = useState(null);
 
   // Digital Signature Pad State
   const [isDrawing, setIsDrawing] = useState(false);
-  const [signatureImage, setSignatureImage] = useState(DEFAULT_SIGNATURE);
+  const [signatureImage, setSignatureImage] = useState(null);
 
+  // Form State
   const [agreed, setAgreed] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const videoRef = useRef(null);
   const signatureCanvasRef = useRef(null);
   const mediaStreamRef = useRef(null);
 
-  const stayId = currentUser?.stay?._id || currentUser?.stayId || (typeof currentUser?.stay === 'string' ? currentUser?.stay : null) || currentUser?.bookingId || 'BK-DELHI-101';
+  const stayId =
+    currentUser?.stay?._id ||
+    currentUser?.stayId ||
+    (typeof currentUser?.stay === 'string' ? currentUser?.stay : null) ||
+    currentUser?.bookingId ||
+    'BK-DELHI-101';
 
-  // Real-time Aadhaar ID number format validation
+  // Aadhaar ID number format validation
   const handleIdNumberChange = (val) => {
-    const clean = val.replace(/\D/g, '');
-    setIdNumber(clean);
     if (idType === 'AADHAAR') {
-      setIdVerified(clean.length === 12);
+      const clean = val.replace(/\D/g, '').slice(0, 12);
+      setIdNumber(clean);
     } else {
-      setIdVerified(clean.length >= 6);
+      setIdNumber(val.toUpperCase().slice(0, 20));
     }
   };
 
-  // Real-time ID Document File Upload & OCR Simulation
+  const isIdValid = () => {
+    if (!idNumber) return false;
+    if (idType === 'AADHAAR') return idNumber.length === 12;
+    return idNumber.length >= 6;
+  };
+
+  // Instant ID Document File Upload (Zero fake delays, zero fake OCR)
   const handleIdFileUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    setIdScanning(true);
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      setError('Please upload an image file (JPG, PNG, WEBP) for verification');
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = () => {
-      setTimeout(() => {
-        setIdImage(reader.result);
-        setIdScanning(false);
-        setIdVerified(true);
-      }, 700);
+      setIdImage(reader.result);
+      setIdFileName(file.name);
+      setError(null);
     };
     reader.readAsDataURL(file);
   };
 
-  // Start Real-Time WebCam Camera Stream
+  const removeIdDocument = () => {
+    setIdImage(null);
+    setIdFileName('');
+  };
+
+  // WebCam Camera Stream for Live Selfie
   const startCamera = async () => {
     setCameraError(null);
     try {
@@ -84,11 +112,11 @@ export const CheckinPage = () => {
       }, 100);
     } catch (err) {
       console.warn('WebCam unavailable:', err);
-      setCameraError('Camera access unavailable. You can upload a selfie image file instead.');
+      setCameraError('Camera access unavailable on this device. Please upload a selfie photo instead.');
+      setCameraActive(false);
     }
   };
 
-  // Stop Camera Stream
   const stopCamera = () => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -97,7 +125,6 @@ export const CheckinPage = () => {
     setCameraActive(false);
   };
 
-  // Capture Real-Time WebCam Frame to Canvas
   const captureSelfie = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
@@ -108,20 +135,22 @@ export const CheckinPage = () => {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
 
     setSelfieImage(dataUrl);
-    setLivenessScore(99.4);
     stopCamera();
   };
 
-  // Selfie File Upload Fallback
   const handleSelfieFileUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       setSelfieImage(reader.result);
-      setLivenessScore(98.6);
+      setError(null);
     };
     reader.readAsDataURL(file);
+  };
+
+  const removeSelfie = () => {
+    setSelfieImage(null);
   };
 
   useEffect(() => {
@@ -130,19 +159,27 @@ export const CheckinPage = () => {
     };
   }, []);
 
-  // Digital Signature Drawing Handlers
+  // Digital Signature Canvas Handlers (Mouse + Touch Screen Support)
+  const getCoordinates = (e) => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? 0;
+    const clientY = e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? 0;
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY,
+    };
+  };
+
   const startDrawing = (e) => {
     setIsDrawing(true);
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
+    const { x, y } = getCoordinates(e);
     ctx.beginPath();
     ctx.moveTo(x, y);
   };
@@ -152,16 +189,10 @@ export const CheckinPage = () => {
     const canvas = signatureCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const rect = canvas.getBoundingClientRect();
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (clientX - rect.left) * scaleX;
-    const y = (clientY - rect.top) * scaleY;
+    const { x, y } = getCoordinates(e);
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#946E3A';
+    ctx.strokeStyle = '#D90429';
     ctx.lineTo(x, y);
     ctx.stroke();
   };
@@ -182,10 +213,36 @@ export const CheckinPage = () => {
     }
   };
 
+  // Check-In Form Submission
   const handleSubmitCheckin = async (e) => {
     e.preventDefault();
+
+    if (!idImage) {
+      setError('Please upload your Aadhaar card or government ID photo.');
+      return;
+    }
+
+    if (!isIdValid()) {
+      setError(
+        idType === 'AADHAAR'
+          ? 'Please enter a valid 12-digit Aadhaar number.'
+          : 'Please enter a valid document identification number.'
+      );
+      return;
+    }
+
+    if (!selfieImage) {
+      setError('Please take a camera selfie or upload a photo to verify your identity.');
+      return;
+    }
+
+    if (!signatureImage) {
+      setError('Please provide your digital signature on the pad below.');
+      return;
+    }
+
     if (!agreed) {
-      setError('Please accept the guest registration terms');
+      setError('Please agree to the hotel registration declaration.');
       return;
     }
 
@@ -196,62 +253,139 @@ export const CheckinPage = () => {
         stayId: stayId || 'default-stay',
         idType,
         idNumber,
-        idDocumentUrl: idImage || DEFAULT_AADHAAR_SVG,
-        selfieUrl: selfieImage || DEFAULT_SELFIE,
-        signatureUrl: signatureImage || DEFAULT_SIGNATURE,
+        idDocumentUrl: idImage,
+        selfieUrl: selfieImage,
+        signatureUrl: signatureImage,
       });
 
       if (refreshSession) {
         await refreshSession();
       }
 
-      navigate('/guest/dashboard?checkinCompleted=true');
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/guest/dashboard?checkinCompleted=true');
+      }, 900);
     } catch (err) {
-      setError(err.message || 'Check-in submission failed');
+      setError(err.message || 'Check-in submission failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '640px', margin: '0 auto', width: '100%' }}>
+      {/* Page Header */}
       <div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
-          Seamless Pre-Arrival
+        <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
+          Contactless Guest Journey
         </div>
-        <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
+        <h1 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0', letterSpacing: '-0.02em' }}>
           Contactless Mobile Check-In
-        </h2>
-        <p className="page-subtitle">
-          Real-time Aadhaar verification, live camera selfie & digital registration signature.
+        </h1>
+        <p className="page-subtitle" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0 }}>
+          Submit your identification, selfie, and digital signature for instant room key issuance.
         </p>
       </div>
 
+      {/* Already Checked-In Notice Banner */}
+      {isAlreadyCheckedIn && (
+        <div
+          className="glass-panel"
+          style={{
+            padding: '16px 18px',
+            background: 'var(--gold-soft)',
+            border: '1px solid var(--border-active)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <CheckCircle2 size={22} color="var(--gold-primary)" />
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--gold-dark)' }}>
+                Check-In Already Active
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                Your suite reservation is confirmed and verified. You can access your Digital Pass or update your ID below.
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <Link to="/guest/qr-pass" className="btn btn-gold" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+              <QrCode size={14} /> View Digital Pass
+            </Link>
+            <Link to="/guest/dashboard" className="btn btn-outline" style={{ padding: '6px 12px', fontSize: '0.78rem' }}>
+              Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Error Alert */}
       {error && (
-        <div style={{ padding: '12px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', border: '1px solid rgba(186, 51, 51, 0.25)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem' }}>
-          {error}
+        <div
+          style={{
+            padding: '12px 16px',
+            background: 'var(--danger-bg)',
+            color: 'var(--danger)',
+            border: '1px solid rgba(225, 29, 72, 0.25)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}
+        >
+          <AlertCircle size={18} />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Success Alert */}
+      {success && (
+        <div
+          style={{
+            padding: '14px 18px',
+            background: 'var(--success-bg)',
+            color: 'var(--gold-dark)',
+            border: '1px solid var(--border-active)',
+            borderRadius: 'var(--radius-sm)',
+            fontSize: '0.88rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontWeight: 600,
+          }}
+        >
+          <CheckCircle2 size={20} color="var(--gold-primary)" />
+          <span>Check-in verified successfully! Unlocking your suite and generating digital pass...</span>
         </div>
       )}
 
       <form onSubmit={handleSubmitCheckin} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-        {/* Step 1: Real-Time Government Identity Proof (Aadhaar/Passport) */}
-        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
+        {/* Step 1: Government Identity Proof */}
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <FileText size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 1: Aadhaar / Government ID Verification</span>
+              <span style={{ fontWeight: 700, fontSize: '0.94rem' }}>Step 1: Aadhaar / Identity Verification</span>
             </div>
-            {idVerified && (
-              <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem' }}>
-                <CheckCircle2 size={12} /> Real-Time Verified
+            {idImage && isIdValid() && (
+              <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem' }}>
+                <CheckCircle2 size={12} /> Document Ready
               </span>
             )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                   Document Type
                 </label>
                 <select
@@ -259,97 +393,152 @@ export const CheckinPage = () => {
                   value={idType}
                   onChange={(e) => {
                     setIdType(e.target.value);
-                    handleIdNumberChange(idNumber);
+                    setIdNumber('');
                   }}
                 >
-                  <option value="AADHAAR">Aadhaar Card (National ID)</option>
+                  <option value="AADHAAR">Aadhaar Card</option>
                   <option value="PASSPORT">Passport</option>
                   <option value="DRIVING_LICENSE">Driving License</option>
+                  <option value="VOTER_ID">Voter ID Card</option>
                 </select>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  {idType === 'AADHAAR' ? '12-Digit Aadhaar Number' : 'Document Number'}
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                  {idType === 'AADHAAR' ? '12-Digit Aadhaar Number' : `${idType.replace('_', ' ')} Number`}
                 </label>
                 <input
                   type="text"
                   className="input-control"
                   value={idNumber}
                   onChange={(e) => handleIdNumberChange(e.target.value)}
-                  placeholder={idType === 'AADHAAR' ? 'e.g. 4126 3082 2252' : 'Document ID'}
+                  placeholder={idType === 'AADHAAR' ? 'e.g. 412630822252' : 'Enter document ID'}
                   maxLength={idType === 'AADHAAR' ? 12 : 20}
                   required
                 />
+                {idType === 'AADHAAR' && idNumber && idNumber.length < 12 && (
+                  <div style={{ fontSize: '0.72rem', color: 'var(--danger)', marginTop: '4px' }}>
+                    {12 - idNumber.length} more digits required
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Real-time Aadhaar / Document Upload Dropzone */}
+            {/* Document File Upload Dropzone */}
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                Upload Aadhaar / ID Front Photo
+                Upload {idType === 'AADHAAR' ? 'Aadhaar Card Photo' : 'Document Image'}
               </label>
-              <div
-                style={{
-                  border: idImage ? '1px solid var(--gold-primary)' : '1px dashed var(--border-active)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '16px',
-                  textAlign: 'center',
-                  background: 'var(--bg-tertiary)',
-                  position: 'relative',
-                }}
-              >
-                {idScanning ? (
-                  <div style={{ padding: '10px', color: 'var(--gold-primary)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                    <RefreshCw size={16} className="animate-spin" /> Performing OCR Real-Time Verification...
-                  </div>
-                ) : idImage ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                    <img
-                      src={idImage}
-                      alt="Aadhaar Front Preview"
-                      style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
-                    />
-                    <div style={{ textAlign: 'left', flex: 1 }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Aadhaar Card Uploaded</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle2 size={12} /> Optical Verification Passed
-                      </div>
+
+              {idImage ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '14px',
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '1px solid var(--border-active)',
+                    background: 'var(--gold-soft)',
+                  }}
+                >
+                  <img
+                    src={idImage}
+                    alt="Uploaded ID preview"
+                    style={{
+                      width: '74px',
+                      height: '52px',
+                      objectFit: 'cover',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-color)',
+                    }}
+                  />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {idFileName || `${idType.replace('_', ' ')} Uploaded`}
                     </div>
-                    <label style={{ cursor: 'pointer', padding: '6px 12px', background: 'var(--gold-soft)', border: '1px solid var(--border-active)', borderRadius: '6px', fontSize: '0.75rem', color: 'var(--gold-primary)', fontWeight: 600 }}>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                      <CheckCircle2 size={12} /> Image attached for registration
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <label
+                      className="btn btn-outline"
+                      style={{ padding: '6px 12px', fontSize: '0.74rem', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                    >
                       Change
                       <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
                     </label>
+                    <button
+                      type="button"
+                      onClick={removeIdDocument}
+                      className="btn btn-outline"
+                      style={{ padding: '6px 10px', fontSize: '0.74rem', color: 'var(--danger)' }}
+                      title="Remove document"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
-                ) : (
-                  <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                    <Upload size={22} color="var(--gold-primary)" />
-                    <span style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 500 }}>Click or drag Aadhaar Card image here</span>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Supports JPG, PNG, WEBP up to 10MB</span>
-                    <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
-                  </label>
-                )}
-              </div>
+                </div>
+              ) : (
+                <label
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '24px 16px',
+                    border: '2px dashed var(--border-active)',
+                    borderRadius: 'var(--radius-sm)',
+                    background: 'var(--bg-primary)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '50%',
+                      background: 'var(--gold-soft)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--gold-primary)',
+                    }}
+                  >
+                    <Upload size={20} />
+                  </div>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                    Click or tap to upload {idType === 'AADHAAR' ? 'Aadhaar Card' : 'ID Document'}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                    Supports JPG, PNG, WEBP (front photo of card)
+                  </div>
+                  <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
+                </label>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Step 2: Real-Time Live Camera Selfie & Facial Liveness Verification */}
-        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+        {/* Step 2: Live Camera Selfie Capture / Photo Upload */}
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <Camera size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 2: Live Camera Selfie Capture</span>
+              <span style={{ fontWeight: 700, fontSize: '0.94rem' }}>Step 2: Guest Photo & Facial Match</span>
             </div>
-            {livenessScore && (
-              <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem' }}>
-                <Sparkles size={12} /> Liveness {livenessScore}%
+            {selfieImage && (
+              <span className="badge badge-free" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem' }}>
+                <CheckCircle2 size={12} /> Photo Captured
               </span>
             )}
           </div>
 
           {cameraError && (
-            <div style={{ padding: '10px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: '6px', fontSize: '0.75rem', marginBottom: '12px' }}>
+            <div style={{ padding: '10px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '0.78rem', marginBottom: '12px' }}>
               {cameraError}
             </div>
           )}
@@ -363,60 +552,104 @@ export const CheckinPage = () => {
                   playsInline
                   style={{ width: '100%', display: 'block', background: '#000' }}
                 />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, border: '2px dashed rgba(180, 140, 90, 0.8)', borderRadius: '50%', margin: '15px auto', width: '160px', height: '160px', pointerEvents: 'none' }} />
                 <button
                   type="button"
                   onClick={captureSelfie}
                   className="btn btn-gold"
-                  style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', padding: '8px 16px', fontSize: '0.8rem', zIndex: 10 }}
+                  style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', padding: '8px 18px', fontSize: '0.82rem', zIndex: 10, whiteSpace: 'nowrap' }}
                 >
-                  <Camera size={14} /> Snap Selfie Frame
+                  <Camera size={15} /> Take Snapshot
                 </button>
               </div>
             ) : selfieImage ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', width: '100%' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '14px',
+                  width: '100%',
+                  padding: '12px 16px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-active)',
+                  background: 'var(--gold-soft)',
+                }}
+              >
                 <img
                   src={selfieImage}
-                  alt="Captured Selfie Preview"
-                  style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '50%', border: '2px solid var(--gold-primary)' }}
+                  alt="Guest selfie preview"
+                  style={{
+                    width: '64px',
+                    height: '64px',
+                    objectFit: 'cover',
+                    borderRadius: '50%',
+                    border: '2px solid var(--gold-primary)',
+                  }}
                 />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Live Face Verified</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <UserCheck size={12} /> AI Face Liveness Match Passed ({livenessScore || 99.4}%)
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '0.86rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    Guest Photo Captured
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--success)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                    <CheckCircle2 size={12} /> Ready for contactless reception verification
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={startCamera}
-                  className="btn btn-outline"
-                  style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-                >
-                  <RefreshCw size={12} /> Retake
-                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="btn btn-outline"
+                    style={{ padding: '6px 12px', fontSize: '0.74rem' }}
+                  >
+                    Retake
+                  </button>
+                  <button
+                    type="button"
+                    onClick={removeSelfie}
+                    className="btn btn-outline"
+                    style={{ padding: '6px 10px', fontSize: '0.74rem', color: 'var(--danger)' }}
+                    title="Remove photo"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
               </div>
             ) : (
               <div
                 style={{
                   width: '100%',
-                  padding: '24px',
+                  padding: '24px 16px',
                   border: '1px dashed var(--border-active)',
                   borderRadius: 'var(--radius-sm)',
                   textAlign: 'center',
-                  background: 'var(--bg-tertiary)',
+                  background: 'var(--bg-primary)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '10px',
                 }}
               >
-                <Camera size={32} color="var(--gold-primary)" />
-                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>Capture Real-Time Live Selfie</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                  Use your device camera for real-time facial liveness verification
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '50%',
+                    background: 'var(--gold-soft)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--gold-primary)',
+                  }}
+                >
+                  <Camera size={20} />
+                </div>
+                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Take a Quick Selfie Frame
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                  Capture a photo using your front camera or upload an existing picture
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <button
                     type="button"
                     onClick={startCamera}
@@ -426,7 +659,10 @@ export const CheckinPage = () => {
                     <Camera size={14} /> Open Camera
                   </button>
 
-                  <label className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.8rem', cursor: 'pointer' }}>
+                  <label
+                    className="btn btn-outline"
+                    style={{ padding: '8px 16px', fontSize: '0.8rem', cursor: 'pointer' }}
+                  >
                     Upload Photo File
                     <input type="file" accept="image/*" onChange={handleSelfieFileUpload} style={{ display: 'none' }} />
                   </label>
@@ -437,30 +673,31 @@ export const CheckinPage = () => {
         </div>
 
         {/* Step 3: Digital Signature Pad */}
-        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF' }}>
+        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <PenTool size={18} />
-              <span style={{ fontWeight: 600, fontSize: '0.92rem' }}>Step 3: Real-Time Guest Signature</span>
+              <span style={{ fontWeight: 700, fontSize: '0.94rem' }}>Step 3: Guest Digital Signature</span>
             </div>
             {signatureImage && (
               <button
                 type="button"
                 onClick={clearSignature}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
               >
-                Clear Signature
+                Clear & Redraw
               </button>
             )}
           </div>
 
           <div
             style={{
-              border: '1px solid var(--border-color)',
+              border: '1px solid var(--border-active)',
               borderRadius: 'var(--radius-sm)',
-              background: '#FAF7F2',
+              background: '#FFFDFD',
               position: 'relative',
               touchAction: 'none',
+              overflow: 'hidden',
             }}
           >
             <canvas
@@ -477,30 +714,60 @@ export const CheckinPage = () => {
               style={{ width: '100%', height: '90px', display: 'block', cursor: 'crosshair' }}
             />
             {!signatureImage && !isDrawing && (
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'var(--text-muted)', fontSize: '0.78rem', pointerEvents: 'none' }}>
-                Sign here with finger or mouse
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.78rem',
+                  pointerEvents: 'none',
+                }}
+              >
+                Sign with finger or mouse here
               </div>
             )}
           </div>
         </div>
 
-        {/* Step 4: Registration Consent */}
-        <div className="glass-panel" style={{ padding: '18px', backgroundColor: '#FFFFFF' }}>
+        {/* Step 4: Declaration Consent */}
+        <div className="glass-panel" style={{ padding: '16px 20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              style={{ marginTop: '3px' }}
+              style={{ marginTop: '3px', accentColor: 'var(--gold-primary)' }}
             />
             <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
-              I hereby declare the Aadhaar and identity information provided is accurate and agree to the hotel house policies, contactless check-in protocols, and data protection terms.
+              I hereby declare that the identification details and photo provided are true and belong to me. I agree to the hotel guest policies, contactless check-in terms, and room folio management.
             </span>
           </label>
         </div>
 
-        <button type="submit" className="btn btn-gold" disabled={loading} style={{ padding: '14px' }}>
-          {loading ? 'Submitting Real-Time Verification...' : 'Complete & Generate Digital Pass'} <ArrowRight size={18} />
+        {/* Submit Button */}
+        <button
+          type="submit"
+          className="btn btn-gold"
+          disabled={loading || !idImage || !isIdValid() || !selfieImage || !signatureImage}
+          style={{
+            padding: '14px',
+            fontSize: '0.95rem',
+            fontWeight: 700,
+            opacity: loading || !idImage || !isIdValid() || !selfieImage || !signatureImage ? 0.65 : 1,
+            cursor: loading || !idImage || !isIdValid() || !selfieImage || !signatureImage ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <RefreshCw size={16} className="animate-spin" /> Submitting Check-In...
+            </span>
+          ) : (
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              Complete Check-In & Get Digital Key <ArrowRight size={18} />
+            </span>
+          )}
         </button>
       </form>
     </div>

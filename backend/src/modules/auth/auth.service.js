@@ -29,8 +29,8 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    if (user.status === 'SUSPENDED') {
-      throw new Error('This account has been suspended. Please contact the platform administrator.');
+    if (user.status === 'DEACTIVATED' || user.status === 'SUSPENDED' || user.status === 'INACTIVE') {
+      throw new Error('Your profile has been deactivated by SuperAdmin. Please contact them.');
     }
 
     const isMatch = await bcrypt.compare(password.trim(), user.passwordHash);

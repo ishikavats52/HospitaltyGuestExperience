@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Globe, Layers, MapPin, CreditCard, Building2, LayoutDashboard, LogOut, ShieldCheck, Menu, X, UserCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const SuperAdminLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -44,7 +43,6 @@ export const SuperAdminLayout = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ThemeSwitcher compact />
           <button
             type="button"
             className="admin-mobile-toggle"

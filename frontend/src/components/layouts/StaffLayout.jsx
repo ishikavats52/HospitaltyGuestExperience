@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { QrCode, ChefHat, Sparkles, Receipt, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const StaffLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -46,7 +45,6 @@ export const StaffLayout = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <ThemeSwitcher compact />
             <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
               <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
               <span style={{ fontSize: '0.92rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -74,11 +72,11 @@ export const StaffLayout = () => {
           <NavLink to="/staff/kitchen" style={navTabStyle}>
             <ChefHat size={16} /> Kitchen KDS
           </NavLink>
-          <NavLink to="/staff/services" style={navTabStyle}>
-            <Sparkles size={16} /> Guest Services
+          <NavLink to="/staff/housekeeping" style={navTabStyle}>
+            <Sparkles size={16} /> Housekeeping & Services
           </NavLink>
-          <NavLink to="/staff/billing" style={navTabStyle}>
-            <Receipt size={16} /> Folio Billing
+          <NavLink to="/staff/accounts" style={navTabStyle}>
+            <Receipt size={16} /> Folio Billing & Accounts
           </NavLink>
         </nav>
       </header>

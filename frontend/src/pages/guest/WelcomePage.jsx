@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KeyRound, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { ThemeSwitcher } from '../../components/ThemeSwitcher.jsx';
+import { Link } from 'react-router-dom';
 import api from '../../services/api.js';
 
 export const WelcomePage = () => {
@@ -16,12 +16,13 @@ export const WelcomePage = () => {
   const { verifyGuestOtp } = useAuth();
   const navigate = useNavigate();
 
-  const handleDirectAccess = async (e) => {
-    e.preventDefault();
+  const handleDirectAccess = async (e, customBooking) => {
+    if (e) e.preventDefault();
+    const bk = customBooking || bookingNumber;
     setLoading(true);
     setError(null);
     try {
-      await verifyGuestOtp(bookingNumber, '123456');
+      await verifyGuestOtp(bk, '123456');
       navigate('/guest/dashboard');
     } catch (err) {
       setError(err.message || 'Failed to access guest portal');
@@ -45,9 +46,15 @@ export const WelcomePage = () => {
         transition: 'all 0.3s ease',
       }}
     >
-      {/* Top Floating Theme Switcher for Instant Client Demo */}
+      {/* Top Staff & Admin Portal Link */}
       <div style={{ position: 'absolute', top: '18px', right: '20px', zIndex: 50 }}>
-        <ThemeSwitcher />
+        <Link
+          to="/staff/login"
+          className="btn btn-outline"
+          style={{ padding: '6px 14px', fontSize: '0.8rem', backgroundColor: '#FFFFFF', boxShadow: 'var(--shadow-xs)' }}
+        >
+          Staff & Admin Portal <ArrowRight size={14} />
+        </Link>
       </div>
 
       {/* Decorative ambient background accents */}
@@ -134,6 +141,39 @@ export const WelcomePage = () => {
             {error}
           </div>
         )}
+
+        {/* Quick Demo Booking Presets */}
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{ fontSize: '0.74rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+            Quick Demo Guest Reservations:
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setBookingNumber('BK-DELHI-101');
+                setPhone('9876543210');
+                handleDirectAccess(null, 'BK-DELHI-101');
+              }}
+              className="btn btn-outline"
+              style={{ fontSize: '0.74rem', padding: '8px', textAlign: 'center' }}
+            >
+              Delhi Guest (BK-101)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setBookingNumber('BK-AGRA-201');
+                setPhone('9876543211');
+                handleDirectAccess(null, 'BK-AGRA-201');
+              }}
+              className="btn btn-outline"
+              style={{ fontSize: '0.74rem', padding: '8px', textAlign: 'center' }}
+            >
+              Agra Guest (BK-201)
+            </button>
+          </div>
+        </div>
 
         <form onSubmit={handleDirectAccess} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div>

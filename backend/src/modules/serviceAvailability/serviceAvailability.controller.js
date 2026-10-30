@@ -41,4 +41,20 @@ export class ServiceAvailabilityController {
       next(err);
     }
   }
+
+  static async enableAll(req, res, next) {
+    try {
+      const { city, country, isFree, allowedPlans } = req.body;
+      const rules = await ServiceAvailabilityService.enableAllServices({
+        city,
+        country,
+        isFree: isFree !== undefined ? isFree : true,
+        allowedPlans,
+        userId: req.user?.id,
+      });
+      return ApiResponse.success(res, 'All services enabled for geolocation with free tier entitlement', rules);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

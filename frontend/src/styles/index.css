@@ -1,34 +1,34 @@
 :root,
 [data-theme="aura"] {
-  /* Theme A: aura Modern Stay (Iconic Coral #FF385C, Hospitality Teal #008489, Warm Sun Amber, Crisp Porcelain) */
-  --bg-primary: #F7F7F7;
+  /* Signature Luxury Pink & White Hospitality Theme */
+  --bg-primary: #FFF9FA;
   --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F0F2F5;
+  --bg-tertiary: #FFF0F3;
   --bg-card: #FFFFFF;
   --bg-card-hover: #FFFFFF;
 
-  --border-color: #EBEBEB;
-  --border-active: #DDDDDD;
-  --border-subtle: #F2F2F2;
+  --border-color: #F8D7DA;
+  --border-active: #F4ACB7;
+  --border-subtle: #FDF2F4;
 
   --gold-primary: #FF385C;
   --gold-light: #FF5A78;
-  --gold-dark: #E00B41;
-  --gold-soft: #FFF0F2;
+  --gold-dark: #D90429;
+  --gold-soft: #FFF0F3;
   --gold-glow: rgba(255, 56, 92, 0.22);
-  --gold-gradient: linear-gradient(135deg, #FF385C 0%, #E00B41 100%);
-  --gold-gradient-soft: linear-gradient(135deg, #FFF5F6 0%, #FFEBEF 100%);
+  --gold-gradient: linear-gradient(135deg, #FF385C 0%, #D90429 100%);
+  --gold-gradient-soft: linear-gradient(135deg, #FFF5F7 0%, #FFE8EC 100%);
 
   --secondary-accent: #008489;
   --secondary-soft: #E6F7F7;
   --amber-accent: #FFB400;
 
-  --text-primary: #222222;
-  --text-secondary: #5E5E5E;
-  --text-muted: #767676;
+  --text-primary: #1F2421;
+  --text-secondary: #5C677D;
+  --text-muted: #8D99AE;
 
   --shadow-gold: 0 6px 20px -2px rgba(255, 56, 92, 0.32);
-  --shadow-card-hover: 0 16px 36px -8px rgba(0, 0, 0, 0.10), 0 4px 12px rgba(255, 56, 92, 0.08);
+  --shadow-card-hover: 0 16px 36px -8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(255, 56, 92, 0.12);
 
   /* Status Colors */
   --success: #008489;
@@ -40,7 +40,7 @@
   --info: #0284C7;
   --info-bg: #E0F2FE;
 
-  /* Fonts: Modern High-Precision Geometric Typography (matching DAPD format) */
+  /* Fonts: Modern High-Precision Geometric Typography */
   --font-serif: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   --font-sans: 'Plus Jakarta Sans', 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
 
@@ -55,111 +55,6 @@
   --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
   --shadow-lg: 0 18px 40px -8px rgba(0, 0, 0, 0.10), 0 4px 12px -2px rgba(0, 0, 0, 0.03);
-}
-
-[data-theme="sonder"] {
-  /* Theme B: Sonder Urban Boutique (Warm Terracotta Clay #D96B43, Eucalyptus Sage #4A7C59, Oat Cream #F9F6F0) */
-  --bg-primary: #F9F6F0;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F2ECE1;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FFFFFF;
-
-  --border-color: #EADBCE;
-  --border-active: #D9C3B0;
-  --border-subtle: #F0E6DC;
-
-  --gold-primary: #D96B43;
-  --gold-light: #E07A5F;
-  --gold-dark: #B8502B;
-  --gold-soft: #FDF3EE;
-  --gold-glow: rgba(217, 107, 67, 0.22);
-  --gold-gradient: linear-gradient(135deg, #D96B43 0%, #C2542B 100%);
-  --gold-gradient-soft: linear-gradient(135deg, #FDF7F3 0%, #F8EDE6 100%);
-
-  --secondary-accent: #4A7C59;
-  --secondary-soft: #EDF5F0;
-  --amber-accent: #E07A5F;
-
-  --text-primary: #2B2D42;
-  --text-secondary: #535868;
-  --text-muted: #7E8494;
-
-  --shadow-gold: 0 6px 20px -2px rgba(217, 107, 67, 0.32);
-  --shadow-card-hover: 0 16px 36px -8px rgba(43, 45, 66, 0.10), 0 4px 12px rgba(217, 107, 67, 0.10);
-
-  --success: #4A7C59;
-  --success-bg: #EDF5F0;
-}
-
-[data-theme="coastal"] {
-  /* Theme C: Azure Coastal Resort (Aegean Marine Teal #028090, Sunset Apricot #F4A261, Sea-Salt Sand White #F4F8F8) */
-  --bg-primary: #F4F8F8;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #E8F1F2;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FFFFFF;
-
-  --border-color: #D3E4E6;
-  --border-active: #B2D3D6;
-  --border-subtle: #E2EFF0;
-
-  --gold-primary: #028090;
-  --gold-light: #00A896;
-  --gold-dark: #056676;
-  --gold-soft: #E8F8F7;
-  --gold-glow: rgba(2, 128, 144, 0.22);
-  --gold-gradient: linear-gradient(135deg, #028090 0%, #00A896 100%);
-  --gold-gradient-soft: linear-gradient(135deg, #F0FBFB 0%, #E3F5F5 100%);
-
-  --secondary-accent: #F4A261;
-  --secondary-soft: #FEF3EB;
-  --amber-accent: #E76F51;
-
-  --text-primary: #1A262F;
-  --text-secondary: #485A65;
-  --text-muted: #758A96;
-
-  --shadow-gold: 0 6px 20px -2px rgba(2, 128, 144, 0.32);
-  --shadow-card-hover: 0 16px 36px -8px rgba(26, 38, 47, 0.10), 0 4px 12px rgba(2, 128, 144, 0.10);
-
-  --success: #00A896;
-  --success-bg: #E6F9F6;
-}
-
-[data-theme="heritage"] {
-  /* Theme D: Heritage Palace (Warm Alabaster #F8F6F2, Brushed Bronze Gold #946E3A) */
-  --bg-primary: #F8F6F2;
-  --bg-secondary: #FFFFFF;
-  --bg-tertiary: #F3EFEA;
-  --bg-card: #FFFFFF;
-  --bg-card-hover: #FFFFFF;
-
-  --border-color: rgba(180, 150, 115, 0.22);
-  --border-active: rgba(160, 120, 75, 0.48);
-  --border-subtle: rgba(180, 150, 115, 0.12);
-
-  --gold-primary: #946E3A;
-  --gold-light: #B28B53;
-  --gold-dark: #745326;
-  --gold-soft: #F7F2EB;
-  --gold-glow: rgba(178, 139, 83, 0.18);
-  --gold-gradient: linear-gradient(135deg, #946E3A 0%, #B89158 100%);
-  --gold-gradient-soft: linear-gradient(135deg, #FAF6F0 0%, #F3EDE2 100%);
-
-  --secondary-accent: #1C6C43;
-  --secondary-soft: #EDF7F1;
-  --amber-accent: #B28B53;
-
-  --text-primary: #1F1B18;
-  --text-secondary: #5C554E;
-  --text-muted: #8E847A;
-
-  --shadow-gold: 0 6px 20px -2px rgba(148, 110, 58, 0.28);
-  --shadow-card-hover: 0 14px 34px -6px rgba(45, 35, 25, 0.12), 0 4px 12px rgba(178, 139, 83, 0.10);
-
-  --success: #1C6C43;
-  --success-bg: #EDF7F1;
 }
 
 * {

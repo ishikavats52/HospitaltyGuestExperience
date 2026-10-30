@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { Home, UtensilsCrossed, Sparkles, Receipt, QrCode, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { ThemeSwitcher } from '../ThemeSwitcher.jsx';
 
 export const GuestLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -44,7 +43,6 @@ export const GuestLayout = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ThemeSwitcher compact />
           <button
             onClick={handleExit}
             className="btn btn-outline"

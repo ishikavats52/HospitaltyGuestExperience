@@ -73,4 +73,35 @@ export class ServiceAvailabilityService {
 
     return eligible;
   }
+
+  /**
+   * Super Admin Bulk Action: Make all services available for geolocation(s) with Free Tier entitlement
+   */
+  static async enableAllServices({ city, country = 'India', isFree = true, allowedPlans = ['FREE', 'BASIC', 'PREMIUM'], userId }) {
+    let allServices = await ServiceCatalogue.find({});
+    const targetCities = city && city !== 'ALL' ? [city] : ['Delhi', 'Agra', 'Jaipur', 'Mumbai', 'Global'];
+    const createdRules = [];
+
+    for (const targetCity of targetCities) {
+      const cityVal = targetCity === 'Global' ? null : targetCity;
+      for (const service of allServices) {
+        const rule = await ServiceAvailability.findOneAndUpdate(
+          { serviceId: service._id, city: cityVal },
+          {
+            serviceId: service._id,
+            country: 'India',
+            city: cityVal,
+            enabled: true,
+            isFree: isFree !== undefined ? isFree : true,
+            allowedPlans: isFree ? ['FREE', 'BASIC', 'PREMIUM'] : allowedPlans,
+            configuredBy: userId,
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        createdRules.push(rule);
+      }
+    }
+    return createdRules;
+  }
 }
+

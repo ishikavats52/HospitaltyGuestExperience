@@ -25,4 +25,35 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
   }
 });
 
+router.post('/items', authenticate, enforceTenantIsolation, async (req, res, next) => {
+  try {
+    const { name, categoryId, price, description, isVegetarian, isAvailable, image } = req.body;
+    const hotelId = req.tenant.hotelId || req.user?.hotelId;
+    const item = await MenuItem.create({
+      hotelId,
+      propertyId: req.tenant.propertyId,
+      categoryId,
+      name,
+      price: Number(price) || 0,
+      description: description || '',
+      isVegetarian: isVegetarian !== undefined ? isVegetarian : true,
+      isAvailable: isAvailable !== undefined ? isAvailable : true,
+      image: image || '',
+    });
+    return ApiResponse.success(res, 'Menu item created successfully', item, 201);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch('/items/:id', authenticate, async (req, res, next) => {
+  try {
+    const updated = await MenuItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return ApiResponse.error(res, 'Menu item not found', 404);
+    return ApiResponse.success(res, 'Menu item updated', updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

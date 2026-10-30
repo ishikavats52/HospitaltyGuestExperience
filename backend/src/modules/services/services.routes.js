@@ -135,10 +135,11 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
         403
       );
     }
+    let hotel = stay.hotelId;
     if (!hotel || typeof hotel === 'string' || !hotel.locationHierarchy) {
       hotel = await Hotel.findById(hotel?._id || hotel) || await Hotel.findOne();
     }
-    const resolvedHotelId = hotel?._id || stay.hotelId;
+    const resolvedHotelId = hotel?._id || (typeof stay.hotelId === 'string' ? stay.hotelId : stay.hotelId?._id);
     const subscription = await HotelSubscription.findOne({ hotelId: resolvedHotelId }).populate('planId');
     const planCode = subscription?.planId?.code || 'FREE';
 
