@@ -15,17 +15,27 @@ import { Stay } from '../modules/stays/stays.model.js';
 import { MenuCategory, MenuItem } from '../modules/menu/menu.model.js';
 import { HotelService } from '../modules/services/services.model.js';
 
+/**
+ * Clean Slate Seeder:
+ * Initialises platform foundation (SuperAdmin, Locations, Plans, Service Catalogue, Geo-rules)
+ * Purges all fake/demo admins, reception staff, properties, and rooms so administrators
+ * start fresh with their own custom real-world configurations.
+ */
 export const seedDatabase = async (force = false) => {
   try {
     const existingUsers = await User.find({});
+    // If not forced and already has superadmin, keep current state
     if (!force && existingUsers && existingUsers.length > 0) {
-      console.log(`[Seeder] Database already populated with ${existingUsers.length} users. Skipping seed.`);
-      return;
+      const hasSuper = existingUsers.some((u) => u.role === 'SUPER_ADMIN');
+      if (hasSuper) {
+        console.log(`[Seeder] Clean database active (${existingUsers.length} user(s)). Skipping seed.`);
+        return;
+      }
     }
 
-    console.log('[Seeder] Starting data population...');
+    console.log('[Seeder] Starting clean slate database initialization...');
 
-    // Clear existing records
+    // Clear all existing records (purge all fake admins, staff, hotels, properties, rooms)
     await Promise.all([
       Location.deleteMany({}),
       ServiceCatalogue.deleteMany({}),
@@ -47,46 +57,56 @@ export const seedDatabase = async (force = false) => {
 
     const passwordHash = await bcrypt.hash('Admin@123', 10);
 
-    // 1. Super Admin User
+    // 1. Super Admin Account (Only permanent account needed to create new admins & properties)
     const superAdmin = await User.create({
       name: 'Platform Super Admin',
       email: 'superadmin@platform.com',
       phone: '+919876543210',
       passwordHash,
       role: 'SUPER_ADMIN',
+      status: 'ACTIVE',
+      createdAt: new Date().toISOString(),
     });
 
     // 2. Locations Hierarchy
     const india = await Location.create({ name: 'India', type: 'COUNTRY', code: 'IN' });
     const delhiState = await Location.create({ name: 'Delhi', type: 'STATE', parentId: india._id });
     const upState = await Location.create({ name: 'Uttar Pradesh', type: 'STATE', parentId: india._id });
-    const delhiCity = await Location.create({ name: 'Delhi', type: 'CITY', parentId: delhiState._id });
-    const agraCity = await Location.create({ name: 'Agra', type: 'CITY', parentId: upState._id });
+    const mhState = await Location.create({ name: 'Maharashtra', type: 'STATE', parentId: india._id });
+    const rjState = await Location.create({ name: 'Rajasthan', type: 'STATE', parentId: india._id });
 
-    // 3. Subscription Plans
+    await Promise.all([
+      Location.create({ name: 'New Delhi', type: 'CITY', parentId: delhiState._id }),
+      Location.create({ name: 'Agra', type: 'CITY', parentId: upState._id }),
+      Location.create({ name: 'Mumbai', type: 'CITY', parentId: mhState._id }),
+      Location.create({ name: 'Jaipur', type: 'CITY', parentId: rjState._id }),
+      Location.create({ name: 'Udaipur', type: 'CITY', parentId: rjState._id }),
+    ]);
+
+    // 3. Subscription Plans (SaaS tiers for hotels)
     const freePlan = await SubscriptionPlan.create({
       name: 'Free Starter Plan',
       code: 'FREE',
       price: 0,
       isFreePlan: true,
-      features: ['Contactless Check-In', 'Digital QR Pass', 'Free-Eligible Services'],
+      features: ['Contactless Check-In', 'Digital QR Pass', 'Free-Eligible Services', 'Basic Room Management'],
     });
 
     const basicPlan = await SubscriptionPlan.create({
       name: 'Hospitality Growth',
       code: 'BASIC',
       price: 2999,
-      features: ['All Free Features', 'Paid Service Folio', 'In-Room Dining KDS'],
+      features: ['All Free Features', 'Paid Service Folio', 'In-Room Dining KDS', 'Multi-Property Hub'],
     });
 
     const premiumPlan = await SubscriptionPlan.create({
       name: 'Luxury Enterprise',
       code: 'PREMIUM',
       price: 7999,
-      features: ['All Basic Features', 'Spa & Concierge Addons', 'Unlimited Rooms'],
+      features: ['All Basic Features', 'Spa & Concierge Addons', 'Unlimited Rooms & Inventory', 'Priority Governance'],
     });
 
-    // 4. Central Service Catalogue (All enabled for Free Subscription by SaaS Super Admin)
+    // 4. Central Service Catalogue (Available for SuperAdmin and Hotel Admins)
     const roomService = await ServiceCatalogue.create({
       name: 'Room Service & Linen Refresh',
       code: 'ROOM_SERVICE',
@@ -159,12 +179,12 @@ export const seedDatabase = async (force = false) => {
       createdBy: superAdmin._id,
     });
 
-    // 5. Geolocation Rules (All services made available for geolocations by SaaS Super Admin, entitled for Free Subscription)
-    const allCatalogueServices = [roomService, laundryService, airportPickup, spaWellness, localTour, luggagePorter];
-    const cities = ['Delhi', 'Agra', 'Mumbai', 'Jaipur'];
+    // 5. Geolocation Rules
+    const allServices = [roomService, laundryService, airportPickup, spaWellness, localTour, luggagePorter];
+    const cities = ['New Delhi', 'Agra', 'Mumbai', 'Jaipur', 'Udaipur'];
 
     for (const city of cities) {
-      for (const s of allCatalogueServices) {
+      for (const s of allServices) {
         await ServiceAvailability.create({
           serviceId: s._id,
           city,
@@ -176,8 +196,8 @@ export const seedDatabase = async (force = false) => {
       }
     }
 
-    // Global default fallback rule for all services
-    for (const s of allCatalogueServices) {
+    // Global default fallback rule
+    for (const s of allServices) {
       await ServiceAvailability.create({
         serviceId: s._id,
         country: 'India',
@@ -187,427 +207,14 @@ export const seedDatabase = async (force = false) => {
       });
     }
 
-    // 6. Hotel Tenants
-    // Hotel 1: Grand Delhi (on Free Plan)
-    const hotelDelhi = await Hotel.create({
-      name: 'Hotel Grand Delhi',
-      brand: 'Grand Heritage Hotels',
-      code: 'HGD-DELHI',
-      locationHierarchy: { country: 'India', state: 'Delhi', city: 'Delhi', localArea: 'Connaught Place' },
-      contactEmail: 'contact@hotelgranddelhi.com',
-      contactPhone: '+911123456789',
-    });
-
-    await HotelSubscription.create({
-      hotelId: hotelDelhi._id,
-      planId: freePlan._id,
-      status: 'ACTIVE',
-      startDate: new Date(),
-    });
-
-    // Hotel 2: Imperial Agra (on Basic Plan)
-    const hotelAgra = await Hotel.create({
-      name: 'The Imperial Agra',
-      brand: 'Imperial Resorts',
-      code: 'IMP-AGRA',
-      locationHierarchy: { country: 'India', state: 'Uttar Pradesh', city: 'Agra', localArea: 'Taj Ganj' },
-      contactEmail: 'info@imperialagra.com',
-      contactPhone: '+915622345678',
-    });
-
-    await HotelSubscription.create({
-      hotelId: hotelAgra._id,
-      planId: basicPlan._id,
-      status: 'ACTIVE',
-      startDate: new Date(),
-    });
-
-    // 7. Properties
-    const propDelhi = await Property.create({
-      hotelId: hotelDelhi._id,
-      name: 'Grand Delhi Main Wing',
-      code: 'GD-CP-01',
-      address: '12 Barakhamba Road, Connaught Place, New Delhi',
-      locationId: delhiCity._id,
-    });
-
-    const propAgra = await Property.create({
-      hotelId: hotelAgra._id,
-      name: 'Imperial Heritage Resort',
-      code: 'IMP-TJ-01',
-      address: 'Near East Gate Taj Mahal, Taj Ganj, Agra',
-      locationId: agraCity._id,
-    });
-
-    // 8. Staff accounts
-    const delhiAdmin = await User.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Rajesh Sharma (Hotel Admin)',
-      email: 'admin.delhi@hotelgrand.com',
-      passwordHash,
-      role: 'HOTEL_ADMIN',
-    });
-
-    const delhiReception = await User.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Pooja Verma (Reception)',
-      email: 'reception.delhi@hotelgrand.com',
-      passwordHash,
-      role: 'RECEPTION',
-    });
-
-    const delhiKitchen = await User.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Chef Sanjeev (Kitchen)',
-      email: 'kitchen.delhi@hotelgrand.com',
-      passwordHash,
-      role: 'KITCHEN',
-    });
-
-    // 9. Hotel Service Enablements (Hotel Admin enabled services)
-    await HotelService.create([
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: roomService._id,
-        enabled: true,
-        isComplimentary: true,
-        price: 0,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: laundryService._id,
-        enabled: true,
-        isComplimentary: true,
-        price: 0,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: airportPickup._id,
-        enabled: true,
-        isComplimentary: false,
-        price: 800,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: spaWellness._id,
-        enabled: true,
-        isComplimentary: false,
-        price: 1500,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: localTour._id,
-        enabled: true,
-        isComplimentary: true,
-        price: 0,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        serviceId: luggagePorter._id,
-        enabled: true,
-        isComplimentary: true,
-        price: 0,
-      },
-    ]);
-
-    // 10. Rooms & Types
-    const deluxeType = await RoomType.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Deluxe Heritage Suite',
-      code: 'DLX-SUITE',
-      basePrice: 4500,
-      amenities: ['King Bed', 'High Speed WiFi', 'City View', 'Mini Bar'],
-    });
-
-    const defaultRoomAmenities = [
-      'King Size Plush Bed',
-      'Smart 4K Ultra-HD TV',
-      'High-Speed Wi-Fi 6',
-      'Mini Bar & Refrigerator',
-      'Climate Controlled AC',
-      'Private City View Balcony',
-      'Electronic Safe Locker',
-    ];
-
-    const defaultRoomInventory = [
-      { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-      { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-      { name: 'Luxury Cotton Bathrobes', quantity: 2, category: 'Linen' },
-      { name: 'Nespresso Pods & Kettle Set', quantity: 1, category: 'Appliances' },
-      { name: 'High-Velocity Hair Dryer', quantity: 1, category: 'Appliances' },
-      { name: 'RFID Smart Room Keys', quantity: 2, category: 'Access' },
-    ];
-
-    const room302 = await Room.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      roomTypeId: deluxeType._id,
-      roomTypeName: 'Deluxe Heritage Suite',
-      pricePerNight: 4500,
-      roomNumber: '302',
-      floor: 3,
-      status: 'AVAILABLE',
-      images: [
-        'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: defaultRoomAmenities,
-      inventory: defaultRoomInventory,
-    });
-
-    const room305 = await Room.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      roomTypeId: deluxeType._id,
-      roomTypeName: 'Deluxe Heritage Suite',
-      pricePerNight: 4500,
-      roomNumber: '305',
-      floor: 3,
-      status: 'OCCUPIED',
-      images: [
-        'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: defaultRoomAmenities,
-      inventory: defaultRoomInventory,
-    });
-
-    const room201 = await Room.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      roomTypeId: deluxeType._id,
-      roomTypeName: 'Deluxe Heritage Suite',
-      pricePerNight: 4200,
-      roomNumber: '201',
-      floor: 2,
-      status: 'AVAILABLE',
-      images: [
-        'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
-      ],
-      amenities: defaultRoomAmenities,
-      inventory: defaultRoomInventory,
-    });
-
-    // 11. Guest, Booking & Stays
-    // Guest 1: Aarav Mehta (New arrival, KYC Pending Check-in)
-    const guestAarav = await Guest.create({
-      hotelId: hotelDelhi._id,
-      name: 'Aarav Mehta',
-      email: 'aarav.mehta@example.com',
-      phone: '9876543210',
-      idType: 'AADHAAR',
-      idNumber: '412630822252',
-      isVerified: false,
-      idDocumentUrl: null,
-      selfieUrl: null,
-      signatureUrl: null,
-    });
-
-    const checkInDate = new Date();
-    const checkOutDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-
-    const booking = await Booking.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      guestId: guestAarav._id,
-      bookingNumber: 'BK-DELHI-101',
-      phone: '9876543210',
-      roomTypeId: deluxeType._id,
-      checkInDate,
-      checkOutDate,
-      totalAmount: 9000,
-      status: 'CONFIRMED',
-    });
-
-    await Stay.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      bookingId: booking._id,
-      guestId: guestAarav._id,
-      roomId: room302._id,
-      status: 'BOOKING_CONFIRMED',
-      idType: 'AADHAAR',
-      idNumber: '412630822252',
-      idDocumentUrl: null,
-      selfieUrl: null,
-      signatureUrl: null,
-      isVerified: false,
-    });
-
-    // Guest 2: Priya Sharma (Checked-in with complete Aadhaar & Selfie KYC)
-    const guestPriya = await Guest.create({
-      hotelId: hotelDelhi._id,
-      name: 'Priya Sharma',
-      email: 'priya.sharma@example.com',
-      phone: '9811223344',
-      idType: 'AADHAAR',
-      idNumber: '891044321980',
-      isVerified: true,
-      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-      selfieUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
-      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 25 Q 35 5, 65 25 T 110 20" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
-    });
-
-    const bookingPriya = await Booking.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      guestId: guestPriya._id,
-      bookingNumber: 'BK-DELHI-202',
-      phone: '9811223344',
-      roomTypeId: deluxeType._id,
-      checkInDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      checkOutDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      totalAmount: 9000,
-      status: 'CONFIRMED',
-    });
-
-    await Stay.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      bookingId: bookingPriya._id,
-      guestId: guestPriya._id,
-      roomId: room305._id,
-      status: 'CHECKED_IN',
-      checkedInAt: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
-      idType: 'AADHAAR',
-      idNumber: '891044321980',
-      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-      selfieUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&q=80',
-      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 25 Q 35 5, 65 25 T 110 20" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
-      isVerified: true,
-    });
-
-    // Guest 3: Vikram Verma (Completed Stay - Checked Out)
-    const guestVikram = await Guest.create({
-      hotelId: hotelDelhi._id,
-      name: 'Vikram Verma',
-      email: 'vikram.verma@example.com',
-      phone: '9822334455',
-      idType: 'AADHAAR',
-      idNumber: '772199043218',
-      isVerified: true,
-      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-      selfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 20 Q 30 10, 60 25 T 100 15" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
-    });
-
-    const bookingVikram = await Booking.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      guestId: guestVikram._id,
-      bookingNumber: 'BK-DELHI-098',
-      phone: '9822334455',
-      roomTypeId: deluxeType._id,
-      checkInDate: new Date(Date.now() - 48 * 60 * 60 * 1000),
-      checkOutDate: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      totalAmount: 9000,
-      status: 'CONFIRMED',
-    });
-
-    await Stay.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      bookingId: bookingVikram._id,
-      guestId: guestVikram._id,
-      roomId: room201._id,
-      status: 'CHECKED_OUT',
-      checkedInAt: new Date(Date.now() - 32 * 60 * 60 * 1000).toISOString(),
-      checkedOutAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      idType: 'AADHAAR',
-      idNumber: '772199043218',
-      idDocumentUrl: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-      selfieUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80',
-      signatureUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="40"><path d="M10 20 Q 30 10, 60 25 T 100 15" stroke="%23946E3A" stroke-width="2" fill="none"/></svg>',
-      isVerified: true,
-    });
-
-    // 12. Menu Items
-    const fnbCategory = await MenuCategory.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Signature Indian Curries & Mains',
-      displayOrder: 1,
-      isActive: true,
-    });
-
-    const beverageCategory = await MenuCategory.create({
-      hotelId: hotelDelhi._id,
-      propertyId: propDelhi._id,
-      name: 'Artisanal Beverages & Desserts',
-      displayOrder: 2,
-      isActive: true,
-    });
-
-    await MenuItem.create([
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        categoryId: fnbCategory._id,
-        name: 'Paneer Makhani with Garlic Naan',
-        description: 'Cottage cheese simmered in buttery satin tomato gravy with freshly baked naan',
-        price: 450,
-        isVeg: true,
-        isAvailable: true,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        categoryId: fnbCategory._id,
-        name: 'Dal Makhani Heritage Style',
-        description: 'Slow-cooked black lentils simmered overnight with cream and smoked spices',
-        price: 380,
-        isVeg: true,
-        isAvailable: true,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        categoryId: fnbCategory._id,
-        name: 'Royal Awadhi Dum Biryani',
-        description: 'Fragrant long-grain basmati rice layered with royal aromatic spices & saffron',
-        price: 520,
-        isVeg: true,
-        isAvailable: true,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        categoryId: beverageCategory._id,
-        name: 'Adrak Masala Chai & Cookies',
-        description: 'Freshly brewed ginger cardamom tea served with house baked almond cookies',
-        price: 180,
-        isVeg: true,
-        isAvailable: true,
-      },
-      {
-        hotelId: hotelDelhi._id,
-        propertyId: propDelhi._id,
-        categoryId: beverageCategory._id,
-        name: 'Warm Gulab Jamun with Saffron Rabri',
-        description: 'Golden fried milk dumplings served in reduced saffron infused cream',
-        price: 260,
-        isVeg: true,
-        isAvailable: true,
-      },
-    ]);
-
-    console.log('[Seeder] Database successfully seeded with realistic multi-tenant data!');
+    console.log('[Seeder] Clean slate initialized successfully!');
     console.log('---------------------------------------------------------');
-    console.log('Super Admin Login : superadmin@platform.com  / Admin@123');
-    console.log('Delhi Admin Login : admin.delhi@hotelgrand.com / Admin@123');
-    console.log('Guest Reservation : Booking Number: BK-DELHI-101 / Phone: 9876543210 (OTP: 123456)');
+    console.log('Super Admin Login : superadmin@platform.com / Admin@123');
+    console.log('Status            : 0 Fake Admins, 0 Fake Staff, 0 Fake Rooms');
+    console.log('Ready for SuperAdmin to provision new hotel admin profiles.');
     console.log('---------------------------------------------------------');
   } catch (err) {
-    console.error('[Seeder] Error during database seeding:', err);
+    console.error('[Seeder] Error during clean database initialization:', err);
   } finally {
     if (process.argv[1]?.endsWith('seedData.js')) {
       await disconnectDB();
@@ -617,5 +224,5 @@ export const seedDatabase = async (force = false) => {
 
 // If run directly via CLI
 if (process.argv[1]?.endsWith('seedData.js')) {
-  seedDatabase();
+  seedDatabase(true);
 }

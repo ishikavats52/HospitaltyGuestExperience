@@ -22,7 +22,7 @@ export const StaffLoginPage = () => {
   const paramEmail = searchParams.get('email');
   const paramPass = searchParams.get('prefillPass');
 
-  const [email, setEmail] = useState(paramEmail || 'admin.delhi@hotelgrand.com');
+  const [email, setEmail] = useState(paramEmail || 'superadmin@platform.com');
   const [password, setPassword] = useState(paramPass || 'Admin@123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -219,36 +219,23 @@ export const StaffLoginPage = () => {
           </div>
         )}
 
-        {/* Quick Demo Role Selector */}
+        {/* Quick Platform Role Preset */}
         <div style={{ marginBottom: '24px' }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Quick Demo Accounts:
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Platform SuperAdmin:
+            </span>
             <button
               type="button"
               onClick={() => handleQuickPreset('superadmin@platform.com')}
               className="btn btn-outline"
-              style={{ fontSize: '0.75rem', padding: '9px 6px', whiteSpace: 'nowrap' }}
+              style={{ fontSize: '0.75rem', padding: '5px 12px', borderRadius: 'var(--radius-full)' }}
             >
-              Super Admin
+              Fill SuperAdmin (superadmin@platform.com)
             </button>
-            <button
-              type="button"
-              onClick={() => handleQuickPreset('admin.delhi@hotelgrand.com')}
-              className="btn btn-outline"
-              style={{ fontSize: '0.75rem', padding: '9px 6px', whiteSpace: 'nowrap' }}
-            >
-              Hotel Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => handleQuickPreset('reception.delhi@hotelgrand.com')}
-              className="btn btn-outline"
-              style={{ fontSize: '0.75rem', padding: '9px 6px', whiteSpace: 'nowrap' }}
-            >
-              Reception
-            </button>
+          </div>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+            Sign in as SuperAdmin to create and govern all your real Hotel Admin and Property profiles.
           </div>
         </div>
 
