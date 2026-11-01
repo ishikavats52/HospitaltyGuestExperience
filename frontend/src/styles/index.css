@@ -400,7 +400,7 @@ body {
 }
 
 .admin-mobile-header {
-  display: none;
+  display: none !important;
   width: 100%;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-color);
@@ -451,7 +451,7 @@ body {
   }
 
   .admin-mobile-header {
-    display: flex;
+    display: flex !important;
   }
 
   .admin-sidebar {

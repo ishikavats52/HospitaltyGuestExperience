@@ -76,6 +76,8 @@ export default function App() {
             <Route path="plans" element={<PlansPage />} />
             <Route path="hotels" element={<SuperDashboard />} />
           </Route>
+          {/* Super Admin URL Alias (supports both /super-admin and /super_admin) */}
+          <Route path="/super_admin/*" element={<Navigate to="/super-admin/dashboard" replace />} />
 
           {/* Hotel Admin Management Portal */}
           <Route path="/admin" element={<AdminLayout />}>

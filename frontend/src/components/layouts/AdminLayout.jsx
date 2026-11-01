@@ -52,7 +52,6 @@ export const AdminLayout = () => {
           padding: '14px 20px',
           background: 'var(--bg-secondary)',
           borderBottom: '1px solid var(--border-color)',
-          display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}

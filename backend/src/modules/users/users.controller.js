@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { User, USER_ROLES } from './users.model.js';
+import { Department, DEFAULT_DEPARTMENTS } from './departments.model.js';
 import { Hotel } from '../hotels/hotels.model.js';
 import { Property } from '../properties/properties.model.js';
 import { Room, RoomType } from '../rooms/rooms.model.js';
@@ -539,6 +540,8 @@ export class UsersController {
           name: staff.name,
           email: staff.email,
           role: staff.role,
+          department: staff.department || staff.role,
+          subDepartment: staff.subDepartment || '',
           phone: staff.phone || '',
           status: staff.status || 'ACTIVE',
           hotelId: staff.hotelId?._id || staff.hotelId,
@@ -555,17 +558,16 @@ export class UsersController {
   }
 
   /**
-   * Hotel Admin creates a staff member
+   * Hotel Admin creates a staff member with Department & Sub-department (Multifunctionality)
    */
   static async createStaff(req, res, next) {
     try {
-      const { name, email, password, role, propertyId, phone } = req.body;
+      const { name, email, password, role, department, subDepartment, propertyId, phone } = req.body;
       const hotelId = req.tenant.hotelId || req.user?.hotelId;
 
       if (!name || !name.trim()) return ApiResponse.error(res, 'Staff name is required', 400);
       if (!email || !email.trim()) return ApiResponse.error(res, 'Staff email is required', 400);
       if (!password || password.trim().length < 6) return ApiResponse.error(res, 'Password must be at least 6 characters', 400);
-      if (!role) return ApiResponse.error(res, 'Staff role is required', 400);
 
       const normalizedEmail = email.trim().toLowerCase();
       const allUsers = await User.find();
@@ -574,13 +576,16 @@ export class UsersController {
       }
 
       const passwordHash = await bcrypt.hash(password.trim(), 10);
+      const assignedRole = role || (department ? department.toUpperCase().replace(/[^A-Z0-9]/g, '_') : 'RECEPTION');
 
       const newStaff = await User.create({
         name: name.trim(),
         email: normalizedEmail,
         passwordHash,
         phone: phone ? phone.trim() : '',
-        role,
+        role: assignedRole,
+        department: department || assignedRole,
+        subDepartment: subDepartment ? subDepartment.trim() : '',
         hotelId: String(hotelId),
         propertyId: propertyId ? String(propertyId) : null,
         status: 'ACTIVE',
@@ -653,6 +658,176 @@ export class UsersController {
         await User.findByIdAndUpdate(id, { passwordHash });
       }
       return ApiResponse.success(res, `Password reset successfully for ${staff.name}`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Fetch all departments and their sub-departments for the hotel
+   */
+  static async getDepartments(req, res, next) {
+    try {
+      const hotelId = req.tenant.hotelId || req.user?.hotelId || 'HOTEL-DEFAULT';
+      const allDepts = await Department.find();
+      let hotelDepts = allDepts.filter((d) => !d.hotelId || String(d.hotelId) === String(hotelId));
+
+      // Seed defaults if this hotel has no departments configured yet
+      if (hotelDepts.length === 0) {
+        hotelDepts = [];
+        for (const def of DEFAULT_DEPARTMENTS) {
+          const created = await Department.create({
+            ...def,
+            hotelId: String(hotelId),
+            createdAt: new Date().toISOString(),
+          });
+          hotelDepts.push(created);
+        }
+      }
+
+      return ApiResponse.success(res, 'Departments and sub-departments fetched successfully', hotelDepts);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Create a new custom department / role
+   */
+  static async createDepartment(req, res, next) {
+    try {
+      const { name, code, description, subDepartments, icon } = req.body;
+      const hotelId = req.tenant.hotelId || req.user?.hotelId || 'HOTEL-DEFAULT';
+
+      if (!name || !name.trim()) {
+        return ApiResponse.error(res, 'Department name is required', 400);
+      }
+
+      const cleanName = name.trim();
+      const cleanCode = (code || cleanName).toUpperCase().replace(/[^A-Z0-9]/g, '_');
+
+      const allDepts = await Department.find();
+      const existing = allDepts.find(
+        (d) =>
+          String(d.hotelId) === String(hotelId) &&
+          (d.name?.toLowerCase() === cleanName.toLowerCase() || d.code === cleanCode)
+      );
+
+      if (existing) {
+        return ApiResponse.error(res, `Department '${cleanName}' already exists.`, 400);
+      }
+
+      const initialSubs = Array.isArray(subDepartments)
+        ? subDepartments.map((s) => (typeof s === 'string' ? s.trim() : s?.name?.trim())).filter(Boolean)
+        : [];
+
+      const newDept = await Department.create({
+        hotelId: String(hotelId),
+        name: cleanName,
+        code: cleanCode,
+        description: description?.trim() || `Department of ${cleanName}`,
+        icon: icon || 'Briefcase',
+        subDepartments: initialSubs,
+        isSystem: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      return ApiResponse.success(res, `Department '${newDept.name}' created successfully`, newDept, 201);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Add a sub-department / multifunctionality under a department
+   */
+  static async addSubDepartment(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { subDepartment, name } = req.body;
+      const targetSub = (subDepartment || name || '').trim();
+
+      if (!targetSub) {
+        return ApiResponse.error(res, 'Sub-department name is required', 400);
+      }
+
+      const allDepts = await Department.find();
+      let dept = allDepts.find((d) => String(d._id) === String(id) || d.code === id);
+      if (!dept) {
+        return ApiResponse.error(res, 'Department not found', 404);
+      }
+
+      const currentSubs = Array.isArray(dept.subDepartments) ? [...dept.subDepartments] : [];
+      if (!currentSubs.includes(targetSub)) {
+        currentSubs.push(targetSub);
+      }
+
+      if (dept.save) {
+        dept.subDepartments = currentSubs;
+        await dept.save();
+      } else {
+        await Department.findByIdAndUpdate(dept._id, { subDepartments: currentSubs });
+      }
+
+      return ApiResponse.success(res, `Sub-department '${targetSub}' added to ${dept.name}`, {
+        _id: dept._id,
+        name: dept.name,
+        subDepartments: currentSubs,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Delete a custom department
+   */
+  static async deleteDepartment(req, res, next) {
+    try {
+      const { id } = req.params;
+      const dept = await Department.findById(id);
+      if (!dept) {
+        return ApiResponse.error(res, 'Department not found', 404);
+      }
+      if (dept.isSystem) {
+        return ApiResponse.error(res, 'Cannot delete core system department. You can customize its sub-departments.', 400);
+      }
+
+      await Department.deleteMany({ _id: id });
+      return ApiResponse.success(res, `Department '${dept.name}' deleted successfully`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Delete a sub-department from a department
+   */
+  static async deleteSubDepartment(req, res, next) {
+    try {
+      const { id, subName } = req.params;
+      const decodedSubName = decodeURIComponent(subName);
+
+      const allDepts = await Department.find();
+      let dept = allDepts.find((d) => String(d._id) === String(id) || d.code === id);
+      if (!dept) {
+        return ApiResponse.error(res, 'Department not found', 404);
+      }
+
+      const currentSubs = Array.isArray(dept.subDepartments) ? [...dept.subDepartments] : [];
+      const updatedSubs = currentSubs.filter((s) => s !== decodedSubName);
+
+      if (dept.save) {
+        dept.subDepartments = updatedSubs;
+        await dept.save();
+      } else {
+        await Department.findByIdAndUpdate(dept._id, { subDepartments: updatedSubs });
+      }
+
+      return ApiResponse.success(res, `Sub-department '${decodedSubName}' removed`, {
+        _id: dept._id,
+        subDepartments: updatedSubs,
+      });
     } catch (err) {
       next(err);
     }

@@ -23,4 +23,11 @@ router.delete('/staff/:id', authenticate, enforceTenantIsolation, requireHotelAd
 router.patch('/staff/:id/status', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.toggleStaffStatus);
 router.patch('/staff/:id/password', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.resetStaffPassword);
 
+// Departments & Sub-Departments Hierarchy Management (Multi-functionality)
+router.get('/departments', authenticate, enforceTenantIsolation, UsersController.getDepartments);
+router.post('/departments', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.createDepartment);
+router.post('/departments/:id/subdepartments', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.addSubDepartment);
+router.delete('/departments/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.deleteDepartment);
+router.delete('/departments/:id/subdepartments/:subName', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.deleteSubDepartment);
+
 export default router;

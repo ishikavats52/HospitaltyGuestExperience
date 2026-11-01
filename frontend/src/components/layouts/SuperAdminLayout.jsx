@@ -31,7 +31,7 @@ export const SuperAdminLayout = () => {
   return (
     <div className="admin-container">
       {/* Mobile Top Header (DAPD text format) */}
-      <header className="admin-mobile-header" style={{ padding: '14px 18px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header className="admin-mobile-header" style={{ padding: '14px 18px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
           <span style={{ fontSize: '1.02rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
