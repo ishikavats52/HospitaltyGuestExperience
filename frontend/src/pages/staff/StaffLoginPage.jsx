@@ -22,8 +22,8 @@ export const StaffLoginPage = () => {
   const paramEmail = searchParams.get('email');
   const paramPass = searchParams.get('prefillPass');
 
-  const [email, setEmail] = useState(paramEmail || 'superadmin@platform.com');
-  const [password, setPassword] = useState(paramPass || 'Admin@123');
+  const [email, setEmail] = useState(paramEmail || '');
+  const [password, setPassword] = useState(paramPass || '');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

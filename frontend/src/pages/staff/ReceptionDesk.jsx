@@ -58,10 +58,7 @@ export const ReceptionDesk = () => {
       const res = await api.get('/qr/arrivals');
       setArrivals(res.data || []);
     } catch (_) {
-      // Fallback demo arrivals
-      setArrivals([
-        { stayId: 'BK-DELHI-101', guestName: 'Aarav Mehta', roomNumber: '302', status: 'QR_GENERATED' }
-      ]);
+      setArrivals([]);
     }
   };
 

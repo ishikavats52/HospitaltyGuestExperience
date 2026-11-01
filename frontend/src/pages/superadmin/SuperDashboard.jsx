@@ -31,16 +31,10 @@ import {
   ChevronRight,
   Plus,
   Image as ImageIcon,
+  SlidersHorizontal,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
-
-const DEFAULT_PRESET_IMAGES = [
-  'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80',
-];
 
 export const SuperDashboard = () => {
   const { logout } = useAuth();
@@ -54,70 +48,31 @@ export const SuperDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Active Tab: 'admins' | 'rooms' | 'overview'
+  // Active Tab: 'admins' | 'rooms'
   const [activeTab, setActiveTab] = useState('admins');
 
   // Search filter
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // ALL | ACTIVE | DEACTIVATED
 
   // -------------------------------------------------------------
   // Comprehensive Create Admin Wizard Modal State
   // -------------------------------------------------------------
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [wizardStep, setWizardStep] = useState(1); // 1: Admin & Brand, 2: Properties & Rooms, 3: Inventory
+  const [wizardStep, setWizardStep] = useState(1); // 1: Admin & Hotel Brand, 2: Properties, 3: Rooms & Inventory
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Step 1: Admin & Hotel Details
+  // Step 1: Admin & Hotel Details (ALL EMPTY BY DEFAULT)
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminPhone, setAdminPhone] = useState('');
   const [hotelBrandName, setHotelBrandName] = useState('');
 
-  // Step 2 & 3: Properties, Rooms & Inventories List
-  const [wizardProperties, setWizardProperties] = useState([
-    {
-      name: 'Grand Imperial Palace - Main Wing',
-      code: 'GIP-01',
-      address: '15 Heritage Boulevard, Connaught Place',
-      city: 'New Delhi',
-      state: 'Delhi',
-      country: 'India',
-      phone: '+91 98765 43210',
-      email: 'imperial@hotel.com',
-      rooms: [
-        {
-          roomNumber: '101',
-          floor: 1,
-          roomType: 'Deluxe Heritage Suite',
-          pricePerNight: 4500,
-          images: [DEFAULT_PRESET_IMAGES[0]],
-          amenities: ['King Size Bed', 'Smart 4K TV', 'Wi-Fi 6', 'Mini Bar', 'Electronic Safe'],
-          inventory: [
-            { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-            { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-            { name: 'Luxury Cotton Bathrobes', quantity: 2, category: 'Linen' },
-            { name: 'Nespresso Pods & Kettle Set', quantity: 1, category: 'Appliances' },
-          ],
-        },
-        {
-          roomNumber: '201',
-          floor: 2,
-          roomType: 'Executive Royal King',
-          pricePerNight: 5500,
-          images: [DEFAULT_PRESET_IMAGES[1]],
-          amenities: ['King Bed', 'City View Balcony', 'Smart TV', 'Wi-Fi 6', 'Espresso Machine'],
-          inventory: [
-            { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-            { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-            { name: 'RFID Smart Keys', quantity: 2, category: 'Access' },
-          ],
-        },
-      ],
-    },
-  ]);
+  // Step 2 & 3: Properties & Rooms List (ALL EMPTY BY DEFAULT)
+  const [wizardProperties, setWizardProperties] = useState([]);
 
   // Post-Creation Voucher Modal
   const [createdCredentials, setCreatedCredentials] = useState(null);
@@ -140,6 +95,18 @@ export const SuperDashboard = () => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Lock background scroll when any modal is open
+  useEffect(() => {
+    if (isCreateModalOpen || inspectedAdmin || resetModalAdmin || createdCredentials) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isCreateModalOpen, inspectedAdmin, resetModalAdmin, createdCredentials]);
 
   const fetchData = async () => {
     try {
@@ -178,130 +145,99 @@ export const SuperDashboard = () => {
     setAdminPassword(pass);
   };
 
+  // Open modal with COMPLETELY EMPTY fields
   const handleOpenCreateModal = () => {
     setAdminName('');
     setAdminEmail('');
     setAdminPhone('');
     setHotelBrandName('');
+    setAdminPassword('');
     setWizardStep(1);
-    generatePassword();
     setCreateError(null);
 
-    // Initial default property and rooms
+    // Initial single property with completely empty fields
     setWizardProperties([
       {
-        name: 'The Grand Heritage Resort - West Wing',
-        code: 'GHR-01',
-        address: '14 Connaught Place, Central Boulevard',
-        city: 'New Delhi',
-        state: 'Delhi',
-        country: 'India',
-        phone: '+91 98765 43210',
-        email: 'grand@heritage.com',
-        rooms: [
-          {
-            roomNumber: '101',
-            floor: 1,
-            roomType: 'Deluxe Heritage Suite',
-            pricePerNight: 4500,
-            images: [DEFAULT_PRESET_IMAGES[0]],
-            amenities: ['King Size Bed', 'Smart 4K TV', 'Wi-Fi 6', 'Mini Bar', 'Electronic Safe'],
-            inventory: [
-              { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-              { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-              { name: 'Luxury Cotton Bathrobes', quantity: 2, category: 'Linen' },
-              { name: 'Nespresso Pods & Kettle Set', quantity: 1, category: 'Appliances' },
-            ],
-          },
-          {
-            roomNumber: '201',
-            floor: 2,
-            roomType: 'Executive Royal King',
-            pricePerNight: 5500,
-            images: [DEFAULT_PRESET_IMAGES[1]],
-            amenities: ['King Bed', 'City View Balcony', 'Smart TV', 'Wi-Fi 6', 'Espresso Machine'],
-            inventory: [
-              { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-              { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-              { name: 'RFID Smart Keys', quantity: 2, category: 'Access' },
-            ],
-          },
-        ],
+        name: '',
+        code: '',
+        address: '',
+        city: '',
+        state: '',
+        country: '',
+        phone: '',
+        email: '',
+        rooms: [],
       },
     ]);
 
     setIsCreateModalOpen(true);
   };
 
-  // Wizard Helper: Add another property
+  // Wizard Helper: Add empty property
   const handleAddWizardProperty = () => {
-    const idx = wizardProperties.length + 1;
     setWizardProperties([
       ...wizardProperties,
       {
-        name: `${hotelBrandName || 'Hotel'} - Property Wing ${idx}`,
-        code: `WING-${idx}`,
-        address: 'Boulevard Road',
-        city: 'New Delhi',
-        state: 'Delhi',
-        country: 'India',
-        phone: adminPhone || '',
-        email: adminEmail || '',
-        rooms: [
-          {
-            roomNumber: `${idx * 100 + 1}`,
-            floor: idx,
-            roomType: 'Deluxe Suite',
-            pricePerNight: 4500,
-            images: [DEFAULT_PRESET_IMAGES[idx % DEFAULT_PRESET_IMAGES.length]],
-            amenities: ['King Bed', 'Smart 4K TV', 'Wi-Fi 6', 'Mini Bar'],
-            inventory: [
-              { name: 'Bath Towels', quantity: 4, category: 'Linen' },
-              { name: 'Pillows', quantity: 4, category: 'Bedding' },
-            ],
-          },
-        ],
+        name: '',
+        code: '',
+        address: '',
+        city: '',
+        state: '',
+        country: '',
+        phone: '',
+        email: '',
+        rooms: [],
       },
     ]);
   };
 
-  // Wizard Helper: Add room to property
+  // Wizard Helper: Add empty room to a property
   const handleAddRoomToProperty = (propIdx) => {
     const updated = [...wizardProperties];
-    const p = updated[propIdx];
-    const newRoomNum = `${(propIdx + 1) * 100 + p.rooms.length + 1}`;
-    p.rooms.push({
-      roomNumber: newRoomNum,
-      floor: propIdx + 1,
-      roomType: 'Deluxe Heritage Suite',
-      pricePerNight: 4500,
-      images: [DEFAULT_PRESET_IMAGES[p.rooms.length % DEFAULT_PRESET_IMAGES.length]],
-      amenities: ['King Bed', 'Smart 4K TV', 'Wi-Fi 6', 'Mini Bar'],
-      inventory: [
-        { name: 'Bath Towels', quantity: 4, category: 'Linen' },
-        { name: 'Pillows', quantity: 4, category: 'Bedding' },
-      ],
+    updated[propIdx].rooms.push({
+      roomNumber: '',
+      floor: '',
+      roomType: '',
+      pricePerNight: '',
+      images: [],
+      amenities: [],
+      inventory: [],
+      newInvName: '',
+      newInvQty: '1',
+      newInvCat: 'Linen',
     });
     setWizardProperties(updated);
   };
 
-  // Wizard Helper: Add inventory item to room
-  const handleAddInventoryToRoom = (propIdx, roomIdx, itemName, itemQty = 2, itemCat = 'Linen') => {
-    if (!itemName?.trim()) return;
+  // Wizard Helper: Add inventory item to a room
+  const handleAddInventoryToRoom = (propIdx, roomIdx) => {
     const updated = [...wizardProperties];
-    updated[propIdx].rooms[roomIdx].inventory.push({
-      name: itemName.trim(),
-      quantity: Number(itemQty) || 1,
-      category: itemCat,
+    const rm = updated[propIdx].rooms[roomIdx];
+    if (!rm.newInvName || !rm.newInvName.trim()) return;
+
+    rm.inventory.push({
+      name: rm.newInvName.trim(),
+      quantity: Number(rm.newInvQty) || 1,
+      category: rm.newInvCat || 'General',
     });
+    rm.newInvName = '';
+    rm.newInvQty = '1';
     setWizardProperties(updated);
   };
 
-  // Wizard Submit: SuperAdmin creates Admin with full property & room configuration
+  // Wizard Helper: Remove inventory item
+  const handleRemoveInventoryFromRoom = (propIdx, roomIdx, invIdx) => {
+    const updated = [...wizardProperties];
+    updated[propIdx].rooms[roomIdx].inventory.splice(invIdx, 1);
+    setWizardProperties(updated);
+  };
+
+  // Submit wizard to create Admin
   const handleFinalSubmitAdmin = async (e) => {
     e.preventDefault();
     if (!adminName.trim() || !adminEmail.trim() || !adminPassword.trim()) {
-      setCreateError('Please complete the admin personal details (Name, Email, Password).');
+      setCreateError('Please complete admin name, email, and password.');
+      setWizardStep(1);
       return;
     }
 
@@ -314,24 +250,24 @@ export const SuperDashboard = () => {
         email: adminEmail.trim().toLowerCase(),
         password: adminPassword.trim(),
         phone: adminPhone.trim(),
-        hotelName: hotelBrandName.trim() || `${adminName.trim()}'s Luxury Hotel Group`,
-        properties: wizardProperties,
+        hotelName: hotelBrandName.trim() || `${adminName.trim()}'s Hotel Group`,
+        properties: wizardProperties.filter((p) => p.name && p.name.trim()),
       };
 
-      const res = await api.post('/users/admins', payload);
+      await api.post('/users/admins', payload);
 
       setCreatedCredentials({
         name: adminName.trim(),
         email: adminEmail.trim().toLowerCase(),
         password: adminPassword.trim(),
         hotelName: payload.hotelName,
-        propertiesCount: wizardProperties.length,
-        roomsCount: wizardProperties.reduce((acc, p) => acc + p.rooms.length, 0),
+        propertiesCount: payload.properties.length,
+        roomsCount: payload.properties.reduce((acc, p) => acc + (p.rooms?.length || 0), 0),
         loginUrl: `${window.location.origin}/staff/login`,
       });
 
       setIsCreateModalOpen(false);
-      showToast('Hotel Admin, Properties & Rooms provisioned successfully!');
+      showToast('Hotel Admin profile & properties provisioned successfully!');
       await fetchData();
     } catch (err) {
       setCreateError(err.message || 'Failed to create admin profile');
@@ -340,9 +276,7 @@ export const SuperDashboard = () => {
     }
   };
 
-  // -------------------------------------------------------------
   // Deactivate / Activate Admin Profile
-  // -------------------------------------------------------------
   const handleToggleAdminStatus = async (adminId, adminName, currentStatus) => {
     const isCurrentlyActive = currentStatus === 'ACTIVE';
     const confirmText = isCurrentlyActive
@@ -364,9 +298,7 @@ export const SuperDashboard = () => {
     }
   };
 
-  // -------------------------------------------------------------
-  // Admin 360 Full Inspector (See each and everything of profile)
-  // -------------------------------------------------------------
+  // Inspect 360
   const handleInspectAdmin = async (adminId) => {
     setLoadingAdmin360(true);
     try {
@@ -407,632 +339,513 @@ export const SuperDashboard = () => {
     navigator.clipboard.writeText(text);
     setCopiedState(true);
     setTimeout(() => setCopiedState(false), 2500);
-    showToast('Credentials voucher copied to clipboard!');
+    showToast('Credentials copied to clipboard!');
   };
 
   // Filter admins
   const filteredAdmins = admins.filter((a) => {
     const s = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       a.name?.toLowerCase().includes(s) ||
       a.email?.toLowerCase().includes(s) ||
-      a.hotelName?.toLowerCase().includes(s) ||
-      a.hotelCode?.toLowerCase().includes(s)
-    );
+      a.hotelName?.toLowerCase().includes(s);
+
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'ACTIVE' && a.status === 'ACTIVE') ||
+      (statusFilter === 'DEACTIVATED' && a.status !== 'ACTIVE');
+
+    return matchesSearch && matchesStatus;
   });
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%', maxWidth: '100%' }}>
       {/* Toast Feedback */}
       {toastMessage && (
         <div
           style={{
             position: 'fixed',
-            top: '24px',
-            right: '24px',
+            top: '20px',
+            right: '20px',
             background: 'var(--text-primary)',
             color: '#FFFFFF',
-            padding: '14px 22px',
+            padding: '12px 20px',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
-            zIndex: 9999,
-            fontSize: '0.9rem',
+            gap: '10px',
+            zIndex: 999999,
+            fontSize: '0.88rem',
             animation: 'fadeIn 0.25s ease',
           }}
         >
-          <CheckCircle2 size={20} color="#10B981" />
+          <CheckCircle2 size={18} color="#10B981" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* SuperAdmin Header */}
+      {/* HORIZONTAL HEADER & STATS BAR (Modern & Clean) */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '24px 28px',
+          background: '#FFFFFF',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+          boxShadow: 'var(--shadow-sm)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+          }}
+        >
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', background: 'var(--gold-soft)', color: 'var(--gold-primary)', borderRadius: 'var(--radius-full)', fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+              <ShieldCheck size={14} />
+              <span>SaaS Platform Governance</span>
+            </div>
+            <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+              SuperAdmin Command Center
+            </h1>
+            <p style={{ margin: '4px 0 0', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
+              Create, govern, and oversee all Hotel Admins, multi-wing properties, and real-time room inventories.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOpenCreateModal}
+            className="btn btn-gold"
+            style={{
+              padding: '13px 24px',
+              borderRadius: 'var(--radius-full)',
+              boxShadow: 'var(--shadow-gold)',
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <UserPlus size={18} />
+            <span>Create Hotel Admin Profile</span>
+          </button>
+        </div>
+
+        {/* Horizontal KPI Stats Ribbon */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '12px',
+            borderTop: '1px solid var(--border-subtle)',
+            paddingTop: '18px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--gold-soft)', color: 'var(--gold-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <UserCheck size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Hotel Admins</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{admins.length}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--gold-soft)', color: 'var(--gold-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Building2 size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Properties</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{properties.length}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#E6F7F7', color: '#008489', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <BedDouble size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Total Rooms</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#008489', lineHeight: 1 }}>{allPlatformRooms.length}</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#FFF0F3', color: 'var(--gold-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Package size={20} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>In-Room Items</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--gold-dark)', lineHeight: 1 }}>
+                {allPlatformRooms.reduce((acc, r) => acc + (Array.isArray(r.inventory) ? r.inventory.length : 0), 0)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* HORIZONTAL CONTROLS: TABS & SEARCH */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '20px',
+          gap: '14px',
         }}
       >
-        <div>
-          <div
+        {/* Horizontal Navigation Pills */}
+        <div style={{ display: 'flex', gap: '8px', background: '#FFFFFF', padding: '6px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border-color)' }}>
+          <button
+            type="button"
+            onClick={() => setActiveTab('admins')}
             style={{
-              fontSize: '0.78rem',
-              color: 'var(--gold-primary)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.14em',
-              fontWeight: 800,
-            }}
-          >
-            SaaS Platform Governance
-          </div>
-          <h1
-            className="title-gold page-title"
-            style={{ fontSize: '2.2rem', margin: '4px 0 8px', letterSpacing: '-0.02em', fontWeight: 800 }}
-          >
-            SuperAdmin Control Center
-          </h1>
-          <p className="page-subtitle" style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-            Full oversight of hotel admins, properties, multi-room inventories, and account deactivation governance.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="btn btn-gold"
-          style={{
-            padding: '14px 24px',
-            borderRadius: 'var(--radius-full)',
-            boxShadow: 'var(--shadow-gold)',
-            fontSize: '0.95rem',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            cursor: 'pointer',
-          }}
-        >
-          <UserPlus size={18} />
-          <span>Create Hotel Admin Profile</span>
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '18px' }}>
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '18px',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'var(--gold-soft)',
-              color: 'var(--gold-primary)',
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-full)',
+              background: activeTab === 'admins' ? 'var(--gold-primary)' : 'transparent',
+              color: activeTab === 'admins' ? '#FFFFFF' : 'var(--text-secondary)',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
             }}
           >
-            <UserCheck size={26} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>Hotel Admins</div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
-              {admins.length} Total
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#008489', marginTop: '4px', fontWeight: 600 }}>
-              {admins.filter((a) => a.status === 'ACTIVE').length} Active • {admins.filter((a) => a.status !== 'ACTIVE').length} Deactivated
-            </div>
-          </div>
-        </div>
+            <UserCheck size={16} />
+            <span>Hotel Admins ({admins.length})</span>
+          </button>
 
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '18px',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div
+          <button
+            type="button"
+            onClick={() => setActiveTab('rooms')}
             style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'var(--gold-soft)',
-              color: 'var(--gold-primary)',
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-full)',
+              background: activeTab === 'rooms' ? 'var(--gold-primary)' : 'transparent',
+              color: activeTab === 'rooms' ? '#FFFFFF' : 'var(--text-secondary)',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
             }}
           >
-            <Building2 size={26} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>Properties Across Admins</div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
-              {properties.length} Active
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              Multi-wing resorts & hotels
-            </div>
-          </div>
+            <BedDouble size={16} />
+            <span>Platform Rooms & Inventory ({allPlatformRooms.length})</span>
+          </button>
         </div>
 
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '18px',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: '#E6F7F7',
-              color: '#008489',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <BedDouble size={26} />
+        {/* Search & Filter */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, maxWidth: '420px', minWidth: '240px' }}>
+          <div style={{ position: 'relative', width: '100%' }}>
+            <Search size={16} color="var(--gold-primary)" style={{ position: 'absolute', left: '12px', top: '11px' }} />
+            <input
+              type="text"
+              placeholder="Search by admin name, email, hotel..."
+              className="input-control"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '36px', height: '38px', fontSize: '0.84rem', borderRadius: 'var(--radius-full)' }}
+            />
           </div>
-          <div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>Total Rooms Managed</div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#008489', lineHeight: 1.1 }}>
-              {allPlatformRooms.length} Rooms
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              Live synchronized inventory
-            </div>
-          </div>
-        </div>
 
-        <div
-          className="glass-panel"
-          style={{
-            padding: '24px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '18px',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'var(--gold-soft)',
-              color: 'var(--gold-primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Package size={26} />
-          </div>
-          <div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 600 }}>Tracked In-Room Inventory</div>
-            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.1 }}>
-              {allPlatformRooms.reduce((acc, r) => acc + (Array.isArray(r.inventory) ? r.inventory.length : 0), 0)} Items
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              Verified linens & electronics
-            </div>
-          </div>
+          {activeTab === 'admins' && (
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="input-control"
+              style={{ width: 'auto', minWidth: '110px', height: '38px', fontSize: '0.82rem', borderRadius: 'var(--radius-full)' }}
+            >
+              <option value="ALL">All Status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="DEACTIVATED">Deactivated</option>
+            </select>
+          )}
         </div>
       </div>
 
-      {/* Tabs Switcher: Admins List vs Live Rooms Explorer */}
-      <div style={{ display: 'flex', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-        <button
-          type="button"
-          onClick={() => setActiveTab('admins')}
-          style={{
-            padding: '10px 20px',
-            background: activeTab === 'admins' ? 'var(--gold-primary)' : 'transparent',
-            color: activeTab === 'admins' ? '#FFFFFF' : 'var(--text-secondary)',
-            border: 'none',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: 700,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <UserCheck size={16} />
-          <span>Hotel Admins Governance ({admins.length})</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('rooms')}
-          style={{
-            padding: '10px 20px',
-            background: activeTab === 'rooms' ? 'var(--gold-primary)' : 'transparent',
-            color: activeTab === 'rooms' ? '#FFFFFF' : 'var(--text-secondary)',
-            border: 'none',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: 700,
-            fontSize: '0.88rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <BedDouble size={16} />
-          <span>Live Platform Rooms & Inventory ({allPlatformRooms.length})</span>
-        </button>
-      </div>
-
-      {/* TAB 1: Hotel Admins List & Governance */}
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 1: Hotel Admins List                                      */}
+      {/* ------------------------------------------------------------- */}
       {activeTab === 'admins' && (
-        <section
-          className="glass-panel"
-          style={{
-            padding: '28px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          {/* Search bar */}
-          <div style={{ display: 'flex', gap: '14px', marginBottom: '22px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={18} color="var(--gold-primary)" style={{ position: 'absolute', left: '14px', top: '13px' }} />
-              <input
-                type="text"
-                placeholder="Search hotel admins by name, email, or hotel tenant..."
-                className="input-control"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ paddingLeft: '42px', borderRadius: 'var(--radius-full)' }}
-              />
-            </div>
-          </div>
-
+        <div>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)' }}>
+            <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
               <div className="animate-spin" style={{ display: 'inline-block', marginBottom: '10px' }}>
                 <UserCheck size={32} color="var(--gold-primary)" />
               </div>
               <div>Loading hotel admin profiles...</div>
             </div>
           ) : filteredAdmins.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)' }}>
-              No hotel admin accounts match your search.
+            /* Clean Empty State */
+            <div
+              className="glass-panel"
+              style={{
+                textAlign: 'center',
+                padding: '60px 24px',
+                background: '#FFFFFF',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px dashed var(--border-color)',
+                boxShadow: 'var(--shadow-sm)',
+              }}
+            >
+              <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'var(--gold-soft)', color: 'var(--gold-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+                <UserPlus size={32} />
+              </div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+                {searchTerm || statusFilter !== 'ALL' ? 'No matching hotel admins found' : 'No Hotel Admins Yet'}
+              </h3>
+              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto 20px', lineHeight: 1.5 }}>
+                {searchTerm || statusFilter !== 'ALL'
+                  ? 'Try clearing your search query or status filter.'
+                  : 'Start fresh by provisioning your first Hotel Admin profile along with their properties, rooms, and inventories.'}
+              </p>
+              <button
+                type="button"
+                onClick={handleOpenCreateModal}
+                className="btn btn-gold"
+                style={{ padding: '12px 26px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              >
+                <Plus size={16} />
+                <span>Create Hotel Admin Profile</span>
+              </button>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                    <th style={{ padding: '16px 20px', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Admin Profile
-                    </th>
-                    <th style={{ padding: '16px 20px', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Assigned Hotel & Properties
-                    </th>
-                    <th style={{ padding: '16px 20px', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Capacity / Rooms
-                    </th>
-                    <th style={{ padding: '16px 20px', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                      Profile Status
-                    </th>
-                    <th style={{ padding: '16px 20px', fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', textAlign: 'right' }}>
-                      Governance Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAdmins.map((admin) => {
-                    const isActive = admin.status === 'ACTIVE';
-                    return (
-                      <tr key={admin._id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                        <td style={{ padding: '18px 20px' }}>
-                          <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.98rem' }}>
-                            {admin.name}
-                          </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--gold-dark)', marginTop: '2px', fontFamily: 'monospace' }}>
-                            {admin.email}
-                          </div>
-                          {admin.phone && (
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              {admin.phone}
-                            </div>
-                          )}
-                        </td>
-
-                        <td style={{ padding: '18px 20px' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                            {admin.hotelName || 'Hospitality Group'}
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '3px' }}>
-                            {admin.propertiesCount || 1} Property(ies) owned
-                          </div>
-                        </td>
-
-                        <td style={{ padding: '18px 20px' }}>
-                          <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--gold-dark)' }}>
-                            {admin.roomsCount || 0} Rooms
-                          </div>
+            /* Horizontal Admin Cards */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {filteredAdmins.map((admin) => {
+                const isActive = admin.status === 'ACTIVE';
+                return (
+                  <div
+                    key={admin._id}
+                    className="glass-panel"
+                    style={{
+                      padding: '20px 24px',
+                      background: '#FFFFFF',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '16px',
+                      boxShadow: 'var(--shadow-sm)',
+                    }}
+                  >
+                    {/* Left: Avatar & Personal Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: '220px' }}>
+                      <div
+                        style={{
+                          width: '46px',
+                          height: '46px',
+                          borderRadius: '12px',
+                          background: isActive ? 'var(--gold-soft)' : '#FFF0F3',
+                          color: isActive ? 'var(--gold-primary)' : 'var(--gold-dark)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 800,
+                          fontSize: '1.1rem',
+                        }}
+                      >
+                        {admin.name?.charAt(0) || 'A'}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {admin.name}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--gold-dark)', fontFamily: 'monospace' }}>
+                          {admin.email}
+                        </div>
+                        {admin.phone && (
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            {admin.inventoryCount || 0} Inventory Items
+                            {admin.phone}
                           </div>
-                        </td>
+                        )}
+                      </div>
+                    </div>
 
-                        <td style={{ padding: '18px 20px' }}>
-                          {isActive ? (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '4px 12px',
-                                background: '#E6F7F7',
-                                color: '#008489',
-                                border: '1px solid rgba(0,132,137,0.3)',
-                                borderRadius: 'var(--radius-full)',
-                                fontSize: '0.75rem',
-                                fontWeight: 700,
-                              }}
-                            >
-                              <CheckCircle2 size={13} />
-                              <span>Active</span>
-                            </span>
-                          ) : (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                                padding: '4px 12px',
-                                background: '#FFF0F3',
-                                color: 'var(--gold-dark)',
-                                border: '1px solid var(--border-active)',
-                                borderRadius: 'var(--radius-full)',
-                                fontSize: '0.75rem',
-                                fontWeight: 800,
-                              }}
-                            >
-                              <UserX size={13} />
-                              <span>Deactivated</span>
-                            </span>
-                          )}
-                        </td>
+                    {/* Middle: Hotel Group & Properties */}
+                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Hotel Group</div>
+                        <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {admin.hotelName || 'Hospitality Group'}
+                        </div>
+                      </div>
 
-                        <td style={{ padding: '18px 20px', textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '8px', alignItems: 'center' }}>
-                            {/* View Full 360 Profile */}
-                            <button
-                              type="button"
-                              onClick={() => handleInspectAdmin(admin._id)}
-                              className="btn btn-outline"
-                              style={{
-                                padding: '7px 12px',
-                                fontSize: '0.78rem',
-                                borderRadius: 'var(--radius-sm)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                              }}
-                              title="Inspect properties, rooms, images, and inventory"
-                            >
-                              <Eye size={14} />
-                              <span>View 360</span>
-                            </button>
+                      <div style={{ paddingLeft: '16px', borderLeft: '1px solid var(--border-subtle)' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>Portfolio</div>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {admin.propertiesCount || 0} Properties • {admin.roomsCount || 0} Rooms
+                        </div>
+                      </div>
+                    </div>
 
-                            {/* Deactivate / Activate Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleToggleAdminStatus(admin._id, admin.name, admin.status)}
-                              className={isActive ? 'btn btn-outline' : 'btn btn-gold'}
-                              style={{
-                                padding: '7px 12px',
-                                fontSize: '0.78rem',
-                                borderRadius: 'var(--radius-sm)',
-                                color: isActive ? 'var(--gold-dark)' : '#FFFFFF',
-                                borderColor: isActive ? 'var(--border-active)' : undefined,
-                              }}
-                            >
-                              {isActive ? 'Deactivate' : 'Activate'}
-                            </button>
+                    {/* Right: Status & Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span
+                        style={{
+                          padding: '4px 12px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
+                          background: isActive ? '#E6F7F7' : '#FFF0F3',
+                          color: isActive ? '#008489' : 'var(--gold-dark)',
+                          border: isActive ? '1px solid rgba(0,132,137,0.3)' : '1px solid var(--border-active)',
+                        }}
+                      >
+                        {isActive ? 'ACTIVE' : 'DEACTIVATED'}
+                      </span>
 
-                            {/* Reset Password */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setResetModalAdmin(admin);
-                                setNewPassword('');
-                                setResetError(null);
-                              }}
-                              className="btn btn-outline"
-                              style={{ padding: '7px 10px', fontSize: '0.78rem', borderRadius: 'var(--radius-sm)' }}
-                              title="Reset Admin Password"
-                            >
-                              <Key size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      <button
+                        type="button"
+                        onClick={() => handleInspectAdmin(admin._id)}
+                        className="btn btn-outline"
+                        style={{ padding: '7px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+                      >
+                        <Eye size={14} />
+                        <span>View 360</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAdminStatus(admin._id, admin.name, admin.status)}
+                        className={isActive ? 'btn btn-outline' : 'btn btn-gold'}
+                        style={{
+                          padding: '7px 12px',
+                          fontSize: '0.78rem',
+                          color: isActive ? 'var(--gold-dark)' : '#FFFFFF',
+                          borderColor: isActive ? 'var(--border-active)' : undefined,
+                        }}
+                      >
+                        {isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResetModalAdmin(admin);
+                          setNewPassword('');
+                          setResetError(null);
+                        }}
+                        className="btn btn-outline"
+                        style={{ padding: '7px 10px', fontSize: '0.78rem' }}
+                        title="Reset Password"
+                      >
+                        <Key size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
-        </section>
+        </div>
       )}
 
-      {/* TAB 2: Live Platform Rooms & Inventory Explorer */}
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 2: Platform Rooms Explorer                                */}
+      {/* ------------------------------------------------------------- */}
       {activeTab === 'rooms' && (
-        <section
+        <div
           className="glass-panel"
           style={{
-            padding: '28px',
-            background: 'var(--bg-secondary)',
-            borderRadius: 'var(--radius-md)',
+            padding: '24px',
+            background: '#FFFFFF',
+            borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow-sm)',
           }}
         >
-          <div style={{ marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-              Live Platform Room Units
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-              Whenever an admin adds a room to their property, it synchronizes and displays in real time here.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-              gap: '24px',
-            }}
-          >
-            {allPlatformRooms.map((room) => (
-              <div
-                key={room._id}
-                style={{
-                  background: '#FFFFFF',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-color)',
-                  overflow: 'hidden',
-                  boxShadow: 'var(--shadow-xs)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}
-              >
-                <div style={{ height: '170px', position: 'relative' }}>
-                  <img
-                    src={room.images?.[0] || DEFAULT_PRESET_IMAGES[0]}
-                    alt={`Room ${room.roomNumber}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                  <div style={{ position: 'absolute', top: '10px', left: '10px' }}>
-                    <span style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.95)', color: 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800 }}>
+          {allPlatformRooms.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--text-muted)' }}>
+              <BedDouble size={40} color="var(--gold-primary)" style={{ opacity: 0.5, margin: '0 auto 10px' }} />
+              <div style={{ fontSize: '1rem', fontWeight: 700 }}>No rooms currently in platform inventory</div>
+              <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Rooms added by admins or provisioned via SuperAdmin will appear here.</div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '18px' }}>
+              {allPlatformRooms.map((room) => (
+                <div
+                  key={room._id}
+                  style={{
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 'var(--radius-md)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    background: '#FFFFFF',
+                  }}
+                >
+                  <div style={{ height: '140px', position: 'relative', background: '#000000' }}>
+                    <img
+                      src={room.images?.[0] || 'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80'}
+                      alt={`Room ${room.roomNumber}`}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <span style={{ position: 'absolute', top: '10px', left: '10px', padding: '3px 10px', background: 'rgba(255,255,255,0.95)', color: 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800 }}>
                       Room {room.roomNumber}
                     </span>
-                  </div>
-                  <div style={{ position: 'absolute', top: '10px', right: '10px' }}>
-                    <span style={{ padding: '4px 10px', background: room.status === 'AVAILABLE' ? '#E6F7F7' : '#FFF0F3', color: room.status === 'AVAILABLE' ? '#008489' : 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.72rem', fontWeight: 700 }}>
+                    <span style={{ position: 'absolute', top: '10px', right: '10px', padding: '3px 8px', background: room.status === 'AVAILABLE' ? '#E6F7F7' : '#FFF0F3', color: room.status === 'AVAILABLE' ? '#008489' : 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.7rem', fontWeight: 700 }}>
                       {room.status}
                     </span>
                   </div>
-                </div>
 
-                <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {room.propertyName || 'Property Wing'}
-                    </div>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                      {room.roomTypeName || 'Deluxe Suite'}
+                  <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>{room.propertyName || 'Property Wing'}</div>
+                    <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{room.roomTypeName || 'Deluxe Suite'}</div>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Floor {room.floor || 1} • ₹{(room.pricePerNight || 0).toLocaleString('en-IN')}/night</div>
+                    <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)', fontSize: '0.75rem', color: 'var(--gold-dark)', fontWeight: 700 }}>
+                      {(room.inventory || []).length} In-Room Inventory Items
                     </div>
                   </div>
-
-                  {/* Amenities Preview */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                    {(room.amenities || []).slice(0, 3).map((a, i) => (
-                      <span key={i} style={{ padding: '2px 7px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-full)', fontSize: '0.7rem', fontWeight: 600 }}>
-                        {a}
-                      </span>
-                    ))}
-                    {(room.amenities || []).length > 3 && (
-                      <span style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', fontWeight: 700 }}>
-                        +{room.amenities.length - 3} more
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Inventory count */}
-                  <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid var(--border-subtle)', fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Floor {room.floor || 1}</span>
-                    <span style={{ fontWeight: 700, color: 'var(--gold-dark)' }}>
-                      {(room.inventory || []).length} Inventory Items
-                    </span>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL: Multi-Property, Room & Inventory Admin Creation Wizard */}
+      {/* MODAL: PROVISION NEW HOTEL ADMIN (100% FIXED & RESPONSIVE)    */}
       {/* ------------------------------------------------------------- */}
       {isCreateModalOpen && (
-        <div className="modal-backdrop active" onClick={() => setIsCreateModalOpen(false)}>
-          <div
-            className="modal-content glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '820px',
-              width: '92%',
-              padding: '36px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: '#FFFFFF',
-              boxShadow: 'var(--shadow-lg)',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+        <div className="modal-backdrop" onClick={() => setIsCreateModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="modal-header">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--gold-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-primary)' }}>
-                    <UserPlus size={20} />
-                  </div>
-                  <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                    Provision New Hotel Admin Profile
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
+                  <UserPlus size={20} />
+                  <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                    Provision New Hotel Admin
                   </h2>
                 </div>
-                <div style={{ fontSize: '0.84rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Step {wizardStep} of 3: Configure admin credentials, properties owned, and in-room inventories.
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                  Step {wizardStep} of 3 • Enter all custom admin, property, and room details.
                 </div>
               </div>
+
               <button
                 type="button"
                 onClick={() => setIsCreateModalOpen(false)}
@@ -1042,149 +855,142 @@ export const SuperDashboard = () => {
               </button>
             </div>
 
-            {/* Step Indicators */}
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
+            {/* Step Progress Bar */}
+            <div style={{ display: 'flex', gap: '6px', padding: '0 28px', marginTop: '12px' }}>
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 1 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 2 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 3 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
             </div>
 
-            {createError && (
-              <div style={{ padding: '12px 16px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={16} />
-                <span>{createError}</span>
-              </div>
-            )}
+            {/* Modal Body (Scrollable & Responsive) */}
+            <div className="modal-body">
+              {createError && (
+                <div style={{ padding: '10px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertCircle size={16} />
+                  <span>{createError}</span>
+                </div>
+              )}
 
-            <form onSubmit={handleFinalSubmitAdmin} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
-              {/* STEP 1: Admin Details & Hotel Brand */}
+              {/* STEP 1: Admin Account Details (ALL EMPTY BY DEFAULT) */}
               {wizardStep === 1 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
-                    1. Administrator Personal & Account Information
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
+                    1. Administrator Personal & Account Credentials
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="responsive-form-grid-2">
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                         Admin Full Name *
                       </label>
                       <input
                         type="text"
                         className="input-control"
+                        placeholder="e.g. John Doe"
                         value={adminName}
                         onChange={(e) => setAdminName(e.target.value)}
-                        placeholder="e.g. Rajesh Sharma"
                         required
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                         Work Email (Login ID) *
                       </label>
                       <input
                         type="email"
                         className="input-control"
+                        placeholder="admin@hotelgroup.com"
                         value={adminEmail}
                         onChange={(e) => setAdminEmail(e.target.value)}
-                        placeholder="admin.rajesh@hotelgroup.com"
                         required
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                  <div className="responsive-form-grid-2">
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                         Contact Phone
                       </label>
                       <input
                         type="text"
                         className="input-control"
+                        placeholder="+91 98765 43210"
                         value={adminPhone}
                         onChange={(e) => setAdminPhone(e.target.value)}
-                        placeholder="+91 98765 43210"
                       />
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                        Hotel Group / Organization Name *
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
+                        Hotel Group / Brand Name *
                       </label>
                       <input
                         type="text"
                         className="input-control"
+                        placeholder="e.g. Sovereign Luxury Resorts"
                         value={hotelBrandName}
                         onChange={(e) => setHotelBrandName(e.target.value)}
-                        placeholder="e.g. Grand Heritage Resorts Group"
                         required
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '5px' }}>
                       Login Password *
                     </label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <input
                         type={showPassword ? 'text' : 'password'}
                         className="input-control"
+                        placeholder="Create strong password"
                         value={adminPassword}
                         onChange={(e) => setAdminPassword(e.target.value)}
                         required
                         style={{ flex: 1 }}
                       />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="btn btn-outline" style={{ padding: '0 12px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="btn btn-outline"
+                        style={{ padding: '0 12px' }}
+                      >
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
-                      <button type="button" onClick={generatePassword} className="btn btn-outline" style={{ padding: '0 14px' }}>
+                      <button
+                        type="button"
+                        onClick={generatePassword}
+                        className="btn btn-outline"
+                        style={{ padding: '0 14px', whiteSpace: 'nowrap' }}
+                      >
                         Generate
                       </button>
                     </div>
                   </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!adminName.trim() || !adminEmail.trim()) {
-                          setCreateError('Please complete admin name and email.');
-                          return;
-                        }
-                        setCreateError(null);
-                        setWizardStep(2);
-                      }}
-                      className="btn btn-gold"
-                      style={{ padding: '12px 24px', borderRadius: 'var(--radius-full)' }}
-                    >
-                      <span>Proceed to Properties Setup</span>
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
                 </div>
               )}
 
-              {/* STEP 2: Properties Owned by Admin */}
+              {/* STEP 2: Properties Owned (ALL EMPTY BY DEFAULT) */}
               {wizardStep === 2 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
                         2. Properties Owned by {adminName || 'Admin'}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        Configure property addresses, cities, and initial room counts.
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                        Add each hotel location, wing, or property owned.
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={handleAddWizardProperty}
                       className="btn btn-outline"
-                      style={{ padding: '8px 14px', fontSize: '0.78rem' }}
+                      style={{ padding: '6px 12px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
-                      <Plus size={14} /> Add Another Property
+                      <Plus size={14} /> Add Property
                     </button>
                   </div>
 
@@ -1192,7 +998,7 @@ export const SuperDashboard = () => {
                     <div
                       key={pIdx}
                       style={{
-                        padding: '18px',
+                        padding: '16px',
                         background: 'var(--bg-primary)',
                         borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--border-color)',
@@ -1202,126 +1008,125 @@ export const SuperDashboard = () => {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--gold-dark)' }}>
-                          Property #{pIdx + 1}: {prop.name}
+                        <span style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--gold-dark)' }}>
+                          Property #{pIdx + 1}
                         </span>
                         {wizardProperties.length > 1 && (
                           <button
                             type="button"
                             onClick={() => setWizardProperties(wizardProperties.filter((_, idx) => idx !== pIdx))}
-                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem' }}
+                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.74rem' }}
                           >
-                            Remove Property
+                            Remove
                           </button>
                         )}
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+                      <div className="responsive-form-grid-2-1">
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Property Name *</label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="e.g. Palace Wing"
+                            value={prop.name}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].name = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Property Code</label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="e.g. PW-01"
+                            value={prop.code}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].code = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Street Address</label>
                         <input
                           type="text"
                           className="input-control"
-                          placeholder="Property Name"
-                          value={prop.name}
+                          placeholder="e.g. 10 Marine Drive"
+                          value={prop.address}
                           onChange={(e) => {
                             const updated = [...wizardProperties];
-                            updated[pIdx].name = e.target.value;
-                            setWizardProperties(updated);
-                          }}
-                        />
-                        <input
-                          type="text"
-                          className="input-control"
-                          placeholder="Code (e.g. PROP-01)"
-                          value={prop.code}
-                          onChange={(e) => {
-                            const updated = [...wizardProperties];
-                            updated[pIdx].code = e.target.value;
+                            updated[pIdx].address = e.target.value;
                             setWizardProperties(updated);
                           }}
                         />
                       </div>
 
-                      <input
-                        type="text"
-                        className="input-control"
-                        placeholder="Full Street Address"
-                        value={prop.address}
-                        onChange={(e) => {
-                          const updated = [...wizardProperties];
-                          updated[pIdx].address = e.target.value;
-                          setWizardProperties(updated);
-                        }}
-                      />
-
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-                        <input
-                          type="text"
-                          className="input-control"
-                          placeholder="City"
-                          value={prop.city}
-                          onChange={(e) => {
-                            const updated = [...wizardProperties];
-                            updated[pIdx].city = e.target.value;
-                            setWizardProperties(updated);
-                          }}
-                        />
-                        <input
-                          type="text"
-                          className="input-control"
-                          placeholder="State"
-                          value={prop.state}
-                          onChange={(e) => {
-                            const updated = [...wizardProperties];
-                            updated[pIdx].state = e.target.value;
-                            setWizardProperties(updated);
-                          }}
-                        />
-                        <input
-                          type="text"
-                          className="input-control"
-                          placeholder="Country"
-                          value={prop.country}
-                          onChange={(e) => {
-                            const updated = [...wizardProperties];
-                            updated[pIdx].country = e.target.value;
-                            setWizardProperties(updated);
-                          }}
-                        />
+                      <div className="responsive-form-grid-3">
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>City</label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="e.g. Mumbai"
+                            value={prop.city}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].city = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>State</label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="e.g. Maharashtra"
+                            value={prop.state}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].state = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Country</label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="India"
+                            value={prop.country}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].country = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setWizardStep(1)}
-                      className="btn btn-outline"
-                      style={{ padding: '12px 20px' }}
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setWizardStep(3)}
-                      className="btn btn-gold"
-                      style={{ padding: '12px 24px', borderRadius: 'var(--radius-full)' }}
-                    >
-                      <span>Proceed to Rooms & Inventory</span>
-                      <ChevronRight size={16} />
-                    </button>
-                  </div>
                 </div>
               )}
 
-              {/* STEP 3: Rooms & In-Room Inventory Configuration */}
+              {/* STEP 3: Rooms & In-Room Inventory (ALL EMPTY BY DEFAULT) */}
               {wizardStep === 3 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
-                      3. Rooms & In-Room Inventory Setup
+                    <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
+                      3. Rooms & In-Room Inventory Configuration
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                      Specify the rooms for each property along with their photo previews and inventory items.
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      Add rooms under each property and configure specific in-room items.
                     </div>
                   </div>
 
@@ -1329,230 +1134,254 @@ export const SuperDashboard = () => {
                     <div
                       key={pIdx}
                       style={{
-                        padding: '18px',
+                        padding: '16px',
                         background: 'var(--bg-primary)',
                         borderRadius: 'var(--radius-md)',
                         border: '1px solid var(--border-color)',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: '14px',
+                        gap: '12px',
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontWeight: 800, color: 'var(--gold-dark)', fontSize: '0.92rem' }}>
-                          Rooms for: {prop.name}
+                        <span style={{ fontWeight: 800, color: 'var(--gold-dark)', fontSize: '0.88rem' }}>
+                          Rooms for: {prop.name || `Property #${pIdx + 1}`}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleAddRoomToProperty(pIdx)}
                           className="btn btn-outline"
-                          style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                          style={{ padding: '5px 12px', fontSize: '0.74rem' }}
                         >
                           + Add Room
                         </button>
                       </div>
 
-                      {prop.rooms.map((room, rIdx) => (
-                        <div
-                          key={rIdx}
-                          style={{
-                            padding: '14px',
-                            background: '#FFFFFF',
-                            borderRadius: 'var(--radius-sm)',
-                            border: '1px solid var(--border-color)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '10px',
-                          }}
-                        >
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: '10px' }}>
-                            <div>
-                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Room #</label>
-                              <input
-                                type="text"
-                                className="input-control"
-                                value={room.roomNumber}
-                                onChange={(e) => {
-                                  const updated = [...wizardProperties];
-                                  updated[pIdx].rooms[rIdx].roomNumber = e.target.value;
-                                  setWizardProperties(updated);
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Floor</label>
-                              <input
-                                type="number"
-                                className="input-control"
-                                value={room.floor}
-                                onChange={(e) => {
-                                  const updated = [...wizardProperties];
-                                  updated[pIdx].rooms[rIdx].floor = Number(e.target.value);
-                                  setWizardProperties(updated);
-                                }}
-                              />
-                            </div>
-                            <div>
-                              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>Category / Type</label>
-                              <input
-                                type="text"
-                                className="input-control"
-                                value={room.roomType}
-                                onChange={(e) => {
-                                  const updated = [...wizardProperties];
-                                  updated[pIdx].rooms[rIdx].roomType = e.target.value;
-                                  setWizardProperties(updated);
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Inventory List for this room */}
-                          <div>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                              📦 Room Inventory:
-                            </div>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                              {room.inventory.map((inv, iIdx) => (
-                                <span
-                                  key={iIdx}
-                                  style={{
-                                    padding: '3px 8px',
-                                    background: 'var(--bg-tertiary)',
-                                    borderRadius: '6px',
-                                    fontSize: '0.72rem',
-                                    fontWeight: 600,
-                                    border: '1px solid var(--border-color)',
-                                  }}
-                                >
-                                  {inv.name} (x{inv.quantity})
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                      {prop.rooms.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '16px', color: 'var(--text-muted)', fontSize: '0.8rem', background: '#FFFFFF', borderRadius: 'var(--radius-sm)', border: '1px dashed var(--border-color)' }}>
+                          No rooms added to this property yet. Click '+ Add Room' above.
                         </div>
-                      ))}
+                      ) : (
+                        prop.rooms.map((room, rIdx) => (
+                          <div
+                            key={rIdx}
+                            style={{
+                              padding: '14px',
+                              background: '#FFFFFF',
+                              borderRadius: 'var(--radius-sm)',
+                              border: '1px solid var(--border-color)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px',
+                            }}
+                          >
+                            <div className="responsive-form-grid-3">
+                              <div>
+                                <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Room # *</label>
+                                <input
+                                  type="text"
+                                  className="input-control"
+                                  placeholder="e.g. 101"
+                                  value={room.roomNumber}
+                                  onChange={(e) => {
+                                    const updated = [...wizardProperties];
+                                    updated[pIdx].rooms[rIdx].roomNumber = e.target.value;
+                                    setWizardProperties(updated);
+                                  }}
+                                  required
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Floor</label>
+                                <input
+                                  type="number"
+                                  className="input-control"
+                                  placeholder="1"
+                                  value={room.floor}
+                                  onChange={(e) => {
+                                    const updated = [...wizardProperties];
+                                    updated[pIdx].rooms[rIdx].floor = e.target.value;
+                                    setWizardProperties(updated);
+                                  }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: '3px' }}>Category / Type</label>
+                                <input
+                                  type="text"
+                                  className="input-control"
+                                  placeholder="e.g. Deluxe Suite"
+                                  value={room.roomType}
+                                  onChange={(e) => {
+                                    const updated = [...wizardProperties];
+                                    updated[pIdx].rooms[rIdx].roomType = e.target.value;
+                                    setWizardProperties(updated);
+                                  }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Inventory adding section for this room */}
+                            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '10px' }}>
+                              <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                                📦 Add In-Room Inventory:
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                <input
+                                  type="text"
+                                  className="input-control"
+                                  placeholder="Item name (e.g. Bath Towels)"
+                                  value={room.newInvName || ''}
+                                  onChange={(e) => {
+                                    const updated = [...wizardProperties];
+                                    updated[pIdx].rooms[rIdx].newInvName = e.target.value;
+                                    setWizardProperties(updated);
+                                  }}
+                                  style={{ flex: 2, minWidth: '140px' }}
+                                />
+                                <input
+                                  type="number"
+                                  className="input-control"
+                                  placeholder="Qty"
+                                  value={room.newInvQty || '1'}
+                                  onChange={(e) => {
+                                    const updated = [...wizardProperties];
+                                    updated[pIdx].rooms[rIdx].newInvQty = e.target.value;
+                                    setWizardProperties(updated);
+                                  }}
+                                  min="1"
+                                  style={{ width: '70px' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddInventoryToRoom(pIdx, rIdx)}
+                                  className="btn btn-outline"
+                                  style={{ padding: '0 12px', fontSize: '0.75rem' }}
+                                >
+                                  + Add Item
+                                </button>
+                              </div>
+
+                              {/* Inventory Chips */}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {(room.inventory || []).map((inv, iIdx) => (
+                                  <span
+                                    key={iIdx}
+                                    style={{
+                                      padding: '3px 8px',
+                                      background: 'var(--bg-tertiary)',
+                                      borderRadius: '6px',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 600,
+                                      border: '1px solid var(--border-color)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '5px',
+                                    }}
+                                  >
+                                    <span>{inv.name} (x{inv.quantity})</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveInventoryFromRoom(pIdx, rIdx, iIdx)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: 0 }}
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   ))}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '14px' }}>
-                    <button
-                      type="button"
-                      onClick={() => setWizardStep(2)}
-                      className="btn btn-outline"
-                      style={{ padding: '12px 20px' }}
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={createLoading}
-                      className="btn btn-gold"
-                      style={{ padding: '12px 30px', borderRadius: 'var(--radius-full)' }}
-                    >
-                      {createLoading ? 'Provisioning Everything...' : 'Complete & Launch Admin Profile'}
-                    </button>
-                  </div>
                 </div>
               )}
-            </form>
+            </div>
+
+            {/* Modal Footer (Sticky at Bottom) */}
+            <div className="modal-footer">
+              {wizardStep > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setWizardStep(wizardStep - 1)}
+                  className="btn btn-outline"
+                  style={{ padding: '10px 18px', fontSize: '0.85rem' }}
+                >
+                  Back
+                </button>
+              )}
+
+              {wizardStep < 3 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (wizardStep === 1) {
+                      if (!adminName.trim() || !adminEmail.trim() || !adminPassword.trim()) {
+                        setCreateError('Please fill in Admin Name, Work Email, and Password.');
+                        return;
+                      }
+                    }
+                    setCreateError(null);
+                    setWizardStep(wizardStep + 1);
+                  }}
+                  className="btn btn-gold"
+                  style={{ padding: '10px 22px', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
+                >
+                  <span>Continue to Step {wizardStep + 1}</span>
+                  <ChevronRight size={16} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={createLoading}
+                  onClick={handleFinalSubmitAdmin}
+                  className="btn btn-gold"
+                  style={{ padding: '10px 26px', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
+                >
+                  {createLoading ? 'Provisioning Profile...' : 'Complete & Launch Admin Profile'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* ------------------------------------------------------------- */}
-      {/* MODAL: Post-Creation Credentials Voucher                      */}
+      {/* MODAL: Post-Creation Voucher                                  */}
       {/* ------------------------------------------------------------- */}
       {createdCredentials && (
-        <div className="modal-backdrop active" onClick={() => setCreatedCredentials(null)}>
-          <div
-            className="modal-content glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '520px',
-              width: '90%',
-              padding: '36px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: '#FFFFFF',
-              boxShadow: 'var(--shadow-lg)',
-              textAlign: 'center',
-            }}
-          >
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: '#E6F7F7',
-                color: '#008489',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: '16px',
-              }}
-            >
-              <CheckCircle2 size={36} />
+        <div className="modal-backdrop" onClick={() => setCreatedCredentials(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', textAlign: 'center', padding: '32px' }}>
+            <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#E6F7F7', color: '#008489', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <CheckCircle2 size={32} />
             </div>
 
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)' }}>
-              Admin Profile Successfully Provisioned!
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)' }}>
+              Hotel Admin Profile Created!
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '22px' }}>
-              The Hotel Admin can now log in and immediately see all their properties, rooms, and inventories.
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+              The administrator can now log in using these provisioned credentials.
             </p>
 
-            <div
-              style={{
-                padding: '20px',
-                background: 'var(--bg-tertiary)',
-                borderRadius: 'var(--radius-md)',
-                textAlign: 'left',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                fontSize: '0.86rem',
-                border: '1px solid var(--border-color)',
-                marginBottom: '22px',
-              }}
-            >
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Hotel Group: </span>
-                <strong>{createdCredentials.hotelName}</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Properties Configured: </span>
-                <strong>{createdCredentials.propertiesCount} Properties</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Total Units: </span>
-                <strong>{createdCredentials.roomsCount} Rooms</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Login Email: </span>
-                <strong style={{ color: 'var(--gold-dark)', fontFamily: 'monospace' }}>{createdCredentials.email}</strong>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Password: </span>
-                <strong style={{ fontFamily: 'monospace' }}>{createdCredentials.password}</strong>
-              </div>
+            <div style={{ padding: '18px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.84rem', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+              <div><span style={{ color: 'var(--text-muted)' }}>Hotel Group: </span><strong>{createdCredentials.hotelName}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Properties: </span><strong>{createdCredentials.propertiesCount} Property(ies)</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Total Units: </span><strong>{createdCredentials.roomsCount} Rooms</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Login Email: </span><strong style={{ color: 'var(--gold-dark)', fontFamily: 'monospace' }}>{createdCredentials.email}</strong></div>
+              <div><span style={{ color: 'var(--text-muted)' }}>Password: </span><strong style={{ fontFamily: 'monospace' }}>{createdCredentials.password}</strong></div>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={() => handleCopyCredentials(createdCredentials)}
-                className="btn btn-outline"
-                style={{ flex: 1, padding: '12px' }}
-              >
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={() => handleCopyCredentials(createdCredentials)} className="btn btn-outline" style={{ flex: 1, padding: '11px' }}>
                 {copiedState ? <Check size={16} /> : <Copy size={16} />}
-                <span>{copiedState ? 'Copied!' : 'Copy Voucher'}</span>
+                <span>{copiedState ? 'Copied' : 'Copy Voucher'}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setCreatedCredentials(null)}
-                className="btn btn-gold"
-                style={{ flex: 1, padding: '12px', borderRadius: 'var(--radius-full)' }}
-              >
+              <button type="button" onClick={() => setCreatedCredentials(null)} className="btn btn-gold" style={{ flex: 1, padding: '11px', borderRadius: 'var(--radius-full)' }}>
                 Done
               </button>
             </div>
@@ -1564,99 +1393,52 @@ export const SuperDashboard = () => {
       {/* MODAL: Full Admin 360 Details Inspector                      */}
       {/* ------------------------------------------------------------- */}
       {inspectedAdmin && (
-        <div className="modal-backdrop active" onClick={() => setInspectedAdmin(null)}>
-          <div
-            className="modal-content glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '820px',
-              width: '92%',
-              padding: '36px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: '#FFFFFF',
-              boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+        <div className="modal-backdrop" onClick={() => setInspectedAdmin(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ padding: '3px 10px', background: inspectedAdmin.admin.status === 'ACTIVE' ? '#E6F7F7' : '#FFF0F3', color: inspectedAdmin.admin.status === 'ACTIVE' ? '#008489' : 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ padding: '2px 8px', background: inspectedAdmin.admin.status === 'ACTIVE' ? '#E6F7F7' : '#FFF0F3', color: inspectedAdmin.admin.status === 'ACTIVE' ? '#008489' : 'var(--gold-dark)', borderRadius: 'var(--radius-full)', fontSize: '0.72rem', fontWeight: 800 }}>
                     {inspectedAdmin.admin.status}
                   </span>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    Hotel Admin 360 Full Oversight
-                  </span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Admin 360 Full Oversight</span>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '4px 0 0', color: 'var(--text-primary)' }}>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '4px 0 0', color: 'var(--text-primary)' }}>
                   {inspectedAdmin.admin.name} ({inspectedAdmin.hotel.name})
-                </h2>
+                </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setInspectedAdmin(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-              >
-                <X size={22} />
+              <button type="button" onClick={() => setInspectedAdmin(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
               </button>
             </div>
 
-            {/* Properties & Underneath Rooms Breakdown */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
-                All Properties Owned ({inspectedAdmin.totalProperties}) • Total Rooms ({inspectedAdmin.totalRooms})
+            <div className="modal-body">
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase' }}>
+                Properties Owned ({inspectedAdmin.totalProperties}) • Rooms ({inspectedAdmin.totalRooms})
               </div>
 
               {inspectedAdmin.properties.map((prop) => (
-                <div
-                  key={prop._id}
-                  style={{
-                    padding: '18px',
-                    background: 'var(--bg-primary)',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-color)',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                      {prop.name}
-                    </h3>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--gold-dark)', fontWeight: 700 }}>
-                      {prop.roomsCount || 0} Rooms Configured
-                    </span>
+                <div key={prop._id} style={{ padding: '16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{prop.name}</h4>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--gold-dark)', fontWeight: 700 }}>{prop.roomsCount || 0} Rooms</span>
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                    <MapPin size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                    <MapPin size={13} style={{ display: 'inline', marginRight: '4px' }} />
                     {prop.address ? `${prop.address}, ${prop.city}` : prop.city || 'India'}
                   </div>
 
-                  {/* Rooms inside this property */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
                     {(prop.rooms || []).map((rm) => (
-                      <div
-                        key={rm._id}
-                        style={{
-                          padding: '12px',
-                          background: '#FFFFFF',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-subtle)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 800, color: 'var(--gold-dark)', fontSize: '0.88rem' }}>
-                            Room {rm.roomNumber}
-                          </span>
-                          <span style={{ fontSize: '0.72rem', padding: '2px 6px', background: rm.status === 'AVAILABLE' ? '#E6F7F7' : '#FFF0F3', color: rm.status === 'AVAILABLE' ? '#008489' : 'var(--gold-dark)', borderRadius: '4px' }}>
+                      <div key={rm._id} style={{ padding: '10px', background: '#FFFFFF', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontWeight: 800, color: 'var(--gold-dark)', fontSize: '0.84rem' }}>Room {rm.roomNumber}</span>
+                          <span style={{ fontSize: '0.68rem', padding: '1px 5px', background: rm.status === 'AVAILABLE' ? '#E6F7F7' : '#FFF0F3', color: rm.status === 'AVAILABLE' ? '#008489' : 'var(--gold-dark)', borderRadius: '4px' }}>
                             {rm.status}
                           </span>
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                          {rm.roomTypeName || 'Deluxe Suite'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          {(rm.inventory || []).length} inventory items
-                        </div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '2px' }}>{rm.roomTypeName || 'Deluxe Suite'}</div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '4px' }}>{(rm.inventory || []).length} inventory items</div>
                       </div>
                     ))}
                   </div>
@@ -1664,13 +1446,8 @@ export const SuperDashboard = () => {
               ))}
             </div>
 
-            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setInspectedAdmin(null)}
-                className="btn btn-outline"
-                style={{ padding: '10px 22px' }}
-              >
+            <div className="modal-footer">
+              <button type="button" onClick={() => setInspectedAdmin(null)} className="btn btn-outline" style={{ padding: '9px 20px', fontSize: '0.84rem' }}>
                 Close Inspector
               </button>
             </div>
@@ -1682,28 +1459,17 @@ export const SuperDashboard = () => {
       {/* MODAL: Reset Password                                         */}
       {/* ------------------------------------------------------------- */}
       {resetModalAdmin && (
-        <div className="modal-backdrop active" onClick={() => setResetModalAdmin(null)}>
-          <div
-            className="modal-content glass-panel"
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              maxWidth: '460px',
-              width: '90%',
-              padding: '32px',
-              borderRadius: 'var(--radius-lg)',
-              backgroundColor: '#FFFFFF',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
-            <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 8px', color: 'var(--text-primary)' }}>
+        <div className="modal-backdrop" onClick={() => setResetModalAdmin(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px', padding: '28px' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)' }}>
               Reset Admin Password
             </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               Enter a new password for <strong>{resetModalAdmin.name}</strong>.
             </p>
 
             {resetError && (
-              <div style={{ padding: '10px 14px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '0.82rem', marginBottom: '14px' }}>
+              <div style={{ padding: '8px 12px', background: 'var(--danger-bg)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '0.8rem', marginBottom: '12px' }}>
                 {resetError}
               </div>
             )}
@@ -1712,16 +1478,16 @@ export const SuperDashboard = () => {
               <input
                 type="text"
                 className="input-control"
-                placeholder="Enter at least 6 characters"
+                placeholder="At least 6 characters"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
               />
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                <button type="button" onClick={() => setResetModalAdmin(null)} className="btn btn-outline">
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                <button type="button" onClick={() => setResetModalAdmin(null)} className="btn btn-outline" style={{ padding: '8px 16px', fontSize: '0.84rem' }}>
                   Cancel
                 </button>
-                <button type="submit" disabled={resetLoading} className="btn btn-gold">
+                <button type="submit" disabled={resetLoading} className="btn btn-gold" style={{ padding: '8px 18px', fontSize: '0.84rem', borderRadius: 'var(--radius-full)' }}>
                   {resetLoading ? 'Updating...' : 'Update Password'}
                 </button>
               </div>

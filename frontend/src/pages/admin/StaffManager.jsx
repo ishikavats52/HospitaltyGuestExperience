@@ -57,6 +57,18 @@ export const StaffManager = () => {
   // Toast Notification
   const [toastMessage, setToastMessage] = useState(null);
 
+  // Background scroll lock when modal or voucher is active
+  useEffect(() => {
+    if (isCreateModalOpen || createdCredentials) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isCreateModalOpen, createdCredentials]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -98,8 +110,8 @@ export const StaffManager = () => {
     setName('');
     setEmail('');
     setPhone('');
+    setPassword('');
     setRole('RECEPTION');
-    generatePassword();
     setCreateError(null);
     setIsCreateModalOpen(true);
   };
@@ -531,35 +543,19 @@ Login URL: ${createdCredentials.loginUrl}`;
       {/* MODAL: CREATE EMPLOYEE ACCOUNT                                 */}
       {/* ------------------------------------------------------------- */}
       {isCreateModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(5px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '16px',
-            animation: 'fadeIn 0.2s ease',
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
-          }}
-        >
+        <div className="modal-backdrop active" onClick={() => setIsCreateModalOpen(false)}>
           <div
-            className="glass-panel animate-fade-in"
+            className="modal-content glass-panel"
+            onClick={(e) => e.stopPropagation()}
             style={{
-              width: '100%',
-              maxWidth: '520px',
+              width: '94%',
+              maxWidth: '540px',
               backgroundColor: '#FFFFFF',
-              borderRadius: 'var(--radius-md)',
+              borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-xl)',
-              padding: '28px',
+              padding: 'clamp(20px, 4vw, 32px)',
               maxHeight: '90vh',
               overflowY: 'auto',
-              position: 'relative',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px', marginBottom: '20px' }}>
@@ -579,6 +575,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                 onClick={() => setIsCreateModalOpen(false)}
                 className="btn-icon"
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
               >
                 <X size={20} />
               </button>
@@ -599,7 +596,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Ramesh Kumar"
+                  placeholder="Enter employee full name..."
                   className="input-control"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -613,14 +610,14 @@ Login URL: ${createdCredentials.loginUrl}`;
                 <input
                   type="email"
                   required
-                  placeholder="e.g. ramesh.reception@hotelgrand.com"
+                  placeholder="Enter employee work email..."
                   className="input-control"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="responsive-form-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
                     Role / Department *
@@ -643,7 +640,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                   </label>
                   <input
                     type="tel"
-                    placeholder="e.g. 9811223344"
+                    placeholder="e.g. +91 98765 43210"
                     className="input-control"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}

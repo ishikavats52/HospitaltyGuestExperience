@@ -42,15 +42,27 @@ export const PropertyManager = () => {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
-  const [country, setCountry] = useState('India');
-  const [phone, setPhone] = useState(currentUser?.phone || '');
-  const [email, setEmail] = useState(currentUser?.email || '');
+  const [country, setCountry] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [description, setDescription] = useState('');
-  const [totalRooms, setTotalRooms] = useState('10');
+  const [totalRooms, setTotalRooms] = useState('');
 
   // Edit Modal State
   const [editingProperty, setEditingProperty] = useState(null);
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // Background scroll lock when any modal is open
+  useEffect(() => {
+    if (isAddModalOpen || editingProperty) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isAddModalOpen, editingProperty]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -77,13 +89,13 @@ export const PropertyManager = () => {
     setPropertyName('');
     setPropertyCode('');
     setAddress('');
-    setCity('New Delhi');
-    setState('Delhi');
-    setCountry('India');
-    setPhone(currentUser?.phone || '');
-    setEmail(currentUser?.email || '');
+    setCity('');
+    setState('');
+    setCountry('');
+    setPhone('');
+    setEmail('');
     setDescription('');
-    setTotalRooms('10');
+    setTotalRooms('');
     setModalError(null);
     setIsAddModalOpen(true);
   };
@@ -682,9 +694,9 @@ export const PropertyManager = () => {
             className="modal-content glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '620px',
-              width: '90%',
-              padding: '36px',
+              maxWidth: '640px',
+              width: '94%',
+              padding: 'clamp(20px, 4vw, 36px)',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
@@ -692,7 +704,7 @@ export const PropertyManager = () => {
               overflowY: 'auto',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
               <div>
                 <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                   Add Property to Portfolio
@@ -705,6 +717,7 @@ export const PropertyManager = () => {
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
               >
                 <X size={22} />
               </button>
@@ -730,7 +743,7 @@ export const PropertyManager = () => {
             )}
 
             <form onSubmit={handleCreateProperty} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px' }}>
+              <div className="responsive-form-grid-2-1">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                     Property / Hotel Name *
@@ -740,7 +753,7 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={propertyName}
                     onChange={(e) => setPropertyName(e.target.value)}
-                    placeholder="e.g. Grand Heritage Palace - East Wing"
+                    placeholder="Enter property name..."
                     required
                   />
                 </div>
@@ -753,7 +766,7 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={propertyCode}
                     onChange={(e) => setPropertyCode(e.target.value)}
-                    placeholder="GHP-01"
+                    placeholder="e.g. PROP-01"
                   />
                 </div>
               </div>
@@ -767,11 +780,11 @@ export const PropertyManager = () => {
                   className="input-control"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Plot 45, Heritage Boulevard"
+                  placeholder="Enter full street address..."
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+              <div className="responsive-form-grid-3">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                     City
@@ -781,19 +794,19 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    placeholder="New Delhi"
+                    placeholder="Enter city..."
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    State
+                    State / Region
                   </label>
                   <input
                     type="text"
                     className="input-control"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    placeholder="Delhi"
+                    placeholder="Enter state..."
                   />
                 </div>
                 <div>
@@ -805,12 +818,12 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    placeholder="India"
+                    placeholder="Enter country..."
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-form-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                     Contact Phone
@@ -820,7 +833,7 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+91 98765 43210"
+                    placeholder="e.g. +91 98765 43210"
                   />
                 </div>
                 <div>
@@ -832,7 +845,7 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="property@hotel.com"
+                    placeholder="e.g. contact@property.com"
                   />
                 </div>
               </div>
@@ -846,12 +859,12 @@ export const PropertyManager = () => {
                   className="input-control"
                   value={totalRooms}
                   onChange={(e) => setTotalRooms(e.target.value)}
-                  placeholder="10"
+                  placeholder="Total number of rooms..."
                   min="1"
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
@@ -882,11 +895,13 @@ export const PropertyManager = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '600px',
-              width: '90%',
-              padding: '36px',
+              width: '94%',
+              padding: 'clamp(20px, 4vw, 36px)',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
@@ -897,6 +912,7 @@ export const PropertyManager = () => {
                 type="button"
                 onClick={() => setEditingProperty(null)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
               >
                 <X size={22} />
               </button>
@@ -912,6 +928,7 @@ export const PropertyManager = () => {
                   className="input-control"
                   value={editingProperty.name || ''}
                   onChange={(e) => setEditingProperty({ ...editingProperty, name: e.target.value })}
+                  placeholder="Property name..."
                   required
                 />
               </div>
@@ -925,10 +942,11 @@ export const PropertyManager = () => {
                   className="input-control"
                   value={editingProperty.address || ''}
                   onChange={(e) => setEditingProperty({ ...editingProperty, address: e.target.value })}
+                  placeholder="Street address..."
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="responsive-form-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                     City
@@ -938,6 +956,7 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={editingProperty.city || ''}
                     onChange={(e) => setEditingProperty({ ...editingProperty, city: e.target.value })}
+                    placeholder="City..."
                   />
                 </div>
                 <div>
@@ -949,11 +968,12 @@ export const PropertyManager = () => {
                     className="input-control"
                     value={editingProperty.phone || ''}
                     onChange={(e) => setEditingProperty({ ...editingProperty, phone: e.target.value })}
+                    placeholder="Phone number..."
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => setEditingProperty(null)}

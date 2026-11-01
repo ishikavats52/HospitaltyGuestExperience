@@ -84,34 +84,34 @@ export const RoomManager = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [targetPropertyId, setTargetPropertyId] = useState('');
   const [newRoomNumber, setNewRoomNumber] = useState('');
-  const [newFloor, setNewFloor] = useState('1');
-  const [newRoomTypeName, setNewRoomTypeName] = useState('Deluxe Heritage Suite');
-  const [newPrice, setNewPrice] = useState('4500');
-  const [selectedImages, setSelectedImages] = useState([PHOTO_PRESETS[0].url]);
+  const [newFloor, setNewFloor] = useState('');
+  const [newRoomTypeName, setNewRoomTypeName] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [selectedImages, setSelectedImages] = useState([]);
   const [customImageUrl, setCustomImageUrl] = useState('');
-  const [selectedAmenities, setSelectedAmenities] = useState([
-    'King Size Bed',
-    'Smart 4K Ultra-HD TV',
-    'High-Speed Wi-Fi 6',
-    'Mini Bar & Refrigerator',
-    'Electronic Safe Locker',
-  ]);
+  const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [customAmenity, setCustomAmenity] = useState('');
 
   // Room Inventory State for New Room
-  const [roomInventory, setRoomInventory] = useState([
-    { name: 'Egyptian Cotton Bath Towels', quantity: 4, category: 'Linen' },
-    { name: 'Feather Comfort Pillows', quantity: 4, category: 'Bedding' },
-    { name: 'Luxury Cotton Bathrobes', quantity: 2, category: 'Linen' },
-    { name: 'Nespresso Pods & Kettle Set', quantity: 1, category: 'Appliances' },
-    { name: 'RFID Smart Room Keys', quantity: 2, category: 'Access' },
-  ]);
+  const [roomInventory, setRoomInventory] = useState([]);
   const [newInvName, setNewInvName] = useState('');
-  const [newInvQty, setNewInvQty] = useState('2');
+  const [newInvQty, setNewInvQty] = useState('1');
   const [newInvCat, setNewInvCat] = useState('Linen');
 
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState(null);
+
+  // Background scroll lock when any modal is open
+  useEffect(() => {
+    if (isAddModalOpen || inspectedRoom || lightboxImage) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isAddModalOpen, inspectedRoom, lightboxImage]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -163,10 +163,17 @@ export const RoomManager = () => {
 
   const handleOpenAddModal = () => {
     setNewRoomNumber('');
-    setNewFloor('1');
-    setNewRoomTypeName('Deluxe Heritage Suite');
-    setNewPrice('4500');
-    setSelectedImages([PHOTO_PRESETS[0].url]);
+    setNewFloor('');
+    setNewRoomTypeName('');
+    setNewPrice('');
+    setSelectedImages([]);
+    setCustomImageUrl('');
+    setSelectedAmenities([]);
+    setCustomAmenity('');
+    setRoomInventory([]);
+    setNewInvName('');
+    setNewInvQty('1');
+    setNewInvCat('Linen');
     setCreateError(null);
     if (properties.length > 0) {
       setTargetPropertyId(properties[0]._id);
@@ -932,8 +939,8 @@ export const RoomManager = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '750px',
-              width: '92%',
-              padding: '36px',
+              width: '94%',
+              padding: 'clamp(20px, 4vw, 36px)',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
@@ -947,13 +954,14 @@ export const RoomManager = () => {
                   Add Room to Property
                 </h2>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  Configure room images, what's in the room, and inventory items.
+                  Configure room specs, photography, in-room amenities, and inventory ledger.
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
               >
                 <X size={22} />
               </button>
@@ -981,11 +989,11 @@ export const RoomManager = () => {
             <form onSubmit={handleCreateRoom} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
               {/* Section 1: Basic Specifications */}
               <div style={{ padding: '18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.05em' }}>
                   1. Room Specifications & Property Assignment
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
+                <div className="responsive-form-grid-2" style={{ marginBottom: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       Target Property *
@@ -1013,11 +1021,13 @@ export const RoomManager = () => {
                       className="input-control"
                       value={newRoomNumber}
                       onChange={(e) => setNewRoomNumber(e.target.value)}
-                      placeholder="e.g. 401, Villa-02, Penthouse"
+                      placeholder="e.g. 101, Villa-A, Suite 402"
                       required
                     />
                   </div>
+                </div>
 
+                <div className="responsive-form-grid-3">
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       Floor
@@ -1027,7 +1037,7 @@ export const RoomManager = () => {
                       className="input-control"
                       value={newFloor}
                       onChange={(e) => setNewFloor(e.target.value)}
-                      placeholder="1"
+                      placeholder="e.g. 1"
                       min="1"
                     />
                   </div>
@@ -1041,7 +1051,7 @@ export const RoomManager = () => {
                       className="input-control"
                       value={newRoomTypeName}
                       onChange={(e) => setNewRoomTypeName(e.target.value)}
-                      placeholder="Executive Suite"
+                      placeholder="e.g. Deluxe Suite, Presidential"
                     />
                   </div>
 
@@ -1054,7 +1064,8 @@ export const RoomManager = () => {
                       className="input-control"
                       value={newPrice}
                       onChange={(e) => setNewPrice(e.target.value)}
-                      placeholder="4500"
+                      placeholder="e.g. 3500"
+                      min="0"
                     />
                   </div>
                 </div>
@@ -1062,7 +1073,7 @@ export const RoomManager = () => {
 
               {/* Section 2: Room Images */}
               <div style={{ padding: '18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.05em' }}>
                   2. Room Photography & Visuals
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
@@ -1093,22 +1104,22 @@ export const RoomManager = () => {
                 </div>
 
                 {/* Custom URL Input */}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
                   <input
                     type="url"
                     className="input-control"
-                    placeholder="Or enter custom image URL (https://...)"
+                    placeholder="Enter custom image URL (https://...)"
                     value={customImageUrl}
                     onChange={(e) => setCustomImageUrl(e.target.value)}
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 240px' }}
                   />
-                  <button type="button" onClick={handleAddCustomPhoto} className="btn btn-outline" style={{ padding: '8px 16px' }}>
+                  <button type="button" onClick={handleAddCustomPhoto} className="btn btn-outline" style={{ padding: '8px 16px', flex: '0 0 auto' }}>
                     Add Photo
                   </button>
                 </div>
 
                 {/* Selected Images Thumbnails */}
-                {selectedImages.length > 0 && (
+                {selectedImages.length > 0 ? (
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                     {selectedImages.map((url, i) => (
                       <div key={i} style={{ position: 'relative', width: '90px', height: '65px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
@@ -1131,22 +1142,34 @@ export const RoomManager = () => {
                             justifyContent: 'center',
                             cursor: 'pointer',
                           }}
+                          aria-label="Remove photo"
                         >
                           <X size={12} />
                         </button>
                       </div>
                     ))}
                   </div>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px 0' }}>
+                    No photos added yet. Select a preset above or enter a custom photo URL.
+                  </div>
                 )}
               </div>
 
               {/* Section 3: What's in the room (Amenities) */}
               <div style={{ padding: '18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  3. What's in the Room (Amenities & Comforts)
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    3. What's in the Room (Amenities & Comforts)
+                  </div>
+                  {selectedAmenities.length > 0 && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--gold-dark)' }}>
+                      {selectedAmenities.length} selected
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                  Click to toggle amenities included in this room.
+                  Click presets to toggle amenities, or add custom room features below.
                 </div>
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '14px' }}>
@@ -1178,16 +1201,16 @@ export const RoomManager = () => {
                   })}
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <input
                     type="text"
                     className="input-control"
                     placeholder="Add custom amenity (e.g. Jacuzzi, City Balcony, Soundbar)..."
                     value={customAmenity}
                     onChange={(e) => setCustomAmenity(e.target.value)}
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 240px' }}
                   />
-                  <button type="button" onClick={handleAddCustomAmenity} className="btn btn-outline" style={{ padding: '8px 16px' }}>
+                  <button type="button" onClick={handleAddCustomAmenity} className="btn btn-outline" style={{ padding: '8px 16px', flex: '0 0 auto' }}>
                     Add
                   </button>
                 </div>
@@ -1195,21 +1218,29 @@ export const RoomManager = () => {
 
               {/* Section 4: Room Inventory Option */}
               <div style={{ padding: '18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  4. Room Inventory Items
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    4. Room Inventory Items
+                  </div>
+                  {roomInventory.length > 0 && (
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--gold-dark)' }}>
+                      {roomInventory.length} items logged
+                    </span>
+                  )}
                 </div>
                 <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                  Keep track of linens, appliances, furniture, and amenities assigned to this room.
+                  Track linens, appliances, furniture, and amenities assigned specifically to this room.
                 </div>
 
-                {/* Add Item Row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '10px', marginBottom: '14px' }}>
+                {/* Add Item Row with responsive wrapping */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
                   <input
                     type="text"
                     className="input-control"
                     placeholder="Item name (e.g. Bath Towels, Nespresso Machine)..."
                     value={newInvName}
                     onChange={(e) => setNewInvName(e.target.value)}
+                    style={{ flex: '2 1 180px' }}
                   />
                   <input
                     type="number"
@@ -1218,11 +1249,13 @@ export const RoomManager = () => {
                     value={newInvQty}
                     onChange={(e) => setNewInvQty(e.target.value)}
                     min="1"
+                    style={{ flex: '1 1 70px' }}
                   />
                   <select
                     className="input-control"
                     value={newInvCat}
                     onChange={(e) => setNewInvCat(e.target.value)}
+                    style={{ flex: '1 1 120px' }}
                   >
                     <option value="Linen">Linen</option>
                     <option value="Bedding">Bedding</option>
@@ -1231,46 +1264,53 @@ export const RoomManager = () => {
                     <option value="Toiletries">Toiletries</option>
                     <option value="Furniture">Furniture</option>
                   </select>
-                  <button type="button" onClick={handleAddInventoryItem} className="btn btn-outline" style={{ padding: '8px 16px' }}>
+                  <button type="button" onClick={handleAddInventoryItem} className="btn btn-gold" style={{ padding: '8px 16px', flex: '0 0 auto' }}>
                     Add Item
                   </button>
                 </div>
 
                 {/* Inventory Table */}
-                <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
-                    <thead>
-                      <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
-                        <th style={{ padding: '8px 12px' }}>Item Name</th>
-                        <th style={{ padding: '8px 12px' }}>Category</th>
-                        <th style={{ padding: '8px 12px' }}>Quantity</th>
-                        <th style={{ padding: '8px 12px', textAlign: 'right' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {roomInventory.map((item, idx) => (
-                        <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: '#FFFFFF' }}>
-                          <td style={{ padding: '8px 12px', fontWeight: 600 }}>{item.name}</td>
-                          <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{item.category}</td>
-                          <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--gold-dark)' }}>{item.quantity}</td>
-                          <td style={{ padding: '8px 12px', textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveInventoryItem(idx)}
-                              style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
+                {roomInventory.length > 0 ? (
+                  <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '8px 12px' }}>Item Name</th>
+                          <th style={{ padding: '8px 12px' }}>Category</th>
+                          <th style={{ padding: '8px 12px' }}>Quantity</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'right' }}>Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {roomInventory.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: '#FFFFFF' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 600 }}>{item.name}</td>
+                            <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{item.category}</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--gold-dark)' }}>{item.quantity}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveInventoryItem(idx)}
+                                style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}
+                                aria-label="Delete item"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '6px 0' }}>
+                    No inventory items added yet. Add items above to track room stock.
+                  </div>
+                )}
               </div>
 
               {/* Submit Buttons */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', flexWrap: 'wrap' }}>
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}

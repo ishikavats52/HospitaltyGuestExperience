@@ -21,6 +21,18 @@ export const MenuManager = () => {
   const [isVegetarian, setIsVegetarian] = useState(true);
   const [creating, setCreating] = useState(false);
 
+  // Background scroll lock when modal is open
+  useEffect(() => {
+    if (isAddModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isAddModalOpen]);
+
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
@@ -242,26 +254,50 @@ export const MenuManager = () => {
       {/* Add Item Modal */}
       {isAddModalOpen && (
         <div className="modal-backdrop active" onClick={() => setIsAddModalOpen(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px' }}>
-              Add New In-Room Dining Item
-            </h3>
-            <form onSubmit={handleCreateItem} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div
+            className="modal-content glass-panel"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '500px',
+              width: '94%',
+              padding: 'clamp(20px, 4vw, 32px)',
+              background: '#FFFFFF',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-lg)',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                Add New In-Room Dining Item
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
+              >
+                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>✕</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateItem} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  Item / Dish Name
+                  Item / Dish Name *
                 </label>
                 <input
                   type="text"
                   className="input-control"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Artisanal Truffle Pasta"
+                  placeholder="Enter dish name..."
                   required
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="responsive-form-grid-2">
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
                     Category
@@ -281,14 +317,14 @@ export const MenuManager = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                    Price (₹)
+                    Price (₹) *
                   </label>
                   <input
                     type="number"
                     className="input-control"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
-                    placeholder="450"
+                    placeholder="Enter price..."
                     min="0"
                     required
                   />
