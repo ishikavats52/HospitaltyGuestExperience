@@ -1414,102 +1414,110 @@ Login URL: ${createdCredentials.loginUrl}`;
       {/* MODAL: ADD STANDALONE DEPARTMENT                               */}
       {/* ------------------------------------------------------------- */}
       {isAddDeptModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsAddDeptModalOpen(false)}>
+        <div className="modal-backdrop active" onClick={() => setIsAddDeptModalOpen(false)}>
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
             style={{
-              width: '94%',
-              maxWidth: '520px',
+              width: '96%',
+              maxWidth: '540px',
               backgroundColor: '#FFFFFF',
               borderRadius: 'var(--radius-lg)',
               boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              padding: '24px 28px',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <FolderPlus size={20} color="var(--gold-primary)" />
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                   Create Hotel Department
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddDeptModalOpen(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+                aria-label="Close modal"
               >
                 <X size={20} />
               </button>
             </div>
 
-            {deptModalError && (
-              <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: '0.82rem', marginBottom: '16px' }}>
-                {deptModalError}
-              </div>
-            )}
+            <form id="add-dept-form" onSubmit={handleCreateDepartmentStandalone} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              {/* Scrollable Body */}
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {deptModalError && (
+                  <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: '0.82rem' }}>
+                    {deptModalError}
+                  </div>
+                )}
 
-            <form onSubmit={handleCreateDepartmentStandalone} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                  Department Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Concierge & Guest Relations, Security, Banquets"
-                  className="input-control"
-                  value={deptModalName}
-                  onChange={(e) => setDeptModalName(e.target.value)}
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
+                    Department Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Concierge & Guest Relations, Security, Banquets"
+                    className="input-control"
+                    value={deptModalName}
+                    onChange={(e) => setDeptModalName(e.target.value)}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                  Description / Operational Scope
-                </label>
-                <textarea
-                  placeholder="Describe duties, oversight, and responsibilities..."
-                  className="input-control"
-                  rows={2}
-                  value={deptModalDesc}
-                  onChange={(e) => setDeptModalDesc(e.target.value)}
-                  style={{ resize: 'vertical' }}
-                />
-              </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
+                    Description / Operational Scope
+                  </label>
+                  <textarea
+                    placeholder="Describe duties, oversight, and responsibilities..."
+                    className="input-control"
+                    rows={2}
+                    value={deptModalDesc}
+                    onChange={(e) => setDeptModalDesc(e.target.value)}
+                    style={{ resize: 'vertical' }}
+                  />
+                </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                  Sub-Departments / Functionalities (Comma Separated)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Gate Security, CCTV Surveillance, Night Patrol"
-                  className="input-control"
-                  value={deptModalSubs}
-                  onChange={(e) => setDeptModalSubs(e.target.value)}
-                />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Separate specializations with commas. You can also add more later.
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
+                    Sub-Departments / Functionalities (Comma Separated)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Gate Security, CCTV Surveillance, Night Patrol"
+                    className="input-control"
+                    value={deptModalSubs}
+                    onChange={(e) => setDeptModalSubs(e.target.value)}
+                  />
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Separate specializations with commas. You can also add more later.
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+              {/* Pinned Sticky Footer */}
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setIsAddDeptModalOpen(false)}
                   className="btn btn-outline"
-                  style={{ padding: '8px 16px', fontSize: '0.84rem' }}
+                  style={{ padding: '9px 18px', fontSize: '0.84rem' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  form="add-dept-form"
                   disabled={deptModalLoading}
                   className="btn btn-gold"
-                  style={{ padding: '8px 20px', fontSize: '0.84rem', fontWeight: 700 }}
+                  style={{ padding: '9px 22px', fontSize: '0.84rem', fontWeight: 700 }}
                 >
                   {deptModalLoading ? 'Creating...' : 'Create Department'}
                 </button>

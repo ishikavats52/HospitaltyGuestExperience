@@ -582,16 +582,18 @@ export const BillingPage = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '650px',
-              width: '90%',
-              padding: '36px',
+              width: '96%',
+              maxHeight: '92dvh',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
               <div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--gold-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                   Official Tax Invoice
@@ -603,21 +605,23 @@ export const BillingPage = () => {
               <button
                 type="button"
                 onClick={() => setSelectedStayId(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
               >
                 <X size={22} />
               </button>
             </div>
 
-            {loadingFolio ? (
-              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
-                <div className="animate-spin" style={{ display: 'inline-block', marginBottom: '10px' }}>
-                  <Receipt size={30} color="var(--gold-primary)" />
+            {/* Scrollable Body */}
+            <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px' }}>
+              {loadingFolio ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-muted)' }}>
+                  <div className="animate-spin" style={{ display: 'inline-block', marginBottom: '10px' }}>
+                    <Receipt size={30} color="var(--gold-primary)" />
+                  </div>
+                  <div>Fetching itemized charge ledger...</div>
                 </div>
-                <div>Fetching itemized charge ledger...</div>
-              </div>
-            ) : folioData ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              ) : folioData ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {/* Folio Metadata */}
                 <div
                   style={{
@@ -709,30 +713,34 @@ export const BillingPage = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => window.print()}
-                    className="btn btn-outline"
-                    style={{ padding: '11px 18px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Printer size={16} /> Print Receipt
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={settling}
-                    onClick={() => handleSettleFolio(selectedStayId)}
-                    className="btn btn-gold"
-                    style={{ padding: '11px 24px', borderRadius: 'var(--radius-full)' }}
-                  >
-                    {settling ? 'Processing...' : 'Settle Folio (Paid in Full)'}
-                  </button>
                 </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '30px' }}>Failed to retrieve folio data.</div>
+              )}
+            </div>
+
+            {/* Pinned Sticky Footer */}
+            {folioData && (
+              <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => window.print()}
+                  className="btn btn-outline"
+                  style={{ padding: '9px 16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.84rem' }}
+                >
+                  <Printer size={15} /> Print Receipt
+                </button>
+
+                <button
+                  type="button"
+                  disabled={settling}
+                  onClick={() => handleSettleFolio(selectedStayId)}
+                  className="btn btn-gold"
+                  style={{ padding: '9px 20px', borderRadius: 'var(--radius-full)', fontSize: '0.86rem', fontWeight: 700 }}
+                >
+                  {settling ? 'Processing...' : 'Settle Folio (Paid in Full)'}
+                </button>
               </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '30px' }}>Failed to retrieve folio data.</div>
             )}
           </div>
         </div>

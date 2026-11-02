@@ -921,17 +921,19 @@ export const RoomManager = () => {
             className="modal-content glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '720px',
-              width: '90%',
-              padding: '36px',
+              maxWidth: '740px',
+              width: '96%',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
               <div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span style={{ padding: '3px 10px', background: 'var(--gold-soft)', color: 'var(--gold-primary)', borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800 }}>
@@ -941,18 +943,22 @@ export const RoomManager = () => {
                     Floor {inspectedRoom.floor || 1} • {inspectedRoom.propertyName}
                   </span>
                 </div>
-                <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: '6px 0 0', color: 'var(--text-primary)' }}>
+                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '4px 0 0', color: 'var(--text-primary)' }}>
                   {inspectedRoom.roomTypeName || 'Deluxe Heritage Suite'}
                 </h2>
               </div>
               <button
                 type="button"
                 onClick={() => setInspectedRoom(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+                aria-label="Close modal"
               >
                 <X size={22} />
               </button>
             </div>
+
+            {/* Scrollable Body */}
+            <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
             {/* Photos Strip */}
             <div style={{ marginBottom: '22px' }}>
@@ -1035,9 +1041,11 @@ export const RoomManager = () => {
                 </table>
               </div>
             </div>
+            </div>
 
-            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="button" onClick={() => setInspectedRoom(null)} className="btn btn-outline" style={{ padding: '10px 22px' }}>
+            {/* Pinned Sticky Footer */}
+            <div className="modal-footer">
+              <button type="button" onClick={() => setInspectedRoom(null)} className="btn btn-gold" style={{ padding: '10px 24px', fontSize: '0.86rem', fontWeight: 700 }}>
                 Close Inspector
               </button>
             </div>

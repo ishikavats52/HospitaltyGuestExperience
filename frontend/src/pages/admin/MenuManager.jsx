@@ -258,118 +258,125 @@ export const MenuManager = () => {
             className="modal-content glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '500px',
-              width: '94%',
-              padding: 'clamp(20px, 4vw, 32px)',
+              maxWidth: '520px',
+              width: '96%',
+              maxHeight: '92dvh',
               background: '#FFFFFF',
               borderRadius: 'var(--radius-lg)',
               boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                 Add New In-Room Dining Item
               </h3>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
                 aria-label="Close modal"
               >
                 <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>✕</span>
               </button>
             </div>
 
-            <form onSubmit={handleCreateItem} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  Item / Dish Name *
-                </label>
-                <input
-                  type="text"
-                  className="input-control"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter dish name..."
-                  required
-                />
-              </div>
-
-              <div className="responsive-form-grid-2">
+            <form id="add-menu-item-form" onSubmit={handleCreateItem} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              {/* Scrollable Body */}
+              <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                    Category
-                  </label>
-                  <select
-                    className="input-control"
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                  >
-                    {categories.map((c) => (
-                      <option key={c._id} value={c._id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                    Price (₹) *
+                    Item / Dish Name *
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     className="input-control"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="Enter price..."
-                    min="0"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter dish name..."
                     required
                   />
                 </div>
-              </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                  Description / Ingredients
+                <div className="responsive-form-grid-2">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      Category
+                    </label>
+                    <select
+                      className="input-control"
+                      value={categoryId}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                    >
+                      {categories.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      Price (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      className="input-control"
+                      value={price}
+                      onChange={(e) => setPrice(e.target.value)}
+                      placeholder="Enter price..."
+                      min="0"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                    Description / Ingredients
+                  </label>
+                  <textarea
+                    className="input-control"
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Description of the culinary dish..."
+                  />
+                </div>
+
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isVegetarian}
+                    onChange={(e) => setIsVegetarian(e.target.checked)}
+                    style={{ accentColor: 'var(--gold-primary)' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                    Vegetarian Dish (Veg indicator)
+                  </span>
                 </label>
-                <textarea
-                  className="input-control"
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Description of the culinary dish..."
-                />
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={isVegetarian}
-                  onChange={(e) => setIsVegetarian(e.target.checked)}
-                  style={{ accentColor: 'var(--gold-primary)' }}
-                />
-                <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                  Vegetarian Dish (Veg indicator)
-                </span>
-              </label>
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              {/* Pinned Sticky Footer */}
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
                   className="btn btn-outline"
-                  style={{ flex: 1 }}
+                  style={{ padding: '10px 18px', fontSize: '0.86rem' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  form="add-menu-item-form"
                   disabled={creating}
                   className="btn btn-gold"
-                  style={{ flex: 1 }}
+                  style={{ padding: '10px 22px', fontSize: '0.86rem', fontWeight: 700 }}
                 >
                   {creating ? 'Saving...' : 'Add to Menu'}
                 </button>

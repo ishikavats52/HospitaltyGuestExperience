@@ -695,189 +695,207 @@ export const PropertyManager = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '640px',
-              width: '94%',
-              padding: 'clamp(20px, 4vw, 36px)',
+              width: '96%',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '22px' }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
               <div>
-                <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                   Add Property to Portfolio
                 </h2>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
                   Register a new hotel branch, wing, or resort.
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
                 aria-label="Close modal"
               >
                 <X size={22} />
               </button>
             </div>
 
-            {modalError && (
+            {/* Form wrapping scrollable body & pinned footer */}
+            <form id="add-property-form" onSubmit={handleCreateProperty} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              {/* Scrollable Body */}
               <div
+                className="modal-body"
                 style={{
-                  padding: '12px 16px',
-                  background: 'var(--danger-bg)',
-                  color: 'var(--danger)',
-                  borderRadius: 'var(--radius-sm)',
-                  fontSize: '0.85rem',
-                  marginBottom: '18px',
+                  flex: 1,
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  padding: '20px 24px',
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
+                  flexDirection: 'column',
+                  gap: '16px',
                 }}
               >
-                <AlertCircle size={16} />
-                <span>{modalError}</span>
-              </div>
-            )}
+                {modalError && (
+                  <div
+                    style={{
+                      padding: '12px 16px',
+                      background: 'var(--danger-bg)',
+                      color: 'var(--danger)',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: '0.85rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <AlertCircle size={16} />
+                    <span>{modalError}</span>
+                  </div>
+                )}
 
-            <form onSubmit={handleCreateProperty} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-              <div className="responsive-form-grid-2-1">
+                <div className="responsive-form-grid-2-1">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Property / Hotel Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={propertyName}
+                      onChange={(e) => setPropertyName(e.target.value)}
+                      placeholder="Enter property name..."
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Property Code
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={propertyCode}
+                      onChange={(e) => setPropertyCode(e.target.value)}
+                      placeholder="e.g. PROP-01"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Property / Hotel Name *
+                    Street Address
                   </label>
                   <input
                     type="text"
                     className="input-control"
-                    value={propertyName}
-                    onChange={(e) => setPropertyName(e.target.value)}
-                    placeholder="Enter property name..."
-                    required
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Enter full street address..."
                   />
                 </div>
+
+                <div className="responsive-form-grid-3">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Enter city..."
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      State / Region
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      placeholder="Enter state..."
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      placeholder="Enter country..."
+                    />
+                  </div>
+                </div>
+
+                <div className="responsive-form-grid-2">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Contact Phone
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. +91 98765 43210"
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Contact Email
+                    </label>
+                    <input
+                      type="email"
+                      className="input-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. contact@property.com"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Property Code
+                    Total Capacity / Rooms
                   </label>
                   <input
-                    type="text"
+                    type="number"
                     className="input-control"
-                    value={propertyCode}
-                    onChange={(e) => setPropertyCode(e.target.value)}
-                    placeholder="e.g. PROP-01"
+                    value={totalRooms}
+                    onChange={(e) => setTotalRooms(e.target.value)}
+                    placeholder="Total number of rooms..."
+                    min="1"
                   />
                 </div>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Street Address
-                </label>
-                <input
-                  type="text"
-                  className="input-control"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter full street address..."
-                />
-              </div>
-
-              <div className="responsive-form-grid-3">
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    className="input-control"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Enter city..."
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    State / Region
-                  </label>
-                  <input
-                    type="text"
-                    className="input-control"
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    placeholder="Enter state..."
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    className="input-control"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    placeholder="Enter country..."
-                  />
-                </div>
-              </div>
-
-              <div className="responsive-form-grid-2">
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Contact Phone
-                  </label>
-                  <input
-                    type="text"
-                    className="input-control"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. +91 98765 43210"
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Contact Email
-                  </label>
-                  <input
-                    type="email"
-                    className="input-control"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. contact@property.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Total Capacity / Rooms
-                </label>
-                <input
-                  type="number"
-                  className="input-control"
-                  value={totalRooms}
-                  onChange={(e) => setTotalRooms(e.target.value)}
-                  placeholder="Total number of rooms..."
-                  min="1"
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px', flexWrap: 'wrap' }}>
+              {/* Pinned Sticky Footer */}
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
                   className="btn btn-outline"
-                  style={{ padding: '12px 22px' }}
+                  style={{ padding: '10px 20px', fontSize: '0.86rem' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  form="add-property-form"
                   disabled={creating}
                   className="btn btn-gold"
-                  style={{ padding: '12px 26px', borderRadius: 'var(--radius-full)' }}
+                  style={{ padding: '10px 24px', fontSize: '0.86rem', fontWeight: 700 }}
                 >
                   {creating ? 'Saving Property...' : 'Save & Register Property'}
                 </button>
@@ -895,98 +913,117 @@ export const PropertyManager = () => {
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '600px',
-              width: '94%',
-              padding: 'clamp(20px, 4vw, 36px)',
+              width: '96%',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
               borderRadius: 'var(--radius-lg)',
               background: '#FFFFFF',
               boxShadow: 'var(--shadow-lg)',
-              maxHeight: '90vh',
-              overflowY: 'auto',
+              overflow: 'hidden',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+            {/* Pinned Sticky Header */}
+            <div className="modal-header">
+              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
                 Edit Property Details
               </h2>
               <button
                 type="button"
                 onClick={() => setEditingProperty(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
                 aria-label="Close modal"
               >
                 <X size={22} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Property Name
-                </label>
-                <input
-                  type="text"
-                  className="input-control"
-                  value={editingProperty.name || ''}
-                  onChange={(e) => setEditingProperty({ ...editingProperty, name: e.target.value })}
-                  placeholder="Property name..."
-                  required
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Street Address
-                </label>
-                <input
-                  type="text"
-                  className="input-control"
-                  value={editingProperty.address || ''}
-                  onChange={(e) => setEditingProperty({ ...editingProperty, address: e.target.value })}
-                  placeholder="Street address..."
-                />
-              </div>
-
-              <div className="responsive-form-grid-2">
+            {/* Form wrapping scrollable body & pinned footer */}
+            <form id="edit-property-form" onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              {/* Scrollable Body */}
+              <div
+                className="modal-body"
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  padding: '20px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    City
+                    Property Name
                   </label>
                   <input
                     type="text"
                     className="input-control"
-                    value={editingProperty.city || ''}
-                    onChange={(e) => setEditingProperty({ ...editingProperty, city: e.target.value })}
-                    placeholder="City..."
+                    value={editingProperty.name || ''}
+                    onChange={(e) => setEditingProperty({ ...editingProperty, name: e.target.value })}
+                    placeholder="Property name..."
+                    required
                   />
                 </div>
+
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Phone
+                    Street Address
                   </label>
                   <input
                     type="text"
                     className="input-control"
-                    value={editingProperty.phone || ''}
-                    onChange={(e) => setEditingProperty({ ...editingProperty, phone: e.target.value })}
-                    placeholder="Phone number..."
+                    value={editingProperty.address || ''}
+                    onChange={(e) => setEditingProperty({ ...editingProperty, address: e.target.value })}
+                    placeholder="Street address..."
                   />
+                </div>
+
+                <div className="responsive-form-grid-2">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editingProperty.city || ''}
+                      onChange={(e) => setEditingProperty({ ...editingProperty, city: e.target.value })}
+                      placeholder="City..."
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Phone
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editingProperty.phone || ''}
+                      onChange={(e) => setEditingProperty({ ...editingProperty, phone: e.target.value })}
+                      placeholder="Phone number..."
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '14px', flexWrap: 'wrap' }}>
+              {/* Pinned Sticky Footer */}
+              <div className="modal-footer">
                 <button
                   type="button"
                   onClick={() => setEditingProperty(null)}
                   className="btn btn-outline"
-                  style={{ padding: '11px 20px' }}
+                  style={{ padding: '10px 20px', fontSize: '0.86rem' }}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
+                  form="edit-property-form"
                   disabled={savingEdit}
                   className="btn btn-gold"
-                  style={{ padding: '11px 24px', borderRadius: 'var(--radius-full)' }}
+                  style={{ padding: '10px 24px', fontSize: '0.86rem', fontWeight: 700 }}
                 >
                   {savingEdit ? 'Updating...' : 'Update Property'}
                 </button>

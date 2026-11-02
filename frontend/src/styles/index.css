@@ -903,14 +903,36 @@ body {
   max-height: calc(100dvh - 32px) !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
   margin: auto !important;
   box-sizing: border-box !important;
   animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Modals with structured header/body: container clips outer rounded corners while modal-body scrolls */
+.modal-content:has(.modal-body) {
+  overflow: hidden !important;
+}
+
+/* Fallback: Modals without .modal-body, or standalone scrollable modals MUST scroll smoothly */
+.modal-content:not(:has(.modal-body)),
+.modal-content.is-scrollable,
+.modal-content[style*="overflow"] {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Forms inside modal-content must flex and not collapse scroll */
+.modal-content > form {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+}
+
 .modal-header {
-  padding: 22px 28px !important;
+  padding: 20px 26px !important;
   background: linear-gradient(135deg, #FFF9FA 0%, #FFFFFF 100%) !important;
   border-bottom: 1px solid var(--border-color) !important;
   display: flex !important;
@@ -918,21 +940,27 @@ body {
   justify-content: space-between !important;
   flex-shrink: 0 !important;
   gap: 12px !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
 }
 
 .modal-body {
-  padding: 28px !important;
+  padding: 24px 26px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
   flex: 1 !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 20px !important;
+  gap: 16px !important;
   box-sizing: border-box !important;
 }
 
 .modal-footer {
-  padding: 18px 28px !important;
+  padding: 16px 26px !important;
   background: var(--bg-primary) !important;
   border-top: 1px solid var(--border-color) !important;
   display: flex !important;
@@ -940,6 +968,9 @@ body {
   justify-content: flex-end !important;
   gap: 12px !important;
   flex-shrink: 0 !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
 }
 
 /* Responsive Grid Form Helpers */
