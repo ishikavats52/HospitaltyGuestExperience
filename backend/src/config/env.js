@@ -10,9 +10,9 @@ export const ENV = {
   DB_ENGINE: process.env.DB_ENGINE || 'dynamodb',
   
   // AWS DynamoDB Configuration
-  AWS_REGION: process.env.AWS_REGION || 'us-east-1',
-  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || 'local',
-  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || 'local',
+  AWS_REGION: process.env.AWS_REGION || 'ap-south-1',
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || '',
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || '',
   DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || '',
   DYNAMODB_TABLE_NAME: process.env.DYNAMODB_TABLE_NAME || 'HospitalityMainTable',
 

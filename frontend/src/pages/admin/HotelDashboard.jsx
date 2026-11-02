@@ -1078,20 +1078,37 @@ export const HotelDashboard = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <input
               type="text"
               placeholder="Filter by guest or ID..."
               value={guestSearch}
               onChange={(e) => setGuestSearch(e.target.value)}
               style={{
-                padding: '6px 12px',
+                padding: '7px 12px',
                 fontSize: '0.82rem',
                 borderRadius: '8px',
                 border: '1px solid var(--border-color)',
                 outline: 'none',
               }}
             />
+            <button
+              type="button"
+              onClick={() => setIsWalkInModalOpen(true)}
+              className="btn btn-gold"
+              style={{
+                padding: '7px 14px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <UserPlus size={15} />
+              <span>+ Register Guest</span>
+            </button>
           </div>
         </div>
 
@@ -1099,7 +1116,23 @@ export const HotelDashboard = () => {
         {loadingGuests ? (
           <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Loading guest register...</div>
         ) : filteredGuests.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>No guests found in registry.</div>
+          <div style={{ textAlign: 'center', padding: '36px 20px', background: 'var(--bg-tertiary)', borderRadius: '10px', border: '1px dashed var(--border-color)' }}>
+            <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>
+              No guest profiles registered yet
+            </div>
+            <p style={{ margin: '0 0 14px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              Manually register a walk-in guest or upcoming arrival to allocate a room and create a verified digital stay record.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsWalkInModalOpen(true)}
+              className="btn btn-gold"
+              style={{ padding: '8px 18px', fontSize: '0.84rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <UserPlus size={15} />
+              <span>Register First Guest</span>
+            </button>
+          </div>
         ) : (
           <div className="table-responsive">
             <table className="data-table">
