@@ -18,10 +18,16 @@ import {
   FileText,
   Sparkles,
   BedDouble,
-  DollarSign
+  DollarSign,
+  UserPlus,
+  Calendar,
+  Copy,
+  Check,
+  Zap,
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import api from '../../services/api.js';
+import { WalkInGuestModal } from '../../components/modals/WalkInGuestModal.jsx';
 
 export const ReceptionDesk = () => {
   // Scanner & Input State
@@ -36,8 +42,14 @@ export const ReceptionDesk = () => {
   // Guest 360 Full Details State
   const [guest360, setGuest360] = useState(null);
 
-  // Recent Arrivals list for 1-click lookup
-  const [arrivals, setArrivals] = useState([]);
+  // Today's Bookings & Scheduled Arrivals State
+  const [todayBookings, setTodayBookings] = useState([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [copiedBookingId, setCopiedBookingId] = useState(null);
+
+  // Room Inventory State
+  const [rooms, setRooms] = useState([]);
+  const [isWalkInModalOpen, setIsWalkInModalOpen] = useState(false);
 
   // Camera & Canvas Refs
   const videoRef = useRef(null);
@@ -45,20 +57,53 @@ export const ReceptionDesk = () => {
   const streamRef = useRef(null);
   const animationFrameRef = useRef(null);
 
-  // Fetch recent arrivals on mount
+  // Load all desk data on mount
   useEffect(() => {
-    fetchArrivals();
+    fetchDeskData();
     return () => {
       stopCamera();
     };
   }, []);
 
-  const fetchArrivals = async () => {
+  const fetchDeskData = async () => {
     try {
-      const res = await api.get('/qr/arrivals');
-      setArrivals(res.data || []);
+      setLoadingBookings(true);
+      const [bkRes, rmRes] = await Promise.all([
+        api.get('/bookings/today').catch(() => ({ data: [] })),
+        api.get('/rooms').catch(() => ({ data: [] })),
+      ]);
+      setTodayBookings(bkRes.data || []);
+      setRooms(rmRes.data || []);
     } catch (_) {
-      setArrivals([]);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  // Copy Magic Link to clipboard
+  const handleCopyMagicLink = (booking) => {
+    const link = `${window.location.origin}${booking.magicLink || `/stay/${booking.bookingNumber}`}`;
+    navigator.clipboard.writeText(link);
+    setCopiedBookingId(booking._id || booking.bookingNumber);
+    setSuccessMsg(`Magic check-in link copied for ${booking.guestName}! Ready to send via WhatsApp.`);
+    setTimeout(() => setCopiedBookingId(null), 3000);
+  };
+
+  // 1-Click Check-In from Reception Desk
+  const handleDirectCheckIn = async (booking) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.patch(`/bookings/${booking._id}/checkin`, { roomId: booking.roomId });
+      setSuccessMsg(`Guest ${booking.guestName} checked into Room ${booking.roomNumber || 'assigned'}!`);
+      await fetchDeskData();
+      if (booking.stayId) {
+        handleSelectArrival(booking.stayId);
+      }
+    } catch (err) {
+      setError(err.message || 'Check-in failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,7 +193,7 @@ export const ReceptionDesk = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -161,42 +206,37 @@ export const ReceptionDesk = () => {
         if (code && code.data) {
           handleScannedData(code.data);
         } else {
-          setError('No valid QR code detected in this photo. Please try another image.');
+          setError('No valid hospitality QR code detected in the uploaded image.');
         }
       };
-      img.src = reader.result;
+      img.src = event.target.result;
     };
     reader.readAsDataURL(file);
   };
 
-  // Process Scanned Data from QR (JSON or raw token/stayId)
-  const handleScannedData = async (rawData) => {
+  // Process Scanned or Input Data
+  const handleScannedData = async (rawPayload) => {
     setLoading(true);
     setError(null);
-    setSuccessMsg('QR Code successfully detected! Retrieving full Guest 360 profile...');
-
-    let parsedToken = rawData;
-    let targetStayId = '';
-    let bookingNumber = '';
+    setSuccessMsg(null);
 
     try {
-      const payload = JSON.parse(rawData);
-      if (payload.token) parsedToken = payload.token;
-      if (payload.stayId) targetStayId = payload.stayId;
-      if (payload.bookingNumber) bookingNumber = payload.bookingNumber;
-    } catch (_) {
-      // If raw string starts with STAY- or BK-
-      if (rawData.startsWith('BK-')) bookingNumber = rawData;
-      else targetStayId = rawData;
-    }
+      let stayId = null;
+      let token = null;
 
-    try {
-      const res = await api.post('/qr/lookup', {
-        token: parsedToken,
-        stayId: targetStayId || undefined,
-        bookingNumber: bookingNumber || undefined,
-      });
+      try {
+        const parsed = JSON.parse(rawPayload);
+        stayId = parsed.stayId || parsed.id;
+        token = parsed.token || parsed.qrToken;
+      } catch (_) {
+        if (rawPayload.startsWith('BK-') || rawPayload.startsWith('STAY-')) {
+          stayId = rawPayload;
+        } else {
+          token = rawPayload;
+        }
+      }
 
+      const res = await api.get(`/qr/stay-360/${stayId || token || 'default-stay'}`);
       setGuest360(res.data);
       setSuccessMsg('Guest Profile Loaded: ' + (res.data.guest?.name || 'Aarav Mehta'));
     } catch (err) {
@@ -212,7 +252,7 @@ export const ReceptionDesk = () => {
     handleScannedData(tokenInput || stayIdInput);
   };
 
-  // Direct 1-Click Demo Select
+  // Direct 1-Click Arrival Select
   const handleSelectArrival = async (stayId) => {
     setLoading(true);
     setError(null);
@@ -269,7 +309,7 @@ export const ReceptionDesk = () => {
       );
       setGuest360(res.data);
       setSuccessMsg('Check-In Confirmed! Room assigned and in-stay privileges activated.');
-      fetchArrivals();
+      fetchDeskData();
     } catch (err) {
       setError(err.message || 'Failed to validate check-in');
     } finally {
@@ -277,10 +317,10 @@ export const ReceptionDesk = () => {
     }
   };
 
-  // Reception Action: Check Out Guest & Settle Folio
+  // Reception Action: Check Out Guest & Settle Folio -> Room moves to CLEANING
   const handleCheckoutGuest = async () => {
     if (!guest360) return;
-    if (!window.confirm('Are you sure you want to complete check-out for this guest?')) return;
+    if (!window.confirm('Are you sure you want to complete check-out for this guest? Room will move to Turnover Cleaning.')) return;
     setLoading(true);
     setError(null);
     try {
@@ -290,8 +330,8 @@ export const ReceptionDesk = () => {
         })
       );
       setGuest360(res.data);
-      setSuccessMsg('Guest successfully checked out. Room status marked available.');
-      fetchArrivals();
+      setSuccessMsg('Guest successfully checked out. Room moved to Housekeeping Cleaning queue.');
+      fetchDeskData();
     } catch (err) {
       setError(err.message || 'Failed to complete check-out');
     } finally {
@@ -299,35 +339,103 @@ export const ReceptionDesk = () => {
     }
   };
 
+  // Quick Room Count Calculations
+  const occupiedCount = rooms.filter((r) => r.status === 'OCCUPIED').length;
+  const availableCount = rooms.filter((r) => r.status === 'AVAILABLE').length;
+  const cleaningCount = rooms.filter((r) => r.status === 'CLEANING').length;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
-      {/* Page Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
+      {/* ------------------------------------------------------------- */}
+      {/* 1. FRONT OFFICE HEADER & WALK-IN ACTION                      */}
+      {/* ------------------------------------------------------------- */}
+      <div
+        className="glass-panel animate-fade-in"
+        style={{
+          padding: 'clamp(16px, 3vw, 24px)',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '14px',
+        }}
+      >
         <div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--gold-light)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Front Office Operations
+          <div style={{ fontSize: '0.74rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}>
+            Front Office Operations Desk
           </div>
-          <h1 className="title-gold page-title">
-            Reception QR Scanner & Guest 360
+          <h1 className="title-gold page-title" style={{ fontSize: 'clamp(1.5rem, 2.8vw, 2rem)', margin: '4px 0 6px', letterSpacing: '-0.02em' }}>
+            Reception QR Scanner & Arrivals
           </h1>
-          <p className="page-subtitle">
-            Real-time camera QR scanner, in-stay check-in/out status, room assignment, live food orders & total folio bill.
+          <p className="page-subtitle" style={{ margin: 0, fontSize: '0.86rem' }}>
+            Today's scheduled arrivals, 1-click walk-in allotment, camera QR validator, and live Guest 360 folio billing.
           </p>
         </div>
 
-        {guest360 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {guest360 && (
+            <button
+              type="button"
+              onClick={() => {
+                setGuest360(null);
+                setSuccessMsg(null);
+              }}
+              className="btn btn-outline"
+              style={{ fontSize: '0.82rem', padding: '8px 14px' }}
+            >
+              <RefreshCw size={14} /> Scan Another Guest
+            </button>
+          )}
+
           <button
             type="button"
-            onClick={() => {
-              setGuest360(null);
-              setSuccessMsg(null);
+            onClick={() => setIsWalkInModalOpen(true)}
+            className="btn btn-gold"
+            style={{
+              padding: '10px 18px',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 14px rgba(229, 169, 60, 0.3)',
             }}
-            className="btn btn-outline"
-            style={{ fontSize: '0.8rem', padding: '8px 14px' }}
           >
-            <RefreshCw size={14} /> Scan Another Guest
+            <UserPlus size={18} />
+            <span>+ Register Walk-In Guest</span>
           </button>
-        )}
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 2. ROOM OCCUPANCY QUICK LEDGER STRIP                          */}
+      {/* ------------------------------------------------------------- */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '10px',
+        }}
+      >
+        <div style={{ padding: '12px 16px', background: '#FFFFFF', borderRadius: '10px', border: '1px solid var(--border-color)' }}>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Total Rooms</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>{rooms.length}</div>
+        </div>
+        <div style={{ padding: '12px 16px', background: '#F0F9F3', borderRadius: '10px', border: '1px solid rgba(28, 108, 67, 0.25)' }}>
+          <div style={{ fontSize: '0.72rem', color: '#1c6c43', fontWeight: 700 }}>● Empty & Ready (Available)</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1c6c43', marginTop: '2px' }}>{availableCount} Rooms</div>
+        </div>
+        <div style={{ padding: '12px 16px', background: '#FFF5F6', borderRadius: '10px', border: '1px solid rgba(186, 51, 51, 0.2)' }}>
+          <div style={{ fontSize: '0.72rem', color: '#BA3333', fontWeight: 700 }}>● Allotted (Occupied)</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#BA3333', marginTop: '2px' }}>{occupiedCount} Rooms</div>
+        </div>
+        <div style={{ padding: '12px 16px', background: '#FFFBEB', borderRadius: '10px', border: '1px solid rgba(217, 119, 6, 0.25)' }}>
+          <div style={{ fontSize: '0.72rem', color: '#D97706', fontWeight: 700 }}>● Turnover Cleaning</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D97706', marginTop: '2px' }}>{cleaningCount} Rooms</div>
+        </div>
       </div>
 
       {/* Notifications */}
@@ -345,7 +453,161 @@ export const ReceptionDesk = () => {
         </div>
       )}
 
-      {/* MAIN VIEW: SCANNER OR GUEST 360 CARD */}
+      {/* ------------------------------------------------------------- */}
+      {/* 3. TODAY'S BOOKINGS & SCHEDULED ARRIVALS (PINNED ON TOP)      */}
+      {/* ------------------------------------------------------------- */}
+      <section
+        className="glass-panel animate-fade-in"
+        style={{
+          padding: 'clamp(16px, 3vw, 24px)',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-md)',
+          border: '1px solid var(--border-color)',
+          borderTop: '4px solid var(--gold-primary)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--gold-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gold-primary)' }}>
+              <Calendar size={18} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                  Today's Bookings & Scheduled Arrivals
+                </h2>
+                <span style={{ background: 'var(--gold-soft)', color: 'var(--gold-dark)', fontSize: '0.72rem', fontWeight: 700, padding: '2px 8px', borderRadius: '10px' }}>
+                  {todayBookings.length} Total
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                Incoming reservations: 1-click Express Magic Link dispatch, instant desk check-in, or Guest 360 inspection
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={fetchDeskData}
+            disabled={loadingBookings}
+            className="btn btn-outline"
+            style={{ padding: '6px 12px', fontSize: '0.76rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+          >
+            <RefreshCw size={12} className={loadingBookings ? 'spin' : ''} /> Refresh
+          </button>
+        </div>
+
+        {loadingBookings ? (
+          <div style={{ textAlign: 'center', padding: '28px', color: 'var(--text-secondary)', fontSize: '0.84rem' }}>
+            Loading today's arrivals...
+          </div>
+        ) : todayBookings.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '24px', background: 'var(--bg-tertiary)', borderRadius: '10px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            No incoming bookings for today. Register walk-in guests directly above.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '12px' }}>
+            {todayBookings.map((b) => {
+              const isCheckedIn = b.stayStatus === 'STAY_ACTIVE' || b.status === 'CHECKED_IN';
+              const isCopied = copiedBookingId === (b._id || b.bookingNumber);
+
+              return (
+                <div
+                  key={b._id || b.bookingNumber}
+                  style={{
+                    backgroundColor: '#FFFFFF',
+                    border: isCheckedIn ? '1px solid rgba(28, 108, 67, 0.35)' : '1px solid var(--border-color)',
+                    borderLeft: isCheckedIn ? '4px solid var(--success, #1c6c43)' : '4px solid var(--gold-primary)',
+                    borderRadius: '10px',
+                    padding: '14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    boxShadow: 'var(--shadow-xs)',
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                      <div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          {b.bookingNumber} • {b.source || (b.isWalkIn ? 'WALK-IN' : 'OTA')}
+                        </div>
+                        <h4 style={{ margin: '2px 0 0', fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                          {b.guestName}
+                        </h4>
+                      </div>
+
+                      {isCheckedIn ? (
+                        <span className="badge badge-free" style={{ fontSize: '0.68rem' }}>● In-House</span>
+                      ) : (
+                        <span className="badge badge-gold" style={{ fontSize: '0.68rem' }}>Pending</span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', background: 'var(--bg-tertiary)', padding: '6px 10px', borderRadius: '6px', marginBottom: '6px' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                        {b.roomNumber && b.roomNumber !== 'Unassigned' ? `Room ${b.roomNumber}` : 'Unassigned'} ({b.roomTypeName || 'Deluxe'})
+                      </span>
+                      <span style={{ fontWeight: 800, color: 'var(--gold-dark)' }}>
+                        ₹{Number(b.totalAmount || 4500).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    {b.guestPhone && (
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Phone size={12} color="var(--text-muted)" />
+                        <span>{b.guestPhone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyMagicLink(b)}
+                      className="btn btn-outline"
+                      style={{ padding: '4px 8px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      title="Copy WhatsApp Express Check-In Link"
+                    >
+                      {isCopied ? <Check size={11} /> : <Copy size={11} />}
+                      <span>{isCopied ? 'Copied' : 'Magic Link'}</span>
+                    </button>
+
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      {!isCheckedIn && (
+                        <button
+                          type="button"
+                          onClick={() => handleDirectCheckIn(b)}
+                          disabled={loading}
+                          className="btn btn-gold"
+                          style={{ padding: '4px 10px', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Zap size={11} /> Check-In
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectArrival(b.stayId || b.bookingNumber)}
+                        disabled={loading}
+                        className="btn btn-outline"
+                        style={{ padding: '4px 10px', fontSize: '0.72rem' }}
+                      >
+                        Guest 360
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 4. MAIN WORKSPACE: SCANNER / MANUAL LOOKUP OR GUEST 360 CARD  */}
+      {/* ------------------------------------------------------------- */}
       {!guest360 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '20px' }}>
           {/* CAMERA QR SCANNER PANEL */}
@@ -375,7 +637,6 @@ export const ReceptionDesk = () => {
                   playsInline
                   style={{ width: '100%', height: '260px', maxHeight: '50vh', objectFit: 'cover', display: 'block' }}
                 />
-                {/* Aiming Reticle Viewfinder */}
                 <div
                   style={{
                     position: 'absolute',
@@ -424,7 +685,7 @@ export const ReceptionDesk = () => {
                 <div>
                   <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Scan Guest QR Pass</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                    Point phone or laptop camera at the guest's digital check-in QR code
+                    Point camera at guest's smartphone screen
                   </div>
                 </div>
 
@@ -445,34 +706,15 @@ export const ReceptionDesk = () => {
                 </div>
               </div>
             )}
-
-            {/* Quick 1-Click Arrival Selector for Demo */}
-            <div style={{ marginTop: '8px' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                Quick Demo Arrival Access (1-Click):
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => handleSelectArrival('BK-DELHI-101')}
-                  disabled={loading}
-                  className="btn btn-outline"
-                  style={{ fontSize: '0.8rem', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}
-                >
-                  <Sparkles size={14} color="var(--gold-light)" />
-                  Aarav Mehta (Suite 302 • BK-DELHI-101)
-                </button>
-              </div>
-            </div>
           </div>
 
           {/* MANUAL PAYLOAD / TOKEN FALLBACK */}
-          <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-light)', fontWeight: 600, fontSize: '0.95rem' }}>
+          <div className="glass-panel" style={{ padding: 'clamp(16px, 3vw, 24px)', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: '#FFFFFF' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)', fontWeight: 600, fontSize: '0.95rem' }}>
               <FileText size={20} />
               Manual Token / Booking Lookup
             </div>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
               Or manually enter the booking reference (e.g. <code>BK-DELHI-101</code>) or paste the scanned JSON token.
             </p>
 
@@ -809,6 +1051,7 @@ export const ReceptionDesk = () => {
               flexWrap: 'wrap',
               gap: '12px',
               borderColor: 'var(--border-active)',
+              backgroundColor: '#FFFFFF',
             }}
           >
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -836,7 +1079,7 @@ export const ReceptionDesk = () => {
                   className="btn btn-outline"
                   style={{ padding: '10px 18px', fontSize: '0.85rem', borderColor: '#F87171', color: '#F87171', flex: '1 1 auto' }}
                 >
-                  <LogOut size={16} /> Complete Checkout & Release Room
+                  <LogOut size={16} /> Complete Checkout & Move Room to Cleaning
                 </button>
               )}
 
@@ -855,6 +1098,22 @@ export const ReceptionDesk = () => {
           </div>
         </div>
       )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* 5. WALK-IN GUEST REGISTRATION MODAL                          */}
+      {/* ------------------------------------------------------------- */}
+      <WalkInGuestModal
+        isOpen={isWalkInModalOpen}
+        onClose={() => setIsWalkInModalOpen(false)}
+        availableRooms={rooms}
+        onSuccess={(result) => {
+          setSuccessMsg(`Walk-in guest ${result.guest?.name || 'Guest'} registered and checked into Room ${result.booking?.roomNumber}!`);
+          fetchDeskData();
+          if (result.stay?._id) {
+            handleSelectArrival(result.stay._id);
+          }
+        }}
+      />
     </div>
   );
 };

@@ -17,6 +17,8 @@ import { QRPassPage } from './pages/guest/QRPassPage.jsx';
 import { ServicesPage } from './pages/guest/ServicesPage.jsx';
 import { FoodMenuPage } from './pages/guest/FoodMenuPage.jsx';
 import { MyBillPage } from './pages/guest/MyBillPage.jsx';
+import { FeedbackPage } from './pages/guest/FeedbackPage.jsx';
+import { MagicStayResolver } from './pages/guest/MagicStayResolver.jsx';
 
 // Pages - Super Admin
 import { SuperDashboard } from './pages/superadmin/SuperDashboard.jsx';
@@ -50,6 +52,10 @@ export default function App() {
           {/* Default Redirect */}
           <Route path="/" element={<Navigate to="/guest/welcome" replace />} />
 
+          {/* Express Magic Stay Resolver for WhatsApp / SMS Links */}
+          <Route path="/stay/:bookingRef" element={<MagicStayResolver />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+
           {/* Guest PWA Portal */}
           <Route path="/guest/welcome" element={<WelcomePage />} />
           <Route path="/guest" element={<GuestLayout />}>
@@ -60,6 +66,7 @@ export default function App() {
             <Route path="services" element={<ServicesPage />} />
             <Route path="dining" element={<FoodMenuPage />} />
             <Route path="bill" element={<MyBillPage />} />
+            <Route path="feedback" element={<FeedbackPage />} />
           </Route>
 
           {/* Staff & Admin Authentication */}
@@ -81,7 +88,8 @@ export default function App() {
 
           {/* Hotel Admin Management Portal */}
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/properties" replace />} />
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<HotelDashboard />} />
             <Route path="properties" element={<PropertyManager />} />
             <Route path="rooms" element={<RoomManager />} />
             <Route path="staff" element={<StaffManager />} />
@@ -89,7 +97,6 @@ export default function App() {
             <Route path="services" element={<ServiceManager />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="billing" element={<BillingPage />} />
-            <Route path="dashboard" element={<HotelDashboard />} />
           </Route>
 
           {/* Hotel Staff Operational Queues */}

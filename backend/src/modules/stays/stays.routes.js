@@ -153,7 +153,7 @@ router.post('/:id/checkout', authenticate, async (req, res, next) => {
 
     if (stay.roomId) {
       const rId = typeof stay.roomId === 'object' ? stay.roomId._id || stay.roomId : stay.roomId;
-      await Room.findByIdAndUpdate(rId, { status: 'AVAILABLE' });
+      await Room.findByIdAndUpdate(rId, { status: 'CLEANING' });
     }
 
     return ApiResponse.success(res, 'Check-out completed successfully', stay);

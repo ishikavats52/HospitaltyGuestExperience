@@ -219,10 +219,11 @@ router.post('/validate', staffOrDemoAuth, async (req, res, next) => {
       }
     }
 
-    // Assign room if provided
-    if (roomId) {
-      stay.roomId = roomId;
-      await Room.findByIdAndUpdate(roomId, { status: 'OCCUPIED' });
+    // Assign room and mark occupied
+    const activeRoomId = roomId || (stay.roomId?._id || stay.roomId);
+    if (activeRoomId) {
+      stay.roomId = activeRoomId;
+      await Room.findByIdAndUpdate(activeRoomId, { status: 'OCCUPIED' });
     }
 
     stay.status = GUEST_JOURNEY_STATES.STAY_ACTIVE;
@@ -251,7 +252,8 @@ router.post('/checkout', staffOrDemoAuth, async (req, res, next) => {
     await stay.save();
 
     if (stay.roomId) {
-      await Room.findByIdAndUpdate(stay.roomId, { status: 'AVAILABLE' });
+      const rId = typeof stay.roomId === 'object' ? stay.roomId._id || stay.roomId : stay.roomId;
+      await Room.findByIdAndUpdate(rId, { status: 'CLEANING' });
     }
 
     const fullDetails = await compileGuest360(stay._id);

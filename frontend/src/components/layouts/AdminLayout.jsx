@@ -137,8 +137,13 @@ export const AdminLayout = () => {
           </button>
         </div>
 
-        {/* 7 Hotel Admin Navigation Links */}
+        {/* Admin Navigation Links */}
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '16px', flex: 1 }}>
+          <NavLink to="/admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
+            <Hotel size={18} />
+            <span>Overview & Room Rack</span>
+          </NavLink>
+
           <NavLink to="/admin/properties" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Building2 size={18} />
             <span>1. Property Management</span>
@@ -178,11 +183,6 @@ export const AdminLayout = () => {
           <div style={{ margin: '12px 0 6px', padding: '0 8px', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Operations & Reception
           </div>
-
-          <NavLink to="/admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
-            <Hotel size={18} />
-            <span>Guest KYC & Check-Ins</span>
-          </NavLink>
 
           <Link
             to="/staff/reception"
