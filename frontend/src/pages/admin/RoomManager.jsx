@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Upload,
   Camera,
+  Edit3,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -81,6 +82,26 @@ export const RoomManager = () => {
   // Room Inspector Modal
   const [inspectedRoom, setInspectedRoom] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
+
+  // Edit Room Modal State
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [editRoomNumber, setEditRoomNumber] = useState('');
+  const [editFloor, setEditFloor] = useState('1');
+  const [editTargetPropertyId, setEditTargetPropertyId] = useState('');
+  const [editRoomTypeName, setEditRoomTypeName] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editStatus, setEditStatus] = useState('AVAILABLE');
+  const [editImages, setEditImages] = useState([]);
+  const [editCustomImageUrl, setEditCustomImageUrl] = useState('');
+  const [editSelectedAmenities, setEditSelectedAmenities] = useState([]);
+  const [editCustomAmenity, setEditCustomAmenity] = useState('');
+  const [editRoomInventory, setEditRoomInventory] = useState([]);
+  const [editNewInvName, setEditNewInvName] = useState('');
+  const [editNewInvQty, setEditNewInvQty] = useState('1');
+  const [editNewInvCat, setEditNewInvCat] = useState('Linen');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState(null);
+  const [activePhotoModal, setActivePhotoModal] = useState('ADD'); // 'ADD' or 'EDIT'
 
   // Add Room Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -155,11 +176,15 @@ export const RoomManager = () => {
       const converted = [];
       for (const file of validFiles) {
         const dataUrl = await compressImageFile(file);
-        if (dataUrl && !selectedImages.includes(dataUrl)) {
+        if (dataUrl) {
           converted.push(dataUrl);
         }
       }
-      setSelectedImages((prev) => [...prev, ...converted]);
+      if (activePhotoModal === 'EDIT') {
+        setEditImages((prev) => [...prev, ...converted.filter((u) => !prev.includes(u))]);
+      } else {
+        setSelectedImages((prev) => [...prev, ...converted.filter((u) => !prev.includes(u))]);
+      }
       showToast(`Added ${converted.length} photo(s) from gallery!`);
     } catch (err) {
       console.error('Gallery upload error:', err);
@@ -180,7 +205,11 @@ export const RoomManager = () => {
       if (file.type.startsWith('image/')) {
         const dataUrl = await compressImageFile(file);
         if (dataUrl) {
-          setSelectedImages((prev) => [...prev, dataUrl]);
+          if (activePhotoModal === 'EDIT') {
+            setEditImages((prev) => [...prev, dataUrl]);
+          } else {
+            setSelectedImages((prev) => [...prev, dataUrl]);
+          }
           showToast('Camera photo captured and attached!');
         }
       }
@@ -231,12 +260,17 @@ export const RoomManager = () => {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
 
-    setSelectedImages((prev) => [...prev, dataUrl]);
+    if (activePhotoModal === 'EDIT') {
+      setEditImages((prev) => [...prev, dataUrl]);
+    } else {
+      setSelectedImages((prev) => [...prev, dataUrl]);
+    }
     showToast('Photo captured and attached to room!');
     stopLiveCamera();
   };
 
-  const triggerCameraCapture = () => {
+  const triggerCameraCapture = (target = 'ADD') => {
+    setActivePhotoModal(target);
     const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
       navigator.userAgent
     );
@@ -252,6 +286,11 @@ export const RoomManager = () => {
     }
   };
 
+  const triggerGalleryUpload = (target = 'ADD') => {
+    setActivePhotoModal(target);
+    fileInputRef.current?.click();
+  };
+
   useEffect(() => {
     return () => {
       if (cameraStreamRef.current) {
@@ -262,7 +301,7 @@ export const RoomManager = () => {
 
   // Background scroll lock when any modal is open
   useEffect(() => {
-    if (isAddModalOpen || inspectedRoom || lightboxImage || isLiveCameraOpen) {
+    if (isAddModalOpen || inspectedRoom || editingRoom || lightboxImage || isLiveCameraOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -270,7 +309,7 @@ export const RoomManager = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isAddModalOpen, inspectedRoom, lightboxImage, isLiveCameraOpen]);
+  }, [isAddModalOpen, inspectedRoom, editingRoom, lightboxImage, isLiveCameraOpen]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -426,6 +465,120 @@ export const RoomManager = () => {
       setCreateError(err.message || 'Failed to add room');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const openEditModal = (room) => {
+    setEditingRoom(room);
+    setEditRoomNumber(room.roomNumber || '');
+    setEditFloor(String(room.floor || 1));
+    setEditTargetPropertyId(room.propertyId?._id || room.propertyId || '');
+    setEditRoomTypeName(room.roomTypeName || 'Deluxe Suite');
+    setEditPrice(String(room.pricePerNight || 4500));
+    setEditStatus(room.status || 'AVAILABLE');
+    setEditImages(Array.isArray(room.images) && room.images.length > 0 ? [...room.images] : [PHOTO_PRESETS[0].url]);
+    setEditCustomImageUrl('');
+    setEditSelectedAmenities(Array.isArray(room.amenities) ? [...room.amenities] : []);
+    setEditCustomAmenity('');
+    setEditRoomInventory(Array.isArray(room.inventory) ? [...room.inventory] : []);
+    setEditNewInvName('');
+    setEditNewInvQty('1');
+    setEditNewInvCat('Linen');
+    setEditError(null);
+    setActivePhotoModal('EDIT');
+  };
+
+  const handleAddEditPresetPhoto = (url) => {
+    if (!editImages.includes(url)) {
+      setEditImages([...editImages, url]);
+    }
+  };
+
+  const handleRemoveEditPhoto = (urlToRemove) => {
+    setEditImages(editImages.filter((u) => u !== urlToRemove));
+  };
+
+  const handleAddEditCustomPhoto = () => {
+    if (editCustomImageUrl.trim() && !editImages.includes(editCustomImageUrl.trim())) {
+      setEditImages([...editImages, editCustomImageUrl.trim()]);
+      setEditCustomImageUrl('');
+    }
+  };
+
+  const toggleEditAmenity = (amenity) => {
+    if (editSelectedAmenities.includes(amenity)) {
+      setEditSelectedAmenities(editSelectedAmenities.filter((a) => a !== amenity));
+    } else {
+      setEditSelectedAmenities([...editSelectedAmenities, amenity]);
+    }
+  };
+
+  const handleAddEditCustomAmenity = () => {
+    if (editCustomAmenity.trim() && !editSelectedAmenities.includes(editCustomAmenity.trim())) {
+      setEditSelectedAmenities([...editSelectedAmenities, editCustomAmenity.trim()]);
+      setEditCustomAmenity('');
+    }
+  };
+
+  const handleAddEditInventoryItem = () => {
+    if (!editNewInvName.trim()) return;
+    setEditRoomInventory([
+      ...editRoomInventory,
+      {
+        name: editNewInvName.trim(),
+        quantity: Number(editNewInvQty) || 1,
+        category: editNewInvCat,
+      },
+    ]);
+    setEditNewInvName('');
+    setEditNewInvQty('1');
+  };
+
+  const handleRemoveEditInventoryItem = (index) => {
+    setEditRoomInventory(editRoomInventory.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateRoom = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editRoomNumber.trim()) {
+      setEditError('Room number is required.');
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+
+    try {
+      const payload = {
+        roomNumber: editRoomNumber.trim(),
+        floor: Number(editFloor) || 1,
+        roomTypeName: editRoomTypeName.trim() || 'Deluxe Suite',
+        pricePerNight: Number(editPrice) || 4500,
+        status: editStatus,
+        images: editImages,
+        amenities: editSelectedAmenities,
+        inventory: editRoomInventory,
+      };
+
+      const res = await api.patch(`/rooms/${editingRoom._id}`, payload);
+      const updatedRoom = res.data || res;
+      showToast(`Room ${editRoomNumber.trim()} specifications & visuals updated!`);
+
+      if (inspectedRoom && inspectedRoom._id === editingRoom._id) {
+        setInspectedRoom({
+          ...inspectedRoom,
+          ...payload,
+          _id: editingRoom._id,
+        });
+      }
+
+      setEditingRoom(null);
+      await fetchRoomsAndProperties();
+    } catch (err) {
+      console.error('Failed to update room:', err);
+      setEditError(err.message || 'Failed to save room changes.');
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -891,22 +1044,42 @@ export const RoomManager = () => {
                     </select>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setInspectedRoom(room)}
-                    className="btn btn-gold"
-                    style={{
-                      padding: '8px 14px',
-                      fontSize: '0.78rem',
-                      borderRadius: 'var(--radius-full)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                    }}
-                  >
-                    <Eye size={13} />
-                    <span>View Details</span>
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(room)}
+                      className="btn btn-outline"
+                      style={{
+                        padding: '7px 11px',
+                        fontSize: '0.78rem',
+                        borderRadius: 'var(--radius-full)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Edit3 size={13} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setInspectedRoom(room)}
+                      className="btn btn-gold"
+                      style={{
+                        padding: '7px 12px',
+                        fontSize: '0.78rem',
+                        borderRadius: 'var(--radius-full)',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      <Eye size={13} />
+                      <span>Details</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -918,11 +1091,12 @@ export const RoomManager = () => {
       {inspectedRoom && (
         <div className="modal-backdrop active" onClick={() => setInspectedRoom(null)}>
           <div
-            className="modal-content glass-panel"
+            className="modal-content has-modal-body glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
-              maxWidth: '740px',
+              maxWidth: '760px',
               width: '96%',
+              height: '90vh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
@@ -947,18 +1121,39 @@ export const RoomManager = () => {
                   {inspectedRoom.roomTypeName || 'Deluxe Heritage Suite'}
                 </h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setInspectedRoom(null)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
-                aria-label="Close modal"
-              >
-                <X size={22} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => openEditModal(inspectedRoom)}
+                  className="btn btn-outline"
+                  style={{
+                    padding: '6px 12px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    borderColor: 'var(--gold-primary)',
+                    color: 'var(--gold-dark)',
+                    borderRadius: 'var(--radius-full)',
+                  }}
+                >
+                  <Edit3 size={13} />
+                  <span>Edit Specs</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectedRoom(null)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}
+                  aria-label="Close modal"
+                >
+                  <X size={22} />
+                </button>
+              </div>
             </div>
 
             {/* Scrollable Body */}
-            <div className="modal-body" style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div className="modal-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
             {/* Photos Strip */}
             <div style={{ marginBottom: '22px' }}>
@@ -1028,15 +1223,23 @@ export const RoomManager = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(inspectedRoom.inventory || []).map((inv, idx) => (
-                      <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: idx % 2 === 0 ? '#FFFFFF' : 'var(--bg-primary)' }}>
-                        <td style={{ padding: '10px 14px', fontWeight: 600 }}>{inv.name}</td>
-                        <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{inv.category || 'General'}</td>
-                        <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--gold-dark)' }}>
-                          {inv.quantity}
+                    {(inspectedRoom.inventory && inspectedRoom.inventory.length > 0) ? (
+                      inspectedRoom.inventory.map((inv, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: idx % 2 === 0 ? '#FFFFFF' : 'var(--bg-primary)' }}>
+                          <td style={{ padding: '10px 14px', fontWeight: 600 }}>{inv.name}</td>
+                          <td style={{ padding: '10px 14px', color: 'var(--text-secondary)' }}>{inv.category || 'General'}</td>
+                          <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700, color: 'var(--gold-dark)' }}>
+                            {inv.quantity}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="3" style={{ padding: '14px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No inventory items registered. Click "Edit Specs" below to add items.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1044,9 +1247,488 @@ export const RoomManager = () => {
             </div>
 
             {/* Pinned Sticky Footer */}
-            <div className="modal-footer">
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => openEditModal(inspectedRoom)}
+                className="btn btn-outline"
+                style={{ padding: '9px 18px', fontSize: '0.84rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Edit3 size={15} /> Edit Room Specs & Photography
+              </button>
               <button type="button" onClick={() => setInspectedRoom(null)} className="btn btn-gold" style={{ padding: '10px 24px', fontSize: '0.86rem', fontWeight: 700 }}>
                 Close Inspector
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Room Specs & Photography Modal */}
+      {editingRoom && (
+        <div className="modal-backdrop active" onClick={() => setEditingRoom(null)}>
+          <div
+            className="modal-content has-modal-body"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '800px',
+              width: '96%',
+              height: '90vh',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 'var(--radius-lg)',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.3)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Sticky Modal Header */}
+            <div
+              className="modal-header"
+              style={{
+                padding: '18px 24px',
+                background: '#FFFFFF',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Edit3 size={20} color="var(--gold-primary)" />
+                  <h2 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                    Edit Room {editRoomNumber} Specifications
+                  </h2>
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '3px' }}>
+                  Update room number, photography (camera & gallery), tariff, amenities, and inventory ledger.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingRoom(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                aria-label="Close modal"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div
+              className="modal-body"
+              style={{
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                padding: '22px 24px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+              }}
+            >
+              {editError && (
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    background: 'var(--danger-bg)',
+                    color: 'var(--danger)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: '0.85rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <AlertCircle size={16} />
+                  <span>{editError}</span>
+                </div>
+              )}
+
+              {/* Section 1: Core Specs */}
+              <div style={{ padding: '16px 18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '14px', letterSpacing: '0.05em' }}>
+                  1. Room Specifications & Tariff
+                </div>
+
+                <div className="responsive-form-grid-2" style={{ marginBottom: '14px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Room Number *
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editRoomNumber}
+                      onChange={(e) => setEditRoomNumber(e.target.value)}
+                      placeholder="e.g. 101"
+                      style={{ fontSize: '0.88rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Floor
+                    </label>
+                    <input
+                      type="number"
+                      className="input-control"
+                      value={editFloor}
+                      onChange={(e) => setEditFloor(e.target.value)}
+                      placeholder="e.g. 1"
+                      style={{ fontSize: '0.88rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="responsive-form-grid-3">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Room / Suite Category
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editRoomTypeName}
+                      onChange={(e) => setEditRoomTypeName(e.target.value)}
+                      placeholder="e.g. Deluxe Suite"
+                      style={{ fontSize: '0.88rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Tariff Per Night (₹)
+                    </label>
+                    <input
+                      type="number"
+                      className="input-control"
+                      value={editPrice}
+                      onChange={(e) => setEditPrice(e.target.value)}
+                      placeholder="4500"
+                      style={{ fontSize: '0.88rem' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Operational Status
+                    </label>
+                    <select
+                      className="input-control"
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
+                      style={{ fontSize: '0.88rem' }}
+                    >
+                      <option value="AVAILABLE">Available</option>
+                      <option value="OCCUPIED">Occupied</option>
+                      <option value="CLEANING">Cleaning</option>
+                      <option value="MAINTENANCE">Maintenance</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Photography & Visuals */}
+              <div style={{ padding: '16px 18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    2. Room Photography & Visuals
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {editImages.length} photo(s) attached
+                  </span>
+                </div>
+
+                {/* Upload & Camera Buttons */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => triggerGalleryUpload('EDIT')}
+                    className="btn btn-outline"
+                    style={{ padding: '7px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Upload size={14} /> Upload from Gallery
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => triggerCameraCapture('EDIT')}
+                    className="btn btn-outline"
+                    style={{ padding: '7px 14px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Camera size={14} /> Take Photo (Camera)
+                  </button>
+                </div>
+
+                {/* Preset Chips */}
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
+                    Quick Presets:
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {PHOTO_PRESETS.map((p, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleAddEditPresetPhoto(p.url)}
+                        className="btn btn-outline"
+                        style={{ padding: '4px 10px', fontSize: '0.72rem', borderRadius: 'var(--radius-full)' }}
+                      >
+                        + {p.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Custom URL Input */}
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                  <input
+                    type="url"
+                    className="input-control"
+                    placeholder="Enter custom image URL (https://...)"
+                    value={editCustomImageUrl}
+                    onChange={(e) => setEditCustomImageUrl(e.target.value)}
+                    style={{ fontSize: '0.82rem', flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddEditCustomPhoto}
+                    className="btn btn-outline"
+                    style={{ padding: '7px 14px', fontSize: '0.8rem' }}
+                  >
+                    Add URL
+                  </button>
+                </div>
+
+                {/* Photos Grid with Delete Button */}
+                {editImages.length > 0 && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '8px' }}>
+                    {editImages.map((img, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          position: 'relative',
+                          height: '75px',
+                          borderRadius: 'var(--radius-sm)',
+                          overflow: 'hidden',
+                          border: '1px solid var(--border-color)',
+                        }}
+                      >
+                        <img src={img} alt={`Preview ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEditPhoto(img)}
+                          style={{
+                            position: 'absolute',
+                            top: '3px',
+                            right: '3px',
+                            background: 'rgba(0,0,0,0.65)',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '50%',
+                            width: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                          }}
+                          aria-label="Remove image"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Section 3: Amenities */}
+              <div style={{ padding: '16px 18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+                  3. What's in the Room (Amenities & Comforts)
+                </div>
+
+                {/* Preset Amenities */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
+                  {COMMON_AMENITIES.map((amenity, i) => {
+                    const isSelected = editSelectedAmenities.includes(amenity);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => toggleEditAmenity(amenity)}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: 'var(--radius-full)',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          border: isSelected ? '1px solid var(--gold-primary)' : '1px solid var(--border-color)',
+                          background: isSelected ? 'var(--gold-soft)' : '#FFFFFF',
+                          color: isSelected ? 'var(--gold-dark)' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                        }}
+                      >
+                        {isSelected && <Check size={12} />}
+                        {amenity}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add Custom Amenity */}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    className="input-control"
+                    placeholder="Add custom amenity (e.g. Jacuzzi, Mountain View)"
+                    value={editCustomAmenity}
+                    onChange={(e) => setEditCustomAmenity(e.target.value)}
+                    style={{ fontSize: '0.82rem', flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddEditCustomAmenity}
+                    className="btn btn-outline"
+                    style={{ padding: '7px 14px', fontSize: '0.8rem' }}
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Section 4: Inventory Ledger */}
+              <div style={{ padding: '16px 18px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--gold-primary)', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+                  4. Room Inventory Ledger
+                </div>
+
+                {/* Add Item Row */}
+                <div className="responsive-form-grid-3" style={{ marginBottom: '12px' }}>
+                  <div>
+                    <input
+                      type="text"
+                      className="input-control"
+                      placeholder="Item name (e.g. Bath Towel)"
+                      value={editNewInvName}
+                      onChange={(e) => setEditNewInvName(e.target.value)}
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                  </div>
+                  <div>
+                    <select
+                      className="input-control"
+                      value={editNewInvCat}
+                      onChange={(e) => setEditNewInvCat(e.target.value)}
+                      style={{ fontSize: '0.82rem' }}
+                    >
+                      <option value="Linen">Linen</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Furniture">Furniture</option>
+                      <option value="Toiletries">Toiletries</option>
+                      <option value="Cutlery">Cutlery</option>
+                      <option value="General">General</option>
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <input
+                      type="number"
+                      className="input-control"
+                      placeholder="Qty"
+                      value={editNewInvQty}
+                      onChange={(e) => setEditNewInvQty(e.target.value)}
+                      style={{ fontSize: '0.82rem', width: '70px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddEditInventoryItem}
+                      className="btn btn-outline"
+                      style={{ padding: '7px 12px', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+                </div>
+
+                {/* Items Table */}
+                {editRoomInventory.length > 0 ? (
+                  <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-color)' }}>
+                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Item</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'left' }}>Category</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'right' }}>Qty</th>
+                          <th style={{ padding: '8px 12px', textAlign: 'right' }}>Remove</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editRoomInventory.map((item, idx) => (
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--border-subtle)', background: idx % 2 === 0 ? '#FFFFFF' : 'var(--bg-primary)' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 600 }}>{item.name}</td>
+                            <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>{item.category}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 700 }}>{item.quantity}</td>
+                            <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEditInventoryItem(idx)}
+                                style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '2px 6px' }}
+                                aria-label="Remove item"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>
+                    No inventory items added yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sticky Footer */}
+            <div
+              className="modal-footer"
+              style={{
+                padding: '14px 24px',
+                borderTop: '1px solid var(--border-color)',
+                background: 'var(--bg-primary)',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '10px',
+                flexShrink: 0,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setEditingRoom(null)}
+                disabled={editSaving}
+                className="btn btn-outline"
+                style={{ padding: '9px 18px', fontSize: '0.86rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleUpdateRoom}
+                disabled={editSaving}
+                className="btn btn-gold"
+                style={{ padding: '9px 24px', fontSize: '0.86rem', fontWeight: 700 }}
+              >
+                {editSaving ? 'Saving Changes...' : 'Save Room Changes'}
               </button>
             </div>
           </div>
@@ -1104,12 +1786,13 @@ export const RoomManager = () => {
       {isAddModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsAddModalOpen(false)}>
           <div
-            className="modal-content"
+            className="modal-content has-modal-body"
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '800px',
               width: '96%',
-              maxHeight: '90vh',
+              height: '90vh',
+              maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: 'var(--radius-lg)',

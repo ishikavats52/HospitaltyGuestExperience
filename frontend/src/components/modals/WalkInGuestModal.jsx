@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   UserPlus,
@@ -14,6 +14,7 @@ import {
   Zap,
   Sparkles,
   Building2,
+  AlertCircle,
 } from 'lucide-react';
 import api from '../../services/api.js';
 
@@ -41,11 +42,12 @@ export const WalkInGuestModal = ({
   });
 
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [roomsList, setRoomsList] = useState(availableRooms);
+  const [roomsList, setRoomsList] = useState(availableRooms || []);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [createdResult, setCreatedResult] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const bodyScrollRef = useRef(null);
 
   // If availableRooms was not passed or empty, fetch them
   useEffect(() => {
@@ -66,7 +68,8 @@ export const WalkInGuestModal = ({
     setLoadingRooms(true);
     try {
       const res = await api.get('/rooms');
-      setRoomsList(res.data || []);
+      const loaded = res.data || [];
+      setRoomsList(loaded);
     } catch (_) {
       setRoomsList([]);
     } finally {
@@ -84,7 +87,7 @@ export const WalkInGuestModal = ({
       if (targetRoom) {
         setFormData((prev) => ({
           ...prev,
-          roomId: targetRoom._id,
+          roomId: prev.roomId || targetRoom._id,
           propertyId: targetRoom.propertyId?._id || targetRoom.propertyId || prev.propertyId,
           totalAmount: prev.totalAmount || targetRoom.pricePerNight || 4500,
         }));
@@ -100,14 +103,34 @@ export const WalkInGuestModal = ({
     setFormData((prev) => ({
       ...prev,
       roomId: selectedId,
+      propertyId: selected?.propertyId?._id || selected?.propertyId || prev.propertyId,
       totalAmount: selected?.pricePerNight || prev.totalAmount,
     }));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+
+    // Client-side validations with clear visual error messaging
     if (!formData.guestName.trim()) {
-      setError('Guest full name is required');
+      setError('Please provide the guest full name.');
+      bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setError('Please provide the guest mobile / WhatsApp contact number.');
+      bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    if (!formData.roomId) {
+      if (roomsList.length === 0) {
+        setError('No rooms are currently registered in your hotel inventory. Please go to Room Manager to add rooms before check-in.');
+      } else {
+        setError('Please select an available room from the inventory dropdown to allot to this guest.');
+      }
+      bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -141,7 +164,9 @@ export const WalkInGuestModal = ({
         onSuccess(res.data);
       }
     } catch (err) {
+      console.error('Walk-in booking error:', err);
       setError(err.message || 'Failed to register walk-in guest. Please try again.');
+      bodyScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSubmitting(false);
     }
@@ -169,7 +194,7 @@ export const WalkInGuestModal = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: '12px',
         animation: 'fadeIn 0.2s ease',
       }}
       onClick={(e) => {
@@ -177,10 +202,11 @@ export const WalkInGuestModal = ({
       }}
     >
       <div
-        className="modal-content"
+        className="modal-content has-modal-body"
         style={{
-          width: 'min(96vw, 620px)',
-          maxHeight: '92vh',
+          width: 'min(96vw, 640px)',
+          height: '90vh',
+          maxHeight: '92dvh',
           backgroundColor: '#FFFFFF',
           borderRadius: 'var(--radius-lg, 16px)',
           boxShadow: '0 24px 60px rgba(0, 0, 0, 0.25)',
@@ -193,13 +219,15 @@ export const WalkInGuestModal = ({
       >
         {/* Sticky Header */}
         <div
+          className="modal-header"
           style={{
-            padding: '18px 24px',
+            padding: '16px 20px',
             borderBottom: '1px solid var(--border-color)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             background: 'var(--bg-secondary)',
+            flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -213,6 +241,7 @@ export const WalkInGuestModal = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--gold-primary)',
+                flexShrink: 0,
               }}
             >
               <UserPlus size={20} />
@@ -248,8 +277,21 @@ export const WalkInGuestModal = ({
           </button>
         </div>
 
-        {/* Scrollable Body */}
-        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Scrollable Body or Form */}
+        <div
+          ref={bodyScrollRef}
+          className="modal-body"
+          style={{
+            padding: '20px 22px',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            flex: '1 1 auto',
+            minHeight: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '18px',
+          }}
+        >
           {/* SUCCESS STATE */}
           {createdResult ? (
             <div style={{ textAlign: 'center', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
@@ -258,14 +300,14 @@ export const WalkInGuestModal = ({
                   width: '64px',
                   height: '64px',
                   borderRadius: '50%',
-                  background: 'var(--success-bg, rgba(28, 108, 67, 0.12))',
+                  background: 'rgba(28, 108, 67, 0.12)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--success, #1c6c43)',
+                  color: '#1c6c43',
                 }}
               >
-                <CheckCircle2 size={36} />
+                <CheckCircle2 size={38} />
               </div>
 
               <div>
@@ -368,25 +410,37 @@ export const WalkInGuestModal = ({
               </button>
             </div>
           ) : (
-            <form id="walk-in-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form
+              id="walk-in-form"
+              noValidate
+              onSubmit={handleSubmit}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {/* Prominent Error Banner */}
               {error && (
                 <div
                   style={{
-                    padding: '10px 14px',
+                    padding: '12px 14px',
                     borderRadius: '8px',
-                    backgroundColor: 'rgba(186, 51, 51, 0.1)',
-                    color: '#BA3333',
-                    fontSize: '0.82rem',
-                    border: '1px solid rgba(186, 51, 51, 0.25)',
+                    backgroundColor: '#FEF2F2',
+                    color: '#991B1B',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    border: '1px solid #FCA5A5',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    animation: 'fadeIn 0.2s ease',
                   }}
                 >
-                  {error}
+                  <AlertCircle size={18} color="#DC2626" style={{ flexShrink: 0 }} />
+                  <span>{error}</span>
                 </div>
               )}
 
               {/* 1. GUEST PERSONAL INFORMATION */}
               <div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
                   1. Guest Identification & Contact
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
@@ -396,10 +450,12 @@ export const WalkInGuestModal = ({
                     </label>
                     <input
                       type="text"
-                      required
                       placeholder="e.g. Vikram Malhotra"
                       value={formData.guestName}
-                      onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, guestName: e.target.value });
+                        if (error) setError(null);
+                      }}
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -407,6 +463,7 @@ export const WalkInGuestModal = ({
                         border: '1px solid var(--border-color)',
                         fontSize: '0.88rem',
                         outline: 'none',
+                        boxSizing: 'border-box',
                       }}
                     />
                   </div>
@@ -419,10 +476,12 @@ export const WalkInGuestModal = ({
                       <Phone size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                       <input
                         type="tel"
-                        required
                         placeholder="+91 98765 43210"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phone: e.target.value });
+                          if (error) setError(null);
+                        }}
                         style={{
                           width: '100%',
                           padding: '10px 12px 10px 32px',
@@ -430,6 +489,7 @@ export const WalkInGuestModal = ({
                           border: '1px solid var(--border-color)',
                           fontSize: '0.88rem',
                           outline: 'none',
+                          boxSizing: 'border-box',
                         }}
                       />
                     </div>
@@ -453,6 +513,7 @@ export const WalkInGuestModal = ({
                           border: '1px solid var(--border-color)',
                           fontSize: '0.88rem',
                           outline: 'none',
+                          boxSizing: 'border-box',
                         }}
                       />
                     </div>
@@ -462,7 +523,7 @@ export const WalkInGuestModal = ({
 
               {/* 2. KYC IDENTITY DETAILS */}
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
                   2. Government ID / KYC Verification
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
@@ -480,6 +541,7 @@ export const WalkInGuestModal = ({
                         border: '1px solid var(--border-color)',
                         fontSize: '0.88rem',
                         backgroundColor: '#FFFFFF',
+                        boxSizing: 'border-box',
                       }}
                     >
                       <option value="AADHAAR">Aadhaar Card (UIDAI)</option>
@@ -507,6 +569,7 @@ export const WalkInGuestModal = ({
                           border: '1px solid var(--border-color)',
                           fontSize: '0.88rem',
                           outline: 'none',
+                          boxSizing: 'border-box',
                         }}
                       />
                     </div>
@@ -516,38 +579,65 @@ export const WalkInGuestModal = ({
 
               {/* 3. ROOM ALLOTMENT & TARIFF */}
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
                   3. Room Allotment & Stay Tariff
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                      Select Room from Available Inventory <span style={{ color: 'var(--danger)' }}>*</span>
-                    </label>
-                    <select
-                      required
-                      value={formData.roomId}
-                      onChange={handleRoomChange}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-color)',
-                        fontSize: '0.88rem',
-                        backgroundColor: '#FFFFFF',
-                      }}
-                    >
-                      <option value="">-- Choose Available Room --</option>
-                      {roomsList.map((r) => {
-                        const isAvailable = r.status === 'AVAILABLE';
-                        return (
-                          <option key={r._id} value={r._id}>
-                            Room {r.roomNumber} • {r.roomTypeName || 'Deluxe'} • Floor {r.floor || 1} • ₹{r.pricePerNight || 4500}/night [{r.status}]
-                          </option>
-                        );
-                      })}
-                    </select>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        Select Room from Available Inventory <span style={{ color: 'var(--danger)' }}>*</span>
+                      </label>
+                      {roomsList.length > 0 && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                          {roomsList.filter((r) => r.status === 'AVAILABLE').length} Available
+                        </span>
+                      )}
+                    </div>
+
+                    {roomsList.length === 0 ? (
+                      <div
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: '8px',
+                          backgroundColor: '#FFFBEB',
+                          border: '1px solid #FDE68A',
+                          color: '#92400E',
+                          fontSize: '0.82rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <AlertCircle size={16} />
+                        <span>No rooms found. Please add rooms in Room Manager first.</span>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.roomId}
+                        onChange={handleRoomChange}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: error && !formData.roomId ? '2px solid #DC2626' : '1px solid var(--border-color)',
+                          fontSize: '0.88rem',
+                          backgroundColor: '#FFFFFF',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <option value="">-- Choose Room from Inventory --</option>
+                        {roomsList.map((r) => {
+                          const isAvailable = r.status === 'AVAILABLE';
+                          return (
+                            <option key={r._id} value={r._id}>
+                              {isAvailable ? '🟢' : '⚪'} Room {r.roomNumber} • {r.roomTypeName || 'Deluxe'} • Floor {r.floor || 1} • ₹{r.pricePerNight || 4500}/night [{r.status}]
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
                   </div>
 
                   <div>
@@ -564,6 +654,7 @@ export const WalkInGuestModal = ({
                         borderRadius: '8px',
                         border: '1px solid var(--border-color)',
                         fontSize: '0.85rem',
+                        boxSizing: 'border-box',
                       }}
                     />
                   </div>
@@ -582,6 +673,7 @@ export const WalkInGuestModal = ({
                         borderRadius: '8px',
                         border: '1px solid var(--border-color)',
                         fontSize: '0.85rem',
+                        boxSizing: 'border-box',
                       }}
                     />
                   </div>
@@ -606,6 +698,7 @@ export const WalkInGuestModal = ({
                           border: '1px solid var(--border-color)',
                           fontSize: '0.88rem',
                           outline: 'none',
+                          boxSizing: 'border-box',
                         }}
                       />
                     </div>
@@ -652,13 +745,15 @@ export const WalkInGuestModal = ({
         {/* Sticky Footer */}
         {!createdResult && (
           <div
+            className="modal-footer"
             style={{
-              padding: '14px 24px',
+              padding: '14px 20px',
               borderTop: '1px solid var(--border-color)',
               background: 'var(--bg-secondary)',
               display: 'flex',
               justifyContent: 'flex-end',
               gap: '10px',
+              flexShrink: 0,
             }}
           >
             <button
@@ -671,21 +766,23 @@ export const WalkInGuestModal = ({
               Cancel
             </button>
             <button
-              type="submit"
-              form="walk-in-form"
+              type="button"
+              onClick={handleSubmit}
               disabled={submitting}
               className="btn btn-gold"
               style={{
-                padding: '9px 22px',
-                fontSize: '0.86rem',
+                padding: '10px 22px',
+                fontSize: '0.88rem',
                 fontWeight: 700,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
+                minWidth: '200px',
+                justifyContent: 'center',
               }}
             >
               {submitting ? (
-                <>Registering Guest...</>
+                <>Registering & Allotting...</>
               ) : (
                 <>
                   <Check size={16} /> Allot Room & Check In

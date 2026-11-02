@@ -676,8 +676,8 @@ Login URL: ${createdCredentials.loginUrl}`;
           {/* Staff Roster Table & Card Feed */}
           <section className="glass-panel animate-fade-in" style={{ padding: '24px 20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             {/* Search & Filter Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
-              <div style={{ position: 'relative', flex: '1', minWidth: '240px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
+              <div style={{ position: 'relative', width: '100%' }}>
                 <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
                 <input
                   type="text"
@@ -685,18 +685,37 @@ Login URL: ${createdCredentials.loginUrl}`;
                   className="input-control"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: '38px', fontSize: '0.85rem' }}
+                  style={{ paddingLeft: '38px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
-              <div className="touch-scroll-x" style={{ display: 'flex', gap: '6px' }}>
+              {/* Smooth Horizontally Scrollable Department Filter Pills */}
+              <div
+                className="touch-scroll-x"
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  width: '100%',
+                  overflowX: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  paddingBottom: '6px',
+                  scrollbarWidth: 'none',
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setRoleFilter('ALL')}
                   className={`btn ${roleFilter === 'ALL' ? 'btn-gold' : 'btn-outline'}`}
-                  style={{ padding: '7px 12px', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    borderRadius: 'var(--radius-full)',
+                  }}
                 >
-                  All ({staffList.length})
+                  All Employees ({staffList.length})
                 </button>
                 {departments.map((dept) => {
                   const count = staffList.filter((s) => s.role === dept.code || s.department === dept.name).length;
@@ -706,7 +725,14 @@ Login URL: ${createdCredentials.loginUrl}`;
                       type="button"
                       onClick={() => setRoleFilter(dept.code)}
                       className={`btn ${roleFilter === dept.code ? 'btn-gold' : 'btn-outline'}`}
-                      style={{ padding: '7px 12px', fontSize: '0.76rem', whiteSpace: 'nowrap' }}
+                      style={{
+                        padding: '8px 16px',
+                        fontSize: '0.8rem',
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                        borderRadius: 'var(--radius-full)',
+                      }}
                     >
                       {dept.name} ({count})
                     </button>
@@ -734,7 +760,8 @@ Login URL: ${createdCredentials.loginUrl}`;
                 </button>
               </div>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
+              <>
+                <div className="desktop-staff-table" style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
                   <thead>
                     <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -861,7 +888,158 @@ Login URL: ${createdCredentials.loginUrl}`;
                   </tbody>
                 </table>
               </div>
-            )}
+
+              {/* Mobile View Cards */}
+              <div className="mobile-staff-cards">
+                {filteredStaff.map((staff) => (
+                  <div
+                    key={staff._id}
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    {/* Top Row: Avatar + Name + Status */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '50%',
+                            background: 'var(--gold-soft)',
+                            color: 'var(--gold-dark)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '0.92rem',
+                            border: '1px solid var(--border-active)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {staff.name
+                            ? staff.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()
+                            : 'E'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.96rem', color: 'var(--text-primary)' }}>
+                            {staff.name}
+                          </div>
+                          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
+                            {staff.email}
+                          </div>
+                        </div>
+                      </div>
+
+                      {staff.status === 'ACTIVE' ? (
+                        <span className="badge badge-free" style={{ fontSize: '0.72rem', padding: '3px 8px' }}>
+                          ACTIVE
+                        </span>
+                      ) : (
+                        <span className="badge" style={{ background: '#FEF3C7', color: '#D97706', fontSize: '0.72rem', padding: '3px 8px' }}>
+                          SUSPENDED
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Middle Details Box */}
+                    <div
+                      style={{
+                        background: 'var(--bg-primary)',
+                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                        fontSize: '0.8rem',
+                        border: '1px solid var(--border-subtle)',
+                      }}
+                    >
+                      {staff.phone && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                          <span>📞</span>
+                          <a href={`tel:${staff.phone}`} style={{ color: 'var(--gold-dark)', textDecoration: 'none', fontWeight: 600 }}>
+                            {staff.phone}
+                          </a>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                        <Building2 size={13} color="var(--gold-primary)" />
+                        <span>{staff.propertyName || 'Main Property / Wing'}</span>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                        {getRoleBadge(staff.role, staff.department)}
+                        {staff.subDepartment && (
+                          <span
+                            style={{
+                              fontSize: '0.72rem',
+                              color: 'var(--gold-dark)',
+                              fontWeight: 600,
+                              background: 'var(--gold-soft)',
+                              padding: '2px 8px',
+                              borderRadius: 'var(--radius-full)',
+                              border: '1px solid var(--border-active)',
+                            }}
+                          >
+                            ↳ {staff.subDepartment}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Bottom Actions Row */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(staff._id, staff.status, staff.name)}
+                        className="btn btn-outline"
+                        style={{
+                          padding: '6px 14px',
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Power size={13} color={staff.status === 'ACTIVE' ? 'var(--warning)' : 'var(--success)'} />
+                        <span>{staff.status === 'ACTIVE' ? 'Suspend' : 'Activate'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteStaff(staff._id, staff.name)}
+                        className="btn btn-outline"
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '0.78rem',
+                          color: 'var(--danger)',
+                          borderColor: 'rgba(220, 38, 38, 0.25)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        <Trash2 size={13} />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           </section>
         </>
       )}
@@ -1051,7 +1229,7 @@ Login URL: ${createdCredentials.loginUrl}`;
       {isCreateModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsCreateModalOpen(false)}>
           <div
-            className="modal-content"
+            className="modal-content has-modal-body"
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '95%',
@@ -1059,7 +1237,8 @@ Login URL: ${createdCredentials.loginUrl}`;
               backgroundColor: '#FFFFFF',
               borderRadius: 'var(--radius-lg)',
               boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.3)',
-              maxHeight: '92vh',
+              height: '90vh',
+              maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
@@ -1416,7 +1595,7 @@ Login URL: ${createdCredentials.loginUrl}`;
       {isAddDeptModalOpen && (
         <div className="modal-backdrop active" onClick={() => setIsAddDeptModalOpen(false)}>
           <div
-            className="modal-content"
+            className="modal-content has-modal-body"
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '96%',
@@ -1424,6 +1603,7 @@ Login URL: ${createdCredentials.loginUrl}`;
               backgroundColor: '#FFFFFF',
               borderRadius: 'var(--radius-lg)',
               boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              height: '90vh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',

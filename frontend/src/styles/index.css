@@ -726,13 +726,41 @@ body {
 
 /* Touch scroll helper */
 .touch-scroll-x {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
 
 .touch-scroll-x::-webkit-scrollbar {
-  display: none;
+  display: none !important;
+}
+
+/* Children inside horizontal scroll bars must not shrink or wrap */
+.touch-scroll-x > * {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Mobile vs Desktop Staff Roster Responsive Layout */
+@media (max-width: 768px) {
+  .desktop-staff-table {
+    display: none !important;
+  }
+  .mobile-staff-cards {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-staff-table {
+    display: block !important;
+  }
+  .mobile-staff-cards {
+    display: none !important;
+  }
 }
 
 /* Custom Scrollbar for Desktop */
@@ -909,14 +937,18 @@ body {
 }
 
 /* Modals with structured header/body: container clips outer rounded corners while modal-body scrolls */
+.modal-content.has-modal-body,
 .modal-content:has(.modal-body) {
   overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 90vh !important;
+  max-height: 92dvh !important;
 }
 
 /* Fallback: Modals without .modal-body, or standalone scrollable modals MUST scroll smoothly */
-.modal-content:not(:has(.modal-body)),
-.modal-content.is-scrollable,
-.modal-content[style*="overflow"] {
+.modal-content:not(:has(.modal-body)):not(.has-modal-body),
+.modal-content.is-scrollable {
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
