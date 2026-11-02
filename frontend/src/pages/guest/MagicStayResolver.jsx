@@ -205,3 +205,4 @@ export const MagicStayResolver = () => {
     </div>
   );
 };
+
