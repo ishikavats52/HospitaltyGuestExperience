@@ -9,31 +9,21 @@ async function main() {
   console.log('====================================================');
   console.log(`Region:     ${ENV.AWS_REGION}`);
   console.log(`Table Name: ${ENV.DYNAMODB_TABLE_NAME}`);
-  console.log(`Access Key: ${ENV.AWS_ACCESS_KEY_ID ? ENV.AWS_ACCESS_KEY_ID.substring(0, 6) + '...' : '(Not provided yet)'}`);
+  console.log(`Access Key: ${ENV.AWS_ACCESS_KEY_ID ? ENV.AWS_ACCESS_KEY_ID.substring(0, 6) + '...' : '(Using IAM Role / Default Provider)'}`);
   console.log('----------------------------------------------------');
 
-  if (!ENV.AWS_ACCESS_KEY_ID || !ENV.AWS_SECRET_ACCESS_KEY) {
-    console.warn('\n⚠️  AWS CREDENTIALS MISSING IN backend/.env');
-    console.warn('Your table "HospitalityMainTable" is live in AWS ap-south-1, but');
-    console.warn('Node.js cannot send data without an AWS Access Key.\n');
-    console.log('To connect in 30 seconds:');
-    console.log('1. In AWS Console (top-right), click your username "AgarwalN"');
-    console.log('2. Click "Security credentials"');
-    console.log('3. Scroll down to "Access keys" and click "Create access key"');
-    console.log('4. Choose "Command Line Interface (CLI)" and copy:');
-    console.log('   - AWS_ACCESS_KEY_ID');
-    console.log('   - AWS_SECRET_ACCESS_KEY');
-    console.log('5. Paste them into backend/.env and rerun this script!\n');
-    return;
-  }
+  const clientConfig = {
+    region: ENV.AWS_REGION || 'ap-south-1',
+  };
 
-  const rawClient = new DynamoDBClient({
-    region: ENV.AWS_REGION,
-    credentials: {
+  if (ENV.AWS_ACCESS_KEY_ID && ENV.AWS_SECRET_ACCESS_KEY) {
+    clientConfig.credentials = {
       accessKeyId: ENV.AWS_ACCESS_KEY_ID,
       secretAccessKey: ENV.AWS_SECRET_ACCESS_KEY,
-    },
-  });
+    };
+  }
+
+  const rawClient = new DynamoDBClient(clientConfig);
 
   const docClient = DynamoDBDocumentClient.from(rawClient, {
     marshallOptions: { removeUndefinedValues: true },
@@ -76,7 +66,21 @@ async function main() {
 
     console.log('\n🎉 ALL CHECKS PASSED: Your application is now live-writing to AWS DynamoDB!');
   } catch (err) {
-    console.error('❌ AWS DynamoDB Connection Failed:', err.message);
+    if (err.name === 'CredentialsProviderError' || err.message?.includes('Could not load credentials')) {
+      console.warn('\n⚠️  AWS CREDENTIALS MISSING IN backend/.env');
+      console.warn('Your table "HospitalityMainTable" is live in AWS ap-south-1, but');
+      console.warn('Node.js cannot send data without an AWS Access Key.\n');
+      console.log('To connect in 30 seconds:');
+      console.log('1. In AWS Console (top-right), click your username "AgarwalN"');
+      console.log('2. Click "Security credentials"');
+      console.log('3. Scroll down to "Access keys" and click "Create access key"');
+      console.log('4. Choose "Command Line Interface (CLI)" and copy:');
+      console.log('   - AWS_ACCESS_KEY_ID');
+      console.log('   - AWS_SECRET_ACCESS_KEY');
+      console.log('5. Paste them into backend/.env and rerun this script!\n');
+    } else {
+      console.error('❌ AWS DynamoDB Connection Failed:', err.message);
+    }
   }
 }
 
