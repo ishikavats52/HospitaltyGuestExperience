@@ -122,7 +122,7 @@ export function createDynamoModel(modelName) {
     static find(filter = {}) {
       return new Query(async () => {
         try {
-          const items = await DynamoDbRepository.queryByPk(pk);
+          const items = await DynamoDbRepository.scanEntity(modelName, pk);
           if (items && items.length > 0) {
             for (const item of items) {
               const strId = String(item._id || item.id);
@@ -142,7 +142,7 @@ export function createDynamoModel(modelName) {
     static findOne(filter = {}) {
       return new Query(async () => {
         try {
-          const items = await DynamoDbRepository.queryByPk(pk);
+          const items = await DynamoDbRepository.scanEntity(modelName, pk);
           if (items && items.length > 0) {
             for (const item of items) {
               const strId = String(item._id || item.id);
@@ -164,7 +164,7 @@ export function createDynamoModel(modelName) {
         if (!id) return null;
         const strId = String(id);
         try {
-          const item = await DynamoDbRepository.get(pk, `${modelName.toUpperCase()}#${strId}`);
+          const item = await DynamoDbRepository.getEntity(modelName, strId, pk, `${modelName.toUpperCase()}#${strId}`);
           if (item) {
             const existingIdx = store.findIndex((s) => String(s._id || s.id) === strId);
             if (existingIdx >= 0) {
@@ -201,7 +201,7 @@ export function createDynamoModel(modelName) {
         };
 
         try {
-          await DynamoDbRepository.put(record);
+          await DynamoDbRepository.putEntity(modelName, record);
         } catch (e) {}
 
         const existingIdx = store.findIndex((i) => String(i._id) === id);
@@ -229,7 +229,7 @@ export function createDynamoModel(modelName) {
         Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
 
         try {
-          await DynamoDbRepository.put(item);
+          await DynamoDbRepository.putEntity(modelName, item);
         } catch (e) {}
 
         return item;
@@ -247,7 +247,7 @@ export function createDynamoModel(modelName) {
         Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
 
         try {
-          await DynamoDbRepository.put(item);
+          await DynamoDbRepository.putEntity(modelName, item);
         } catch (e) {}
 
         return item;
@@ -265,7 +265,7 @@ export function createDynamoModel(modelName) {
         Object.assign(item, updatedFields, { updatedAt: new Date().toISOString() });
 
         try {
-          await DynamoDbRepository.put(item);
+          await DynamoDbRepository.putEntity(modelName, item);
         } catch (e) {}
 
         return { matchedCount: 1, modifiedCount: 1 };
@@ -279,7 +279,7 @@ export function createDynamoModel(modelName) {
           store.length = 0;
           for (const item of items) {
             try {
-              await DynamoDbRepository.delete(pk, item.SK);
+              await DynamoDbRepository.deleteEntity(modelName, item._id || item.id, pk, item.SK);
             } catch (e) {}
           }
           return { deletedCount: items.length };
@@ -290,7 +290,7 @@ export function createDynamoModel(modelName) {
           const idx = store.findIndex((i) => i === item);
           if (idx >= 0) store.splice(idx, 1);
           try {
-            await DynamoDbRepository.delete(pk, item.SK);
+            await DynamoDbRepository.deleteEntity(modelName, item._id || item.id, pk, item.SK);
           } catch (e) {}
         }
         return { deletedCount: toDelete.length };

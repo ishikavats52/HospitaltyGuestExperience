@@ -17,8 +17,11 @@ router.patch('/admins/:id/status', authenticate, requireSuperAdmin, UsersControl
 router.patch('/admins/:id/password', authenticate, requireSuperAdmin, UsersController.resetAdminPassword);
 
 // Hotel Staff Management (Hotel Admin & Super Admin)
+router.get('/all', authenticate, UsersController.getAllUsers);
 router.get('/staff', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.getStaff);
 router.post('/staff', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.createStaff);
+router.patch('/staff/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.updateStaff);
+router.put('/staff/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.updateStaff);
 router.delete('/staff/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.deleteStaff);
 router.patch('/staff/:id/status', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.toggleStaffStatus);
 router.patch('/staff/:id/password', authenticate, enforceTenantIsolation, requireHotelAdmin, UsersController.resetStaffPassword);

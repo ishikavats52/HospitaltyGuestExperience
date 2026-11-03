@@ -32,6 +32,7 @@ import {
   Plus,
   Image as ImageIcon,
   SlidersHorizontal,
+  Users,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -45,10 +46,11 @@ export const SuperDashboard = () => {
   const [hotels, setHotels] = useState([]);
   const [properties, setProperties] = useState([]);
   const [allPlatformRooms, setAllPlatformRooms] = useState([]);
+  const [allUsersList, setAllUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Active Tab: 'admins' | 'rooms'
+  // Active Tab: 'admins' | 'rooms' | 'users'
   const [activeTab, setActiveTab] = useState('admins');
 
   // Search filter
@@ -112,17 +114,19 @@ export const SuperDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const [adminsRes, hotelsRes, propsRes, roomsRes] = await Promise.all([
+      const [adminsRes, hotelsRes, propsRes, roomsRes, usersRes] = await Promise.all([
         api.get('/users/admins'),
         api.get('/hotels'),
         api.get('/properties').catch(() => ({ data: [] })),
         api.get('/rooms').catch(() => ({ data: [] })),
+        api.get('/users/all').catch(() => ({ data: [] })),
       ]);
 
       setAdmins(adminsRes.data || []);
       setHotels(hotelsRes.data || []);
       setProperties(propsRes.data || []);
       setAllPlatformRooms(roomsRes.data || []);
+      setAllUsersList(usersRes.data || []);
     } catch (err) {
       console.error('Failed to load superadmin data:', err);
       setError(err.message || 'Failed to load platform data');
@@ -552,6 +556,28 @@ export const SuperDashboard = () => {
             <BedDouble size={16} />
             <span>Platform Rooms & Inventory ({allPlatformRooms.length})</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('users')}
+            style={{
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-full)',
+              background: activeTab === 'users' ? 'var(--gold-primary)' : 'transparent',
+              color: activeTab === 'users' ? '#FFFFFF' : 'var(--text-secondary)',
+              border: 'none',
+              fontWeight: 700,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Users size={16} />
+            <span>All Login Users ({allUsersList.length})</span>
+          </button>
         </div>
 
         {/* Search & Filter */}
@@ -823,6 +849,139 @@ export const SuperDashboard = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* TAB 3: ALL PLATFORM LOGIN USERS & CREDENTIAL AUDIT            */}
+      {/* ------------------------------------------------------------- */}
+      {activeTab === 'users' && (
+        <div
+          className="glass-panel"
+          style={{
+            padding: '24px',
+            background: '#FFFFFF',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Platform User Directory (DynamoDB: Hospitality_Users)
+              </h3>
+              <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                Comprehensive real-time directory of all login accounts across Super Admins, Hotel Admins, and Operational Staff.
+              </p>
+            </div>
+            <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--gold-primary)', background: 'var(--gold-soft)', padding: '6px 14px', borderRadius: 'var(--radius-full)' }}>
+              Total Accounts: {allUsersList.length}
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '700px' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border-color)', fontSize: '0.72rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '12px' }}>User / Login Account</th>
+                  <th style={{ padding: '12px' }}>Role</th>
+                  <th style={{ padding: '12px' }}>Department</th>
+                  <th style={{ padding: '12px' }}>Hotel & Property Wing</th>
+                  <th style={{ padding: '12px' }}>Contact Phone</th>
+                  <th style={{ padding: '12px' }}>Created By</th>
+                  <th style={{ padding: '12px' }}>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allUsersList
+                  .filter((u) => {
+                    const s = searchTerm.toLowerCase();
+                    return (
+                      !s ||
+                      (u.name || '').toLowerCase().includes(s) ||
+                      (u.email || '').toLowerCase().includes(s) ||
+                      (u.role || '').toLowerCase().includes(s) ||
+                      (u.hotelName || '').toLowerCase().includes(s)
+                    );
+                  })
+                  .map((user) => {
+                    const initials = (user.name || 'U').substring(0, 2).toUpperCase();
+                    const isSuper = user.role === 'SUPER_ADMIN';
+                    const isAdmin = user.role === 'HOTEL_ADMIN';
+                    return (
+                      <tr key={user._id} style={{ borderBottom: '1px solid var(--border-subtle)', fontSize: '0.84rem' }}>
+                        <td style={{ padding: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div
+                              style={{
+                                width: '34px',
+                                height: '34px',
+                                borderRadius: '50%',
+                                background: isSuper ? '#8B5CF6' : isAdmin ? 'var(--gold-primary)' : 'var(--border-color)',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 800,
+                                fontSize: '0.75rem',
+                              }}
+                            >
+                              {initials}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user.name}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span
+                            style={{
+                              padding: '3px 8px',
+                              borderRadius: 'var(--radius-full)',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              background: isSuper ? '#F3E8FF' : isAdmin ? 'var(--gold-soft)' : '#E0F2FE',
+                              color: isSuper ? '#7C3AED' : isAdmin ? 'var(--gold-dark)' : '#0284C7',
+                            }}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          {user.department || user.role}
+                          {user.subDepartment ? ` • ${user.subDepartment}` : ''}
+                        </td>
+                        <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                          <div>{user.hotelName || 'Enterprise Hotel'}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{user.propertyName || 'Main Wing'}</div>
+                        </td>
+                        <td style={{ padding: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {user.phone || '—'}
+                        </td>
+                        <td style={{ padding: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {user.createdBy || 'SYSTEM'}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          <span
+                            className={user.status === 'ACTIVE' ? 'badge badge-free' : 'badge'}
+                            style={{
+                              fontSize: '0.72rem',
+                              padding: '3px 8px',
+                              background: user.status === 'ACTIVE' ? '#E6F7F7' : '#FEF3C7',
+                              color: user.status === 'ACTIVE' ? '#008489' : '#D97706',
+                            }}
+                          >
+                            {user.status || 'ACTIVE'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

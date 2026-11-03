@@ -30,6 +30,7 @@ import {
   Wrench,
   FolderPlus,
   ChevronRight,
+  Edit3,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -83,12 +84,27 @@ export const StaffManager = () => {
   const [createdCredentials, setCreatedCredentials] = useState(null);
   const [copied, setCopied] = useState(false);
 
+  // Edit Staff Modal State
+  const [editingStaff, setEditingStaff] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editRole, setEditRole] = useState('RECEPTION');
+  const [editDept, setEditDept] = useState('');
+  const [editSubDept, setEditSubDept] = useState('');
+  const [editPropertyId, setEditPropertyId] = useState('');
+  const [editStatus, setEditStatus] = useState('ACTIVE');
+  const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState(null);
+
   // Toast Notification
   const [toastMessage, setToastMessage] = useState(null);
 
   // Background scroll lock when modal or voucher is active
   useEffect(() => {
-    if (isCreateModalOpen || createdCredentials || isAddDeptModalOpen) {
+    if (isCreateModalOpen || createdCredentials || isAddDeptModalOpen || editingStaff) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -96,7 +112,7 @@ export const StaffManager = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isCreateModalOpen, createdCredentials, isAddDeptModalOpen]);
+  }, [isCreateModalOpen, createdCredentials, isAddDeptModalOpen, editingStaff]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -120,7 +136,14 @@ export const StaffManager = () => {
         api.get('/properties').catch(() => ({ data: [] })),
         api.get('/users/departments').catch(() => ({ data: [] })),
       ]);
-      setStaffList(staffRes.data || []);
+      const rawStaff = staffRes.data || [];
+      const currentAdminId = String(currentUser?._id || currentUser?.id || '');
+      // Strict Client-Side Filter: Hotel admin never sees their own admin profile in staff list
+      const filteredStaff = rawStaff.filter((s) => {
+        const sId = String(s._id || s.id);
+        return sId !== currentAdminId && s.role !== 'HOTEL_ADMIN' && s.role !== 'SUPER_ADMIN';
+      });
+      setStaffList(filteredStaff);
       setProperties(propRes.data || []);
       const fetchedDepts = deptsRes.data || [];
       setDepartments(fetchedDepts);
@@ -406,15 +429,71 @@ export const StaffManager = () => {
   };
 
   const handleDeleteStaff = async (staffId, staffName) => {
-    if (!window.confirm(`Are you sure you want to delete employee '${staffName}'? They will no longer be able to log in.`)) {
+    if (!window.confirm(`Are you sure you want to delete employee '${staffName}'? They will be permanently removed from the database and will no longer be able to log in.`)) {
       return;
     }
     try {
       await api.delete(`/users/staff/${staffId}`);
-      showToast(`Employee account '${staffName}' deleted`);
+      showToast(`Employee account '${staffName}' permanently deleted from database`);
       await fetchStaffData();
     } catch (err) {
-      alert(err.message || 'Failed to delete employee');
+      alert(err.message || 'Failed to delete employee from database');
+    }
+  };
+
+  const openEditModal = (staff) => {
+    setEditingStaff(staff);
+    setEditName(staff.name || '');
+    setEditEmail(staff.email || '');
+    setEditPhone(staff.phone || '');
+    setEditRole(staff.role || 'RECEPTION');
+    setEditDept(staff.department || staff.role || '');
+    setEditSubDept(staff.subDepartment || '');
+    setEditPropertyId(staff.propertyId?._id || staff.propertyId || (properties[0]?._id || ''));
+    setEditStatus(staff.status || 'ACTIVE');
+    setEditPassword('');
+    setShowEditPassword(false);
+    setEditError(null);
+  };
+
+  const handleSaveEditStaff = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editName.trim()) {
+      setEditError('Employee full name is required.');
+      return;
+    }
+    if (!editEmail.trim()) {
+      setEditError('Employee work email is required.');
+      return;
+    }
+
+    setEditSaving(true);
+    setEditError(null);
+
+    try {
+      const payload = {
+        name: editName.trim(),
+        email: editEmail.trim(),
+        phone: editPhone.trim(),
+        role: editRole,
+        department: editDept || editRole,
+        subDepartment: editSubDept.trim(),
+        propertyId: editPropertyId || null,
+        status: editStatus,
+      };
+
+      if (editPassword.trim()) {
+        payload.password = editPassword.trim();
+      }
+
+      await api.patch(`/users/staff/${editingStaff._id}`, payload);
+      showToast(`Employee profile '${editName.trim()}' updated in database!`);
+      setEditingStaff(null);
+      await fetchStaffData();
+    } catch (err) {
+      setEditError(err.message || 'Failed to update employee details.');
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -865,6 +944,16 @@ Login URL: ${createdCredentials.loginUrl}`;
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                             <button
                               type="button"
+                              onClick={() => openEditModal(staff)}
+                              className="btn btn-outline"
+                              style={{ padding: '5px 9px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              title="Edit Employee Details"
+                            >
+                              <Edit3 size={13} />
+                              <span>Edit</span>
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleToggleStatus(staff._id, staff.status, staff.name)}
                               className="btn btn-outline"
                               style={{ padding: '5px 9px', fontSize: '0.75rem' }}
@@ -877,7 +966,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                               onClick={() => handleDeleteStaff(staff._id, staff.name)}
                               className="btn btn-outline"
                               style={{ padding: '5px 9px', fontSize: '0.75rem', color: 'var(--danger)', borderColor: 'var(--danger-bg)' }}
-                              title="Delete Employee"
+                              title="Delete Employee from Database"
                             >
                               <Trash2 size={13} />
                             </button>
@@ -1000,7 +1089,23 @@ Login URL: ${createdCredentials.loginUrl}`;
                     </div>
 
                     {/* Bottom Actions Row */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '10px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(staff)}
+                        className="btn btn-outline"
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '0.78rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Edit3 size={13} />
+                        <span>Edit</span>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(staff._id, staff.status, staff.name)}
@@ -1032,7 +1137,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                         }}
                       >
                         <Trash2 size={13} />
-                        <span>Remove</span>
+                        <span>Delete</span>
                       </button>
                     </div>
                   </div>
@@ -1793,6 +1898,325 @@ Login URL: ${createdCredentials.loginUrl}`;
                 Done
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* MODAL: EDIT EMPLOYEE PROFILE                                  */}
+      {/* ------------------------------------------------------------- */}
+      {editingStaff && (
+        <div className="modal-backdrop active" onClick={() => setEditingStaff(null)}>
+          <div
+            className="modal-content has-modal-body"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '96%',
+              maxWidth: '580px',
+              backgroundColor: '#FFFFFF',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.3)',
+              height: '90vh',
+              maxHeight: '92dvh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Header */}
+            <div
+              className="modal-header"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '18px 24px',
+                borderBottom: '1px solid var(--border-color)',
+                backgroundColor: '#FFFFFF',
+                flexShrink: 0,
+              }}
+            >
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                  Edit Employee Profile
+                </h2>
+                <p style={{ margin: '3px 0 0', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  Update details for {editingStaff.name} in database
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingStaff(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '6px',
+                  display: 'flex',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleSaveEditStaff} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div
+                className="modal-body"
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '20px 24px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                }}
+              >
+                {editError && (
+                  <div
+                    style={{
+                      background: 'var(--danger-bg)',
+                      border: '1px solid rgba(220, 38, 38, 0.25)',
+                      color: 'var(--danger)',
+                      padding: '10px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <AlertCircle size={15} />
+                    <span>{editError}</span>
+                  </div>
+                )}
+
+                {/* Full Name */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Full Name *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Users size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="e.g. Ramesh Chandra"
+                      required
+                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Work Email *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Mail size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                    <input
+                      type="email"
+                      className="input-control"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="e.g. ramesh@hotel.com"
+                      required
+                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Phone / WhatsApp Number
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Phone size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                    <input
+                      type="tel"
+                      className="input-control"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="+91 98765 43210"
+                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Department & Sub-Department Grid */}
+                <div className="responsive-form-grid-2">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                      Department *
+                    </label>
+                    <select
+                      className="input-control"
+                      value={editDept}
+                      onChange={(e) => {
+                        const newD = e.target.value;
+                        setEditDept(newD);
+                        const matched = departments.find((d) => d.name === newD || d.code === newD);
+                        if (matched && matched.subDepartments?.length > 0) {
+                          setEditSubDept(matched.subDepartments[0]);
+                        }
+                      }}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      {departments.map((d) => (
+                        <option key={d._id || d.code} value={d.name}>
+                          {d.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                      Functionality / Sub-Department
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={editSubDept}
+                      onChange={(e) => setEditSubDept(e.target.value)}
+                      placeholder="e.g. Front Desk, Room Attendant"
+                      style={{ fontSize: '0.85rem' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Role & Property Grid */}
+                <div className="responsive-form-grid-2">
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                      Assigned Role *
+                    </label>
+                    <select
+                      className="input-control"
+                      value={editRole}
+                      onChange={(e) => setEditRole(e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      <option value="RECEPTION">Reception & Front Desk</option>
+                      <option value="HOUSEKEEPING">Housekeeping Operations</option>
+                      <option value="KITCHEN">Kitchen & Dining / KDS</option>
+                      <option value="ACCOUNTS">Finance & Accounts</option>
+                      <option value="MAINTENANCE">Maintenance & Facilities</option>
+                      <option value="CONCIERGE">Concierge & Guest Relations</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                      Assigned Property Wing
+                    </label>
+                    <select
+                      className="input-control"
+                      value={editPropertyId}
+                      onChange={(e) => setEditPropertyId(e.target.value)}
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      {properties.map((p) => (
+                        <option key={p._id} value={p._id}>
+                          {p.name} ({p.city || 'Main'})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Account Status */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
+                    Account Status
+                  </label>
+                  <select
+                    className="input-control"
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value)}
+                    style={{ fontSize: '0.85rem' }}
+                  >
+                    <option value="ACTIVE">ACTIVE (Authorized to log in)</option>
+                    <option value="SUSPENDED">SUSPENDED (Access locked)</option>
+                  </select>
+                </div>
+
+                {/* Reset Password Optional */}
+                <div style={{ background: 'var(--bg-primary)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '4px', color: 'var(--text-primary)' }}>
+                    Set New Password (Optional)
+                  </label>
+                  <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0 0 8px 0' }}>
+                    Leave blank to keep the employee's existing login password unchanged.
+                  </p>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                    <input
+                      type={showEditPassword ? 'text' : 'password'}
+                      className="input-control"
+                      value={editPassword}
+                      onChange={(e) => setEditPassword(e.target.value)}
+                      placeholder="Enter new password (min. 6 chars)"
+                      style={{ paddingLeft: '36px', paddingRight: '40px', fontSize: '0.86rem' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPassword(!showEditPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '4px',
+                      }}
+                    >
+                      {showEditPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div
+                className="modal-footer"
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '16px 24px',
+                  borderTop: '1px solid var(--border-color)',
+                  backgroundColor: '#FFFFFF',
+                  flexShrink: 0,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setEditingStaff(null)}
+                  className="btn btn-outline"
+                  style={{ padding: '9px 18px', fontSize: '0.84rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="btn btn-gold"
+                  style={{ padding: '9px 24px', fontSize: '0.84rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  {editSaving ? <RefreshCw size={14} className="animate-spin" /> : <Check size={14} />}
+                  <span>{editSaving ? 'Saving Changes...' : 'Save Changes in Database'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

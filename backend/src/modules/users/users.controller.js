@@ -514,18 +514,43 @@ export class UsersController {
 
   /**
    * Hotel Admin / Super Admin gets all staff/employees for their hotel
+   * STRICT ISOLATION:
+   * - Hotel Admin NEVER sees their own profile in employees
+   * - Hotel Admin NEVER sees other admins
+   * - Hotel Admin ONLY sees employee profiles created by them
    */
   static async getStaff(req, res, next) {
     try {
-      const hotelId = req.tenant.isSuperAdmin && !req.tenant.hotelId ? null : req.tenant.hotelId;
+      const currentUserId = String(req.user?.id || req.user?._id || '');
+      const currentUserRole = req.user?.role;
+      const isSuperAdmin = currentUserRole === USER_ROLES.SUPER_ADMIN || req.tenant?.isSuperAdmin;
+      const hotelId = req.tenant?.hotelId || req.user?.hotelId;
+
       const allUsers = await User.find();
 
       let staffUsers = allUsers.filter((u) => {
-        if (u.role === USER_ROLES.SUPER_ADMIN) return false;
-        if (hotelId) {
-          const userHotelId = u.hotelId?._id || u.hotelId;
-          return String(userHotelId) === String(hotelId);
+        const uId = String(u._id || u.id);
+
+        // 1. Never show SUPER_ADMIN or HOTEL_ADMIN in employee list
+        if (u.role === USER_ROLES.SUPER_ADMIN || u.role === USER_ROLES.HOTEL_ADMIN) return false;
+
+        // 2. Never show the logged-in admin themselves
+        if (uId === currentUserId) return false;
+
+        // 3. Strict Admin Isolation for Hotel Admins:
+        // Each hotel admin must only see employees created by them, NOT those created by other admins
+        if (!isSuperAdmin) {
+          if (u.createdBy) {
+            return String(u.createdBy) === currentUserId;
+          }
+          // Fallback only if createdBy was not set (e.g. initial demo seed):
+          if (hotelId) {
+            const userHotelId = u.hotelId?._id || u.hotelId;
+            return String(userHotelId) === String(hotelId);
+          }
+          return false;
         }
+
         return true;
       });
 
@@ -536,7 +561,7 @@ export class UsersController {
         const property = properties.find((p) => String(p._id) === String(propId));
 
         return {
-          _id: staff._id,
+          _id: staff._id || staff.id,
           name: staff.name,
           email: staff.email,
           role: staff.role,
@@ -547,6 +572,7 @@ export class UsersController {
           hotelId: staff.hotelId?._id || staff.hotelId,
           propertyId: propId,
           propertyName: property ? property.name : 'Main Wing',
+          createdBy: staff.createdBy || null,
           createdAt: staff.createdAt,
         };
       });
@@ -559,11 +585,13 @@ export class UsersController {
 
   /**
    * Hotel Admin creates a staff member with Department & Sub-department (Multifunctionality)
+   * Explicitly sets createdBy to current admin for multi-tenant isolation.
    */
   static async createStaff(req, res, next) {
     try {
       const { name, email, password, role, department, subDepartment, propertyId, phone } = req.body;
-      const hotelId = req.tenant.hotelId || req.user?.hotelId;
+      const hotelId = req.tenant?.hotelId || req.user?.hotelId;
+      const currentUserId = String(req.user?.id || req.user?._id || '');
 
       if (!name || !name.trim()) return ApiResponse.error(res, 'Staff name is required', 400);
       if (!email || !email.trim()) return ApiResponse.error(res, 'Staff email is required', 400);
@@ -586,10 +614,10 @@ export class UsersController {
         role: assignedRole,
         department: department || assignedRole,
         subDepartment: subDepartment ? subDepartment.trim() : '',
-        hotelId: String(hotelId),
+        hotelId: String(hotelId || ''),
         propertyId: propertyId ? String(propertyId) : null,
         status: 'ACTIVE',
-        createdBy: req.user?.id || req.user?._id,
+        createdBy: currentUserId,
         createdAt: new Date().toISOString(),
       });
 
@@ -600,18 +628,128 @@ export class UsersController {
   }
 
   /**
-   * Hotel Admin deletes a staff member
+   * Hotel Admin updates employee profile (Name, email, phone, role, dept, property, status, password)
+   */
+  static async updateStaff(req, res, next) {
+    try {
+      const { id } = req.params;
+      const currentUserId = String(req.user?.id || req.user?._id || '');
+      const isSuperAdmin = req.user?.role === USER_ROLES.SUPER_ADMIN || req.tenant?.isSuperAdmin;
+
+      const staff = await User.findById(id);
+      if (!staff) return ApiResponse.error(res, 'Employee profile not found', 404);
+
+      if (staff.role === USER_ROLES.SUPER_ADMIN || staff.role === USER_ROLES.HOTEL_ADMIN) {
+        return ApiResponse.error(res, 'Cannot edit an administrator account via staff endpoint', 403);
+      }
+
+      // Strict Isolation: Hotel admin can only edit employees they created
+      if (!isSuperAdmin) {
+        if (staff.createdBy && String(staff.createdBy) !== currentUserId) {
+          return ApiResponse.error(res, 'Unauthorized: You can only edit employees created by your admin account', 403);
+        }
+      }
+
+      const { name, email, phone, role, department, subDepartment, propertyId, status, password } = req.body;
+
+      const updateData = {};
+      if (name && name.trim()) updateData.name = name.trim();
+      if (phone !== undefined) updateData.phone = phone.trim();
+      if (department) updateData.department = department;
+      if (subDepartment !== undefined) updateData.subDepartment = subDepartment.trim();
+      if (propertyId !== undefined) updateData.propertyId = propertyId ? String(propertyId) : null;
+      if (status) updateData.status = status;
+      if (role) updateData.role = role;
+
+      if (email && email.trim()) {
+        const normEmail = email.trim().toLowerCase();
+        if (normEmail !== (staff.email || '').toLowerCase()) {
+          const allUsers = await User.find();
+          if (allUsers.some((u) => String(u._id || u.id) !== String(id) && u.email && u.email.toLowerCase() === normEmail)) {
+            return ApiResponse.error(res, `Email '${normEmail}' is already registered with another account.`, 400);
+          }
+          updateData.email = normEmail;
+        }
+      }
+
+      if (password && password.trim().length >= 6) {
+        updateData.passwordHash = await bcrypt.hash(password.trim(), 10);
+      }
+
+      updateData.updatedAt = new Date().toISOString();
+
+      const updated = await User.findByIdAndUpdate(id, updateData, { new: true });
+      return ApiResponse.success(res, `Employee '${updated.name}' updated successfully in database`, updated);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Hotel Admin deletes a staff member permanently from the database
    */
   static async deleteStaff(req, res, next) {
     try {
       const { id } = req.params;
+      const currentUserId = String(req.user?.id || req.user?._id || '');
+      const isSuperAdmin = req.user?.role === USER_ROLES.SUPER_ADMIN || req.tenant?.isSuperAdmin;
+
       const staff = await User.findById(id);
       if (!staff) return ApiResponse.error(res, 'Staff member not found', 404);
       if (staff.role === USER_ROLES.SUPER_ADMIN || staff.role === USER_ROLES.HOTEL_ADMIN) {
         return ApiResponse.error(res, 'Cannot delete an administrator account via staff endpoint', 403);
       }
+
+      // Strict Isolation: Hotel admin can only delete employees they created
+      if (!isSuperAdmin) {
+        if (staff.createdBy && String(staff.createdBy) !== currentUserId) {
+          return ApiResponse.error(res, 'Unauthorized: You can only delete employees created by your admin account', 403);
+        }
+      }
+
       await User.deleteMany({ _id: id });
-      return ApiResponse.success(res, `Staff member '${staff.name}' deleted successfully`);
+      return ApiResponse.success(res, `Staff member '${staff.name}' deleted successfully from database`);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Platform Audit: View all registered login users (SuperAdmin, HotelAdmins, Staff)
+   * Solves the user need to view all system accounts at any time.
+   */
+  static async getAllUsers(req, res, next) {
+    try {
+      const allUsers = await User.find();
+      const properties = await Property.find();
+      const hotels = await Hotel.find();
+
+      const sanitizedUsers = allUsers.map((u) => {
+        const propId = u.propertyId?._id || u.propertyId;
+        const hotelId = u.hotelId?._id || u.hotelId;
+        const prop = properties.find((p) => String(p._id) === String(propId));
+        const hotel = hotels.find((h) => String(h._id) === String(hotelId));
+
+        return {
+          _id: u._id || u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          department: u.department || u.role,
+          subDepartment: u.subDepartment || '',
+          phone: u.phone || '',
+          status: u.status || 'ACTIVE',
+          hotelId: hotelId,
+          hotelName: hotel ? hotel.name : 'All Hotels',
+          propertyId: propId,
+          propertyName: prop ? prop.name : 'Main Wing',
+          createdBy: u.createdBy || 'SYSTEM',
+          createdAt: u.createdAt,
+          updatedAt: u.updatedAt,
+        };
+      });
+
+      return ApiResponse.success(res, 'All platform login users fetched successfully', sanitizedUsers);
     } catch (err) {
       next(err);
     }
