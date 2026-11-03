@@ -1,0 +1,35 @@
+[
+  {
+    "_id": "superadmin-01",
+    "id": "superadmin-01",
+    "name": "Platform Super Admin",
+    "email": "superadmin@platform.com",
+    "phone": "+919876543210",
+    "passwordHash": "$2a$10$Lf4KUCCg5QQr.TdksIyZJenziNXkEQYKKQoghOicj15ULkK54mSlO",
+    "role": "SUPER_ADMIN",
+    "department": "Platform Executive",
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z",
+    "createdBy": "SYSTEM_INSTALL"
+  },
+  {
+    "_id": "admin-01",
+    "id": "admin-01",
+    "name": "Ishika Sharma",
+    "email": "ishivats251@gmail.com",
+    "phone": "+917078813158",
+    "passwordHash": "$2a$10$Lf4KUCCg5QQr.TdksIyZJenziNXkEQYKKQoghOicj15ULkK54mSlO",
+    "role": "HOTEL_ADMIN",
+    "department": "Executive Management",
+    "hotelId": "hotel-royal-blue",
+    "propertyId": "prop-wing-01",
+    "propertyIds": [
+      "prop-wing-01"
+    ],
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z",
+    "createdBy": "superadmin-01"
+  }
+]

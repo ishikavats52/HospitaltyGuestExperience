@@ -1,0 +1,38 @@
+[
+  {
+    "name": "India",
+    "type": "COUNTRY",
+    "code": "IN",
+    "_id": "67e98a29-4ea3-4061-ae5d-3abe02d5bde8",
+    "id": "67e98a29-4ea3-4061-ae5d-3abe02d5bde8",
+    "createdAt": "2026-11-03T18:58:48.050Z",
+    "updatedAt": "2026-11-03T18:58:48.050Z"
+  },
+  {
+    "name": "Delhi",
+    "type": "STATE",
+    "parentId": "67e98a29-4ea3-4061-ae5d-3abe02d5bde8",
+    "_id": "28fa2fb9-6f41-4763-ba0d-b2043988c297",
+    "id": "28fa2fb9-6f41-4763-ba0d-b2043988c297",
+    "createdAt": "2026-11-03T18:58:50.071Z",
+    "updatedAt": "2026-11-03T18:58:50.071Z"
+  },
+  {
+    "name": "Uttar Pradesh",
+    "type": "STATE",
+    "parentId": "67e98a29-4ea3-4061-ae5d-3abe02d5bde8",
+    "_id": "5584afbe-c92c-4c76-aeaf-125ac5172108",
+    "id": "5584afbe-c92c-4c76-aeaf-125ac5172108",
+    "createdAt": "2026-11-03T18:58:52.086Z",
+    "updatedAt": "2026-11-03T18:58:52.086Z"
+  },
+  {
+    "name": "Maharashtra",
+    "type": "STATE",
+    "parentId": "67e98a29-4ea3-4061-ae5d-3abe02d5bde8",
+    "_id": "885dfe02-d78d-426f-b84c-6499f3289b8a",
+    "id": "885dfe02-d78d-426f-b84c-6499f3289b8a",
+    "createdAt": "2026-11-03T18:58:54.120Z",
+    "updatedAt": "2026-11-03T18:58:54.120Z"
+  }
+]

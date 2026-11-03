@@ -1,7 +1,8 @@
 import { DynamoDbRepository } from './dynamodbRepository.js';
+import { DiskStorage } from './diskStorage.js';
 import crypto from 'crypto';
 
-// Global in-memory cache to guarantee fast response and offline local operation
+// Global in-memory cache to guarantee fast response
 const inMemoryStore = new Map();
 
 function matchesFilter(item, filter = {}) {
@@ -18,7 +19,7 @@ function matchesFilter(item, filter = {}) {
 
     if (val && typeof val === 'object' && !(val instanceof Date)) {
       if ('$in' in val && Array.isArray(val.$in)) {
-        if (!val.$in.includes(item[key])) return false;
+        if (!val.$in.map(String).includes(String(item[key]))) return false;
         continue;
       }
       if ('$gt' in val) {
@@ -127,10 +128,12 @@ class Query {
 }
 
 export function createDynamoModel(modelName) {
-  const pk = `ENTITY#${modelName.toUpperCase()}`;
+  const tableName = DynamoDbRepository.getTableName(modelName);
 
+  // Initialize in-memory cache from persistent disk storage immediately
   if (!inMemoryStore.has(modelName)) {
-    inMemoryStore.set(modelName, []);
+    const initialDiskItems = DiskStorage.readTable(tableName);
+    inMemoryStore.set(modelName, initialDiskItems);
   }
   const store = inMemoryStore.get(modelName);
 
@@ -142,7 +145,7 @@ export function createDynamoModel(modelName) {
     static find(filter = {}) {
       return new Query(async () => {
         try {
-          const items = await DynamoDbRepository.scanEntity(modelName, pk);
+          const items = await DynamoDbRepository.scanEntity(modelName);
           if (items && items.length > 0) {
             for (const item of items) {
               const strId = String(item._id || item.id);
@@ -162,7 +165,7 @@ export function createDynamoModel(modelName) {
     static findOne(filter = {}) {
       return new Query(async () => {
         try {
-          const items = await DynamoDbRepository.scanEntity(modelName, pk);
+          const items = await DynamoDbRepository.scanEntity(modelName);
           if (items && items.length > 0) {
             for (const item of items) {
               const strId = String(item._id || item.id);
@@ -184,7 +187,7 @@ export function createDynamoModel(modelName) {
         if (!id) return null;
         const strId = String(id);
         try {
-          const item = await DynamoDbRepository.getEntity(modelName, strId, pk, `${modelName.toUpperCase()}#${strId}`);
+          const item = await DynamoDbRepository.getEntity(modelName, strId);
           if (item) {
             const existingIdx = store.findIndex((s) => String(s._id || s.id) === strId);
             if (existingIdx >= 0) {
@@ -195,10 +198,9 @@ export function createDynamoModel(modelName) {
             return item;
           }
         } catch (e) {}
-        return store.find((item) => String(item._id) === strId || String(item.id) === strId) || null;
+        return store.find((item) => String(item._id || item.id) === strId) || null;
       }, Model);
     }
-
 
     static async create(data) {
       const isArray = Array.isArray(data);
@@ -206,16 +208,11 @@ export function createDynamoModel(modelName) {
 
       const createdItems = [];
       for (const itemData of itemsToCreate) {
-        const id = itemData._id ? String(itemData._id) : crypto.randomUUID();
-        const sk = `${modelName.toUpperCase()}#${id}`;
+        const id = itemData._id ? String(itemData._id) : (itemData.id ? String(itemData.id) : crypto.randomUUID());
         const record = {
+          ...itemData,
           _id: id,
           id: id,
-          ...itemData,
-          PK: pk,
-          SK: sk,
-          GSI1PK: itemData.hotelId ? `HOTEL#${itemData.hotelId}` : pk,
-          GSI1SK: sk,
           createdAt: itemData.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
@@ -224,7 +221,7 @@ export function createDynamoModel(modelName) {
           await DynamoDbRepository.putEntity(modelName, record);
         } catch (e) {}
 
-        const existingIdx = store.findIndex((i) => String(i._id) === id);
+        const existingIdx = store.findIndex((i) => String(i._id || i.id) === id);
         if (existingIdx >= 0) {
           store[existingIdx] = record;
         } else {
@@ -299,7 +296,7 @@ export function createDynamoModel(modelName) {
           store.length = 0;
           for (const item of items) {
             try {
-              await DynamoDbRepository.deleteEntity(modelName, item._id || item.id, pk, item.SK);
+              await DynamoDbRepository.deleteEntity(modelName, item._id || item.id);
             } catch (e) {}
           }
           return { deletedCount: items.length };
@@ -310,10 +307,39 @@ export function createDynamoModel(modelName) {
           const idx = store.findIndex((i) => i === item);
           if (idx >= 0) store.splice(idx, 1);
           try {
-            await DynamoDbRepository.deleteEntity(modelName, item._id || item.id, pk, item.SK);
+            await DynamoDbRepository.deleteEntity(modelName, item._id || item.id);
           } catch (e) {}
         }
         return { deletedCount: toDelete.length };
+      }, Model);
+    }
+
+    static deleteOne(filter = {}) {
+      return new Query(async () => {
+        const item = store.find((i) => matchesFilter(i, filter));
+        if (!item) return { deletedCount: 0 };
+        const idx = store.findIndex((i) => i === item);
+        if (idx >= 0) store.splice(idx, 1);
+        try {
+          await DynamoDbRepository.deleteEntity(modelName, item._id || item.id);
+        } catch (e) {}
+        return { deletedCount: 1 };
+      }, Model);
+    }
+
+    static findByIdAndDelete(id) {
+      return new Query(async () => {
+        if (!id) return null;
+        const strId = String(id);
+        const item = store.find((i) => String(i._id || i.id) === strId);
+        if (item) {
+          const idx = store.findIndex((i) => i === item);
+          if (idx >= 0) store.splice(idx, 1);
+        }
+        try {
+          await DynamoDbRepository.deleteEntity(modelName, strId);
+        } catch (e) {}
+        return item || null;
       }, Model);
     }
   };

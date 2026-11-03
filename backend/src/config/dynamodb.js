@@ -4,6 +4,7 @@ import { ENV } from './env.js';
 
 const clientConfig = {
   region: ENV.AWS_REGION || 'ap-south-1',
+  maxAttempts: 1,
 };
 
 if (ENV.AWS_ACCESS_KEY_ID && ENV.AWS_SECRET_ACCESS_KEY) {

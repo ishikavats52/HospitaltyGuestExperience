@@ -1,0 +1,146 @@
+[
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Housekeeping",
+    "code": "HOUSEKEEPING",
+    "subDepartments": [
+      "Room Cleaning & Turn Down",
+      "Laundry & Linen Management",
+      "Floor Supervisor",
+      "Public Area Cleaning",
+      "Deep Cleaning & Sanitization",
+      "Mini Bar & Amenities Runner",
+      "Linen Master & Uniforms"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "83348ece-1a3d-4fbf-9e26-58524814235e",
+    "id": "83348ece-1a3d-4fbf-9e26-58524814235e",
+    "updatedAt": "2026-11-03T18:58:29.858Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Front Desk (Reception)",
+    "code": "RECEPTION",
+    "subDepartments": [
+      "Front Desk Receptionist",
+      "Concierge & Guest Relations",
+      "Night Auditor",
+      "Bellhop & Valet Services",
+      "Reservations & Bookings",
+      "VIP Guest Host"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "efd08d69-176e-4ab1-8ffe-294db11d9874",
+    "id": "efd08d69-176e-4ab1-8ffe-294db11d9874",
+    "updatedAt": "2026-11-03T18:58:31.881Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Booking & Reservations Desk",
+    "code": "BOOKING_DESK",
+    "subDepartments": [
+      "Manual Reservation Desk Agent",
+      "Walk-In Booking Specialist",
+      "Date & Inventory Coordinator",
+      "Corporate & Group Reservations"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "14bce3b5-d3b2-4b9c-a9e6-8622f12169a9",
+    "id": "14bce3b5-d3b2-4b9c-a9e6-8622f12169a9",
+    "updatedAt": "2026-11-03T18:58:33.939Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Kitchen Staff & F&B",
+    "code": "KITCHEN",
+    "subDepartments": [
+      "Executive / Head Chef",
+      "Line Cook & Station Chef",
+      "Pastry & Bakery Chef",
+      "Kitchen Steward & Dishwashing",
+      "In-Room Dining Runner",
+      "Barista & Beverage Specialist"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "d3c2388f-008d-42ca-8369-6d81aa1afd70",
+    "id": "d3c2388f-008d-42ca-8369-6d81aa1afd70",
+    "updatedAt": "2026-11-03T18:58:35.960Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Accounts & Billing",
+    "code": "ACCOUNTS",
+    "subDepartments": [
+      "Front Office Cashier",
+      "Night Audit & Revenue Settlement",
+      "Accounts Receivable & Ledger",
+      "Cost Comptroller & Inventory"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "af9be26e-98f2-4cad-8919-21876b21d6c8",
+    "id": "af9be26e-98f2-4cad-8919-21876b21d6c8",
+    "updatedAt": "2026-11-03T18:58:37.978Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Maintenance & Engineering",
+    "code": "MAINTENANCE",
+    "subDepartments": [
+      "HVAC & Air Conditioning Specialist",
+      "Electrical & Lighting Technician",
+      "Plumbing & Water Systems",
+      "Carpentry & Painting Specialist",
+      "Safety, Fire & Security Engineering"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "3527945a-2227-44da-ae81-16aebde4a51c",
+    "id": "3527945a-2227-44da-ae81-16aebde4a51c",
+    "updatedAt": "2026-11-03T18:58:39.993Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Security & Safety",
+    "code": "SECURITY",
+    "subDepartments": [
+      "CCTV Surveillance Officer",
+      "Lobby & Gate Security",
+      "Night Patrol & Incident Response",
+      "Emergency Response Coordinator"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "a28480d3-c678-406f-86fa-2a0db9866210",
+    "id": "a28480d3-c678-406f-86fa-2a0db9866210",
+    "updatedAt": "2026-11-03T18:58:42.009Z"
+  },
+  {
+    "hotelId": "hotel-royal-blue",
+    "name": "Spa & Wellness",
+    "code": "SPA_WELLNESS",
+    "subDepartments": [
+      "Senior Massage Therapist",
+      "Esthetician & Skin Specialist",
+      "Pool Deck Attendant",
+      "Fitness & Yoga Instructor"
+    ],
+    "isCustom": false,
+    "status": "ACTIVE",
+    "createdAt": "2026-11-03T18:58:17.651Z",
+    "_id": "3d151fb3-0fda-42d8-8ce1-d6d41ba1809d",
+    "id": "3d151fb3-0fda-42d8-8ce1-d6d41ba1809d",
+    "updatedAt": "2026-11-03T18:58:44.023Z"
+  }
+]

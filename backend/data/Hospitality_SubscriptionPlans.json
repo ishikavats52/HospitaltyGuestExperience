@@ -1,0 +1,48 @@
+[
+  {
+    "name": "Free Starter Plan",
+    "code": "FREE",
+    "price": 0,
+    "isFreePlan": true,
+    "features": [
+      "Contactless Check-In",
+      "Digital QR Pass",
+      "Free-Eligible Services",
+      "Basic Room Management"
+    ],
+    "_id": "08d33969-4c59-4779-93f8-4d024342a475",
+    "id": "08d33969-4c59-4779-93f8-4d024342a475",
+    "createdAt": "2026-11-03T18:59:53.929Z",
+    "updatedAt": "2026-11-03T18:59:53.929Z"
+  },
+  {
+    "name": "Hospitality Growth",
+    "code": "BASIC",
+    "price": 2999,
+    "features": [
+      "All Free Features",
+      "Paid Service Folio",
+      "In-Room Dining KDS",
+      "Multi-Property Hub"
+    ],
+    "_id": "542b4e23-e8ea-4863-a16a-387b967db201",
+    "id": "542b4e23-e8ea-4863-a16a-387b967db201",
+    "createdAt": "2026-11-03T18:59:56.010Z",
+    "updatedAt": "2026-11-03T18:59:56.010Z"
+  },
+  {
+    "name": "Luxury Enterprise",
+    "code": "PREMIUM",
+    "price": 7999,
+    "features": [
+      "All Basic Features",
+      "Spa & Concierge Addons",
+      "Unlimited Rooms & Inventory",
+      "Priority Governance"
+    ],
+    "_id": "350d9fc9-dcf0-459c-906d-e37cb116650e",
+    "id": "350d9fc9-dcf0-459c-906d-e37cb116650e",
+    "createdAt": "2026-11-03T18:59:58.033Z",
+    "updatedAt": "2026-11-03T18:59:58.033Z"
+  }
+]

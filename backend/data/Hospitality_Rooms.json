@@ -1,0 +1,89 @@
+[
+  {
+    "_id": "room-101",
+    "id": "room-101",
+    "hotelId": "hotel-royal-blue",
+    "propertyId": "prop-wing-01",
+    "roomNumber": "101",
+    "floor": 1,
+    "roomTypeName": "deluxe suit",
+    "pricePerNight": 4500,
+    "status": "AVAILABLE",
+    "images": [
+      "https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "King Size Plush Bed",
+      "Smart 4K Ultra-HD TV",
+      "High-Speed Wi-Fi 6",
+      "Mini Bar & Refrigerator"
+    ],
+    "inventory": [
+      {
+        "name": "Egyptian Cotton Towels",
+        "quantity": 5,
+        "category": "Linen"
+      }
+    ],
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z"
+  },
+  {
+    "_id": "room-102",
+    "id": "room-102",
+    "hotelId": "hotel-royal-blue",
+    "propertyId": "prop-wing-01",
+    "roomNumber": "102",
+    "floor": 1,
+    "roomTypeName": "premium suit",
+    "pricePerNight": 4500,
+    "status": "AVAILABLE",
+    "images": [
+      "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "King Size Plush Bed",
+      "Smart 4K Ultra-HD TV",
+      "High-Speed Wi-Fi 6",
+      "Mini Bar & Refrigerator"
+    ],
+    "inventory": [
+      {
+        "name": "Egyptian Cotton Towels",
+        "quantity": 4,
+        "category": "Linen"
+      }
+    ],
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z"
+  },
+  {
+    "_id": "room-201",
+    "id": "room-201",
+    "hotelId": "hotel-royal-blue",
+    "propertyId": "prop-wing-01",
+    "roomNumber": "201",
+    "floor": 2,
+    "roomTypeName": "Basic suit",
+    "pricePerNight": 4500,
+    "status": "AVAILABLE",
+    "images": [
+      "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80"
+    ],
+    "amenities": [
+      "King Size Plush Bed",
+      "Smart 4K Ultra-HD TV",
+      "High-Speed Wi-Fi 6",
+      "Mini Bar & Refrigerator"
+    ],
+    "inventory": [
+      {
+        "name": "Egyptian Cotton Towels",
+        "quantity": 3,
+        "category": "Linen"
+      }
+    ],
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z"
+  }
+]

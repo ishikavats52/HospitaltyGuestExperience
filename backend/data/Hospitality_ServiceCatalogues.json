@@ -1,0 +1,59 @@
+[
+  {
+    "name": "Room Service & Linen Refresh",
+    "code": "ROOM_SERVICE",
+    "category": "HOUSEKEEPING",
+    "description": "Daily fresh towels, bed linens, and amenity top-ups",
+    "icon": "sparkles",
+    "status": "ACTIVE",
+    "isFreeByDefault": true,
+    "eligiblePlans": [
+      "FREE",
+      "BASIC",
+      "PREMIUM"
+    ],
+    "createdBy": "superadmin-01",
+    "_id": "54abdedc-3bfd-4b8f-b694-adb5e2cd0114",
+    "id": "54abdedc-3bfd-4b8f-b694-adb5e2cd0114",
+    "createdAt": "2026-11-03T19:00:02.092Z",
+    "updatedAt": "2026-11-03T19:00:02.092Z"
+  },
+  {
+    "name": "Express Garment Laundry",
+    "code": "LAUNDRY",
+    "category": "HOUSEKEEPING",
+    "description": "Professional laundry and steam press",
+    "icon": "shirt",
+    "status": "ACTIVE",
+    "isFreeByDefault": true,
+    "eligiblePlans": [
+      "FREE",
+      "BASIC",
+      "PREMIUM"
+    ],
+    "createdBy": "superadmin-01",
+    "_id": "aeac595f-b7fd-4ba9-a506-d61f25b8e8ef",
+    "id": "aeac595f-b7fd-4ba9-a506-d61f25b8e8ef",
+    "createdAt": "2026-11-03T19:00:04.104Z",
+    "updatedAt": "2026-11-03T19:00:04.104Z"
+  },
+  {
+    "name": "Chauffeured Airport Transfer",
+    "code": "AIRPORT_PICKUP",
+    "category": "TRANSPORT",
+    "description": "Private luxury sedan transfer to and from international terminal",
+    "icon": "car",
+    "status": "ACTIVE",
+    "isFreeByDefault": true,
+    "eligiblePlans": [
+      "FREE",
+      "BASIC",
+      "PREMIUM"
+    ],
+    "createdBy": "superadmin-01",
+    "_id": "1f2377f9-c48c-4961-8a36-5d3c1d66c34b",
+    "id": "1f2377f9-c48c-4961-8a36-5d3c1d66c34b",
+    "createdAt": "2026-11-03T19:00:06.120Z",
+    "updatedAt": "2026-11-03T19:00:06.120Z"
+  }
+]

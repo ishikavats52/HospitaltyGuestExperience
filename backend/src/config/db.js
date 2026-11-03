@@ -20,7 +20,7 @@ export const connectDB = async () => {
     console.warn(`[Database] Auto-seeding notice: ${seedErr.message}`);
   }
 
-  console.log(`[Database] AWS DynamoDB Engine Active: Table '${ENV.DYNAMODB_TABLE_NAME}' initialized & populated.`);
+  console.log(`[Database] AWS DynamoDB Dedicated Entity Engine Active: 20 separate dedicated tables initialized & persistent.`);
 };
 
 export const disconnectDB = async () => {

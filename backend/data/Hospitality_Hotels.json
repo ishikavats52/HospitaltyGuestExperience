@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "hotel-royal-blue",
+    "id": "hotel-royal-blue",
+    "name": "Royal Blue Hotel",
+    "brand": "Royal Blue Luxury Stays",
+    "code": "RBL-101",
+    "contactEmail": "ishivats251@gmail.com",
+    "contactPhone": "+917078813158",
+    "locationHierarchy": {
+      "country": "India",
+      "state": "Delhi",
+      "city": "New Delhi",
+      "localArea": "Central"
+    },
+    "createdAt": "2026-11-03T18:58:02.001Z",
+    "updatedAt": "2026-11-03T18:58:02.001Z"
+  }
+]

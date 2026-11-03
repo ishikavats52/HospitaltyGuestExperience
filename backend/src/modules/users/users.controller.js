@@ -298,7 +298,9 @@ export class UsersController {
   static async getAdmins(req, res, next) {
     try {
       const allUsers = await User.find();
-      const adminUsers = allUsers.filter((u) => u.role === USER_ROLES.HOTEL_ADMIN);
+      const adminUsers = allUsers.filter(
+        (u) => u.role === USER_ROLES.HOTEL_ADMIN || String(u.role || '').toUpperCase() === 'HOTEL_ADMIN'
+      );
 
       const hotels = await Hotel.find();
       const properties = await Property.find();

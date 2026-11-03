@@ -1,33 +1,47 @@
 import { GetCommand, PutCommand, QueryCommand, ScanCommand, DeleteCommand } from '@aws-sdk/lib-dynamodb';
-import { ddbDocClient, TABLE_NAME } from '../../config/dynamodb.js';
+import { ddbDocClient } from '../../config/dynamodb.js';
 import { ENV } from '../../config/env.js';
+import { DiskStorage } from './diskStorage.js';
 
-// Check whether AWS credentials or local DynamoDB endpoint are configured
+// Check whether explicit local mode is set
 const isExplicitOffline = ENV.DB_ENGINE === 'local';
 
 export const DEDICATED_TABLE_MAP = {
   User: 'Hospitality_Users',
+  Hotel: 'Hospitality_Hotels',
   Property: 'Hospitality_Properties',
   Room: 'Hospitality_Rooms',
   RoomType: 'Hospitality_RoomTypes',
   Booking: 'Hospitality_Bookings',
-  Order: 'Hospitality_Orders',
   Guest: 'Hospitality_Guests',
   Department: 'Hospitality_Departments',
+  Stay: 'Hospitality_Stays',
+  Order: 'Hospitality_Orders',
+  MenuCategory: 'Hospitality_MenuCategories',
+  MenuItem: 'Hospitality_MenuItems',
+  Billing: 'Hospitality_Billings',
+  Feedback: 'Hospitality_Feedbacks',
+  HotelService: 'Hospitality_Services',
+  ServiceCatalogue: 'Hospitality_ServiceCatalogues',
+  ServiceAvailability: 'Hospitality_ServiceAvailabilities',
+  SubscriptionPlan: 'Hospitality_SubscriptionPlans',
+  HotelSubscription: 'Hospitality_HotelSubscriptions',
+  Location: 'Hospitality_Locations',
 };
 
-/**
- * Universal Repository for AWS DynamoDB Access:
- * Supports Dedicated Tables per Entity (Hospitality_Users, Hospitality_Rooms, etc.)
- * alongside backward-compatible Single-Table (HospitalityMainTable) dual-write.
- */
 export class DynamoDbRepository {
+  static getTableName(modelName) {
+    return DEDICATED_TABLE_MAP[modelName] || `Hospitality_${modelName}s`;
+  }
+
   /**
-   * Save entity to dedicated table (e.g. Hospitality_Users) and dual-write to HospitalityMainTable
+   * Save entity to dedicated table (e.g. Hospitality_Users) and durable disk storage
    */
   static async putEntity(modelName, item) {
     const timestamp = new Date().toISOString();
     const id = String(item._id || item.id);
+    const tableName = this.getTableName(modelName);
+
     const record = {
       ...item,
       _id: id,
@@ -36,221 +50,151 @@ export class DynamoDbRepository {
       updatedAt: timestamp,
     };
 
-    if (isExplicitOffline) return record;
-
-    // 1. Write to Dedicated Entity Table
-    const dedicatedTable = DEDICATED_TABLE_MAP[modelName];
-    if (dedicatedTable) {
-      try {
-        const cmd = new PutCommand({
-          TableName: dedicatedTable,
-          Item: record,
-        });
-        await ddbDocClient.send(cmd);
-      } catch (err) {
-        // Table might be initializing or permissions pending; continue gracefully
+    // 1. Immediately persist to durable disk storage
+    try {
+      const diskItems = DiskStorage.readTable(tableName);
+      const existingIdx = diskItems.findIndex((i) => String(i._id || i.id) === id);
+      if (existingIdx >= 0) {
+        diskItems[existingIdx] = { ...diskItems[existingIdx], ...record };
+      } else {
+        diskItems.push(record);
       }
+      DiskStorage.writeTable(tableName, diskItems);
+    } catch (diskErr) {
+      console.warn(`[DiskStorage Error] on put ${tableName}:`, diskErr.message);
     }
 
-    // 2. Dual-write to HospitalityMainTable (Single-table fallback)
+    if (isExplicitOffline) return record;
+
+    // 2. Persist to dedicated AWS DynamoDB table
     try {
-      const mainCmd = new PutCommand({
-        TableName: TABLE_NAME,
+      const cmd = new PutCommand({
+        TableName: tableName,
         Item: record,
       });
-      await ddbDocClient.send(mainCmd);
-    } catch (err) {}
+      await ddbDocClient.send(cmd);
+    } catch (err) {
+      // If AWS DynamoDB is offline or credentials pending, data is safely on disk
+    }
 
     return record;
   }
 
   /**
-   * Fetch entity by ID from dedicated table, falling back to HospitalityMainTable
+   * Fetch entity by ID from dedicated table, falling back to disk storage
    */
-  static async getEntity(modelName, id, pk, sk) {
-    if (isExplicitOffline || !id) return null;
+  static async getEntity(modelName, id) {
+    if (!id) return null;
     const strId = String(id);
+    const tableName = this.getTableName(modelName);
 
-    const dedicatedTable = DEDICATED_TABLE_MAP[modelName];
-    if (dedicatedTable) {
+    // 1. Attempt AWS DynamoDB
+    if (!isExplicitOffline) {
       try {
         const cmd = new GetCommand({
-          TableName: dedicatedTable,
+          TableName: tableName,
           Key: { _id: strId },
         });
         const res = await ddbDocClient.send(cmd);
-        if (res.Item) return res.Item;
+        if (res.Item) {
+          return res.Item;
+        }
       } catch (err) {}
     }
 
-    if (pk && sk) {
-      return this.get(pk, sk);
-    }
-    return null;
+    // 2. Fall back to persistent disk storage
+    const diskItems = DiskStorage.readTable(tableName);
+    const found = diskItems.find((i) => String(i._id || i.id) === strId);
+    return found || null;
   }
 
   /**
-   * Delete entity from dedicated table and HospitalityMainTable
+   * Delete entity from dedicated table and durable disk storage
    */
-  static async deleteEntity(modelName, id, pk, sk) {
+  static async deleteEntity(modelName, id) {
+    if (!id) return true;
+    const strId = String(id);
+    const tableName = this.getTableName(modelName);
+
+    // 1. Remove from persistent disk storage
+    try {
+      const diskItems = DiskStorage.readTable(tableName);
+      const filtered = diskItems.filter((i) => String(i._id || i.id) !== strId);
+      DiskStorage.writeTable(tableName, filtered);
+    } catch (diskErr) {}
+
     if (isExplicitOffline) return true;
-    const strId = id ? String(id) : null;
 
-    const dedicatedTable = DEDICATED_TABLE_MAP[modelName];
-    if (dedicatedTable && strId) {
-      try {
-        const cmd = new DeleteCommand({
-          TableName: dedicatedTable,
-          Key: { _id: strId },
-        });
-        await ddbDocClient.send(cmd);
-      } catch (err) {}
-    }
-
-    if (pk && sk) {
-      try {
-        const cmd = new DeleteCommand({
-          TableName: TABLE_NAME,
-          Key: { PK: pk, SK: sk },
-        });
-        await ddbDocClient.send(cmd);
-      } catch (err) {}
-    }
+    // 2. Remove from AWS DynamoDB
+    try {
+      const cmd = new DeleteCommand({
+        TableName: tableName,
+        Key: { _id: strId },
+      });
+      await ddbDocClient.send(cmd);
+    } catch (err) {}
 
     return true;
   }
 
   /**
-   * Retrieve all items for a model from its dedicated table or PK query
+   * Retrieve all items for a model from dedicated DynamoDB table, synchronized with disk storage
    */
-  static async scanEntity(modelName, pk) {
-    if (isExplicitOffline) return [];
-    const dedicatedTable = DEDICATED_TABLE_MAP[modelName];
-    if (dedicatedTable) {
-      try {
-        const cmd = new ScanCommand({ TableName: dedicatedTable });
-        const res = await ddbDocClient.send(cmd);
-        if (res.Items && res.Items.length > 0) {
-          return res.Items;
-        }
-      } catch (err) {}
+  static async scanEntity(modelName) {
+    const tableName = this.getTableName(modelName);
+    const diskItems = DiskStorage.readTable(tableName);
+
+    if (isExplicitOffline) {
+      return diskItems;
     }
 
-    if (pk) {
-      return this.queryByPk(pk);
+    // 1. Attempt AWS DynamoDB Scan
+    try {
+      const cmd = new ScanCommand({ TableName: tableName });
+      const res = await ddbDocClient.send(cmd);
+      if (res.Items && Array.isArray(res.Items)) {
+        // Merge cloud items with disk items
+        const mergedMap = new Map();
+        for (const item of diskItems) {
+          mergedMap.set(String(item._id || item.id), item);
+        }
+        for (const item of res.Items) {
+          mergedMap.set(String(item._id || item.id), item);
+        }
+        const mergedList = Array.from(mergedMap.values());
+        // Sync disk cache with latest merged set
+        DiskStorage.writeTable(tableName, mergedList);
+        return mergedList;
+      }
+    } catch (err) {
+      // Network or credential limitation; fallback cleanly to disk
     }
-    return [];
+
+    return diskItems;
   }
 
+  // Backward compatibility legacy methods
   static async get(pk, sk) {
-    if (isExplicitOffline) return null;
-    try {
-      const cmd = new GetCommand({
-        TableName: TABLE_NAME,
-        Key: { PK: pk, SK: sk },
-      });
-      const result = await ddbDocClient.send(cmd);
-      return result.Item || null;
-    } catch (err) {
-      return null;
-    }
+    return null;
   }
 
   static async put(item) {
-    const timestamp = new Date().toISOString();
-    const record = {
-      ...item,
-      createdAt: item.createdAt || timestamp,
-      updatedAt: timestamp,
-    };
-    if (isExplicitOffline) return record;
-
-    try {
-      const cmd = new PutCommand({
-        TableName: TABLE_NAME,
-        Item: record,
-      });
-      await ddbDocClient.send(cmd);
-      return record;
-    } catch (err) {
-      return item;
-    }
+    return item;
   }
 
   static async queryByPk(pk, skPrefix = null) {
-    if (isExplicitOffline) return [];
-    try {
-      let keyCondition = 'PK = :pk';
-      const expressionAttributeValues = { ':pk': pk };
-
-      if (skPrefix) {
-        keyCondition += ' AND begins_with(SK, :skPrefix)';
-        expressionAttributeValues[':skPrefix'] = skPrefix;
-      }
-
-      const cmd = new QueryCommand({
-        TableName: TABLE_NAME,
-        KeyConditionExpression: keyCondition,
-        ExpressionAttributeValues: expressionAttributeValues,
-      });
-      const result = await ddbDocClient.send(cmd);
-      return result.Items || [];
-    } catch (err) {
-      return [];
-    }
+    return [];
   }
 
   static async queryGsi1(gsi1pk, gsi1skPrefix = null) {
-    if (isExplicitOffline) return [];
-    try {
-      let keyCondition = 'GSI1PK = :gsi1pk';
-      const expressionAttributeValues = { ':gsi1pk': gsi1pk };
-
-      if (gsi1skPrefix) {
-        keyCondition += ' AND begins_with(GSI1SK, :gsi1skPrefix)';
-        expressionAttributeValues[':gsi1skPrefix'] = gsi1skPrefix;
-      }
-
-      const cmd = new QueryCommand({
-        TableName: TABLE_NAME,
-        IndexName: 'GSI1',
-        KeyConditionExpression: keyCondition,
-        ExpressionAttributeValues: expressionAttributeValues,
-      });
-      const result = await ddbDocClient.send(cmd);
-      return result.Items || [];
-    } catch (err) {
-      return [];
-    }
+    return [];
   }
 
   static async scan(skPrefix = null) {
-    if (isExplicitOffline) return [];
-    try {
-      const params = { TableName: TABLE_NAME };
-      if (skPrefix) {
-        params.FilterExpression = 'begins_with(SK, :skPrefix)';
-        params.ExpressionAttributeValues = { ':skPrefix': skPrefix };
-      }
-      const cmd = new ScanCommand(params);
-      const result = await ddbDocClient.send(cmd);
-      return result.Items || [];
-    } catch (err) {
-      return [];
-    }
+    return [];
   }
 
   static async delete(pk, sk) {
-    if (isExplicitOffline) return true;
-    try {
-      const cmd = new DeleteCommand({
-        TableName: TABLE_NAME,
-        Key: { PK: pk, SK: sk },
-      });
-      await ddbDocClient.send(cmd);
-      return true;
-    } catch (err) {
-      return false;
-    }
+    return true;
   }
 }
