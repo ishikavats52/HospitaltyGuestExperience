@@ -1,29 +1,74 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { QrCode, ChefHat, Sparkles, Receipt, LogOut } from 'lucide-react';
+import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { QrCode, CalendarCheck, ChefHat, Sparkles, Receipt, LogOut, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const StaffLayout = () => {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, isHotelAdmin, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     navigate('/staff/login');
   };
 
+  const isAdmin = isHotelAdmin || isSuperAdmin;
+  const role = currentUser?.role;
+
+  // Determine allowed routes based on staff role
+  const getRoleDefaultPath = (userRole) => {
+    switch (userRole) {
+      case 'BOOKING_DESK':
+        return '/staff/bookings';
+      case 'HOUSEKEEPING':
+        return '/staff/housekeeping';
+      case 'KITCHEN':
+        return '/staff/kitchen';
+      case 'ACCOUNTS':
+        return '/staff/accounts';
+      case 'RECEPTION':
+      default:
+        return '/staff/reception';
+    }
+  };
+
+  // Restrict staff to their own operational portal unless they are an admin
+  const currentPath = location.pathname;
+  if (!isAdmin && role) {
+    const allowedPath = getRoleDefaultPath(role);
+    // If staff is trying to access another department's sub-path, redirect to their allowed portal
+    if (currentPath !== allowedPath && currentPath.startsWith('/staff/')) {
+      return <Navigate to={allowedPath} replace />;
+    }
+  }
+
+  // Navigation items: Admins see all departments to govern everything;
+  // Individual staff members see only their dedicated department.
+  const allNavTabs = [
+    { to: '/staff/reception', label: 'Reception Desk', icon: QrCode, role: 'RECEPTION' },
+    { to: '/staff/bookings', label: 'Booking Desk', icon: CalendarCheck, role: 'BOOKING_DESK' },
+    { to: '/staff/housekeeping', label: 'Housekeeping', icon: Sparkles, role: 'HOUSEKEEPING' },
+    { to: '/staff/kitchen', label: 'Kitchen KDS', icon: ChefHat, role: 'KITCHEN' },
+    { to: '/staff/accounts', label: 'Accounts Folio', icon: Receipt, role: 'ACCOUNTS' },
+  ];
+
+  const visibleTabs = isAdmin
+    ? allNavTabs
+    : allNavTabs.filter((t) => t.role === role);
+
   const navTabStyle = ({ isActive }) => ({
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
-    padding: '9px 16px',
+    padding: '8px 16px',
     borderRadius: 'var(--radius-sm)',
     color: isActive ? 'var(--gold-dark)' : 'var(--text-secondary)',
     background: isActive ? 'var(--gold-soft)' : '#FFFFFF',
     border: isActive ? '1px solid var(--border-active)' : '1px solid var(--border-color)',
     textDecoration: 'none',
-    fontSize: '0.85rem',
-    fontWeight: 600,
+    fontSize: '0.84rem',
+    fontWeight: isActive ? 700 : 500,
     whiteSpace: 'nowrap',
     flexShrink: 0,
     boxShadow: isActive ? 'var(--shadow-xs)' : 'none',
@@ -31,64 +76,100 @@ export const StaffLayout = () => {
   });
 
   return (
-    <div className="staff-container">
-      {/* Top Operations Nav */}
-      <header className="staff-header">
-        <div className="staff-header-top">
-          <div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 600 }}>
-              Hotel Staff Operations
-            </div>
-            <div className="font-serif" style={{ fontSize: 'clamp(1.1rem, 2.5vw, 1.35rem)', fontWeight: 700, color: 'var(--text-primary)' }}>
-              Live Task & Service Dispatch
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-              <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
-              <span style={{ fontSize: '0.92rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {currentUser?.name || 'Staff Member'}
-              </span>
-              <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                {currentUser?.role?.replace('_', ' ') || 'STAFF'}
-              </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="btn btn-outline"
-              style={{ padding: '6px 12px', fontSize: '0.75rem' }}
-              title="Sign Out"
-            >
-              <LogOut size={14} /> Exit
-            </button>
-          </div>
+    <div className="staff-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
+      {/* Clean Minimalist Staff Header */}
+      <header
+        style={{
+          background: '#FFFFFF',
+          borderBottom: '1px solid var(--border-color)',
+          padding: '12px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Welcome,</span>
+          <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            {currentUser?.name || 'Staff Member'}
+          </span>
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '3px 10px',
+              borderRadius: '9999px',
+              background: 'var(--gold-soft)',
+              color: 'var(--gold-primary)',
+              border: '1px solid var(--border-active)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            {currentUser?.department || currentUser?.role?.replace('_', ' ') || 'STAFF'}
+          </span>
         </div>
 
-        <nav className="staff-nav touch-scroll-x">
-          <NavLink to="/staff/reception" style={navTabStyle}>
-            <QrCode size={16} /> Reception Desk & QR
-          </NavLink>
-          <NavLink to="/staff/kitchen" style={navTabStyle}>
-            <ChefHat size={16} /> Kitchen KDS
-          </NavLink>
-          <NavLink to="/staff/housekeeping" style={navTabStyle}>
-            <Sparkles size={16} /> Housekeeping & Services
-          </NavLink>
-          <NavLink to="/staff/accounts" style={navTabStyle}>
-            <Receipt size={16} /> Folio Billing & Accounts
-          </NavLink>
-        </nav>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/admin/dashboard')}
+              className="btn btn-outline"
+              style={{ padding: '6px 14px', fontSize: '0.78rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              <span>Hotel Admin Suite</span>
+              <ArrowRight size={13} />
+            </button>
+          )}
+          <button
+            onClick={handleLogout}
+            className="btn btn-outline"
+            style={{ padding: '6px 12px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            title="Sign Out"
+          >
+            <LogOut size={14} />
+            <span>Exit</span>
+          </button>
+        </div>
       </header>
 
-      {/* Main Operations Body */}
-      <main className="staff-main" style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 120px)' }}>
+      {/* Role Navigation Bar (Shown when admin can govern all, or when user has tabs) */}
+      {isAdmin && (
+        <nav
+          className="staff-nav touch-scroll-x"
+          style={{
+            padding: '8px 20px',
+            background: 'var(--bg-primary)',
+            borderBottom: '1px solid var(--border-color)',
+            display: 'flex',
+            gap: '8px',
+            overflowX: 'auto',
+          }}
+        >
+          {visibleTabs.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink key={item.to} to={item.to} style={navTabStyle}>
+                <Icon size={15} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+      )}
+
+      {/* Main Operations Content */}
+      <main className="staff-main" style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '24px 20px' }}>
         <Outlet />
-        <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '28px' }}>
-          🔒 Secure • Reliable • Strategic
+        <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '32px' }}>
+          🔒 AURA Staff Operations • Dedicated Role Workspace
         </div>
       </main>
     </div>
   );
 };
-

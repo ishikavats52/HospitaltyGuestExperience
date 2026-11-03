@@ -55,7 +55,15 @@ export const StaffLoginPage = () => {
       if (user.role === 'SUPER_ADMIN') {
         navigate('/super-admin/dashboard');
       } else if (user.role === 'HOTEL_ADMIN') {
-        navigate('/admin/properties');
+        navigate('/admin/dashboard');
+      } else if (user.role === 'BOOKING_DESK') {
+        navigate('/staff/bookings');
+      } else if (user.role === 'HOUSEKEEPING') {
+        navigate('/staff/housekeeping');
+      } else if (user.role === 'KITCHEN') {
+        navigate('/staff/kitchen');
+      } else if (user.role === 'ACCOUNTS') {
+        navigate('/staff/accounts');
       } else {
         navigate('/staff/reception');
       }

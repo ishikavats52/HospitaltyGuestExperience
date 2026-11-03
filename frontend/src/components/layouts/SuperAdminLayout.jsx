@@ -95,21 +95,6 @@ export const SuperAdminLayout = () => {
             <span>Hotel Admins</span>
           </NavLink>
 
-          {/* <NavLink to="/super-admin/locations" style={navItemStyle} onClick={() => setMobileOpen(false)}>
-            <MapPin size={18} />
-            <span>Locations Hierarchy</span>
-          </NavLink> */}
-
-          {/* <NavLink to="/super-admin/catalogue" style={navItemStyle} onClick={() => setMobileOpen(false)}>
-            <Layers size={18} />
-            <span>Service Catalogue</span>
-          </NavLink> */}
-
-          {/* <NavLink to="/super-admin/geo-rules" style={navItemStyle} onClick={() => setMobileOpen(false)}>
-            <Globe size={18} />
-            <span>Geo Service Availability</span>
-          </NavLink> */}
-
           <NavLink to="/super-admin/plans" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <CreditCard size={18} />
             <span>Subscription Plans</span>

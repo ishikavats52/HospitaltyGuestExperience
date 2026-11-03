@@ -40,9 +40,31 @@ import { BillingPage } from './pages/admin/BillingPage.jsx';
 // Pages - Staff
 import { StaffLoginPage } from './pages/staff/StaffLoginPage.jsx';
 import { ReceptionDesk } from './pages/staff/ReceptionDesk.jsx';
+import { BookingDesk } from './pages/staff/BookingDesk.jsx';
 import { KitchenKDS } from './pages/staff/KitchenKDS.jsx';
 import { HousekeepingView } from './pages/staff/HousekeepingView.jsx';
 import { AccountsFolio } from './pages/staff/AccountsFolio.jsx';
+import { useAuth } from './context/AuthContext.jsx';
+
+// Role-based smart redirect for Staff portal entry
+const StaffRoleIndexRedirect = () => {
+  const { currentUser } = useAuth();
+  const role = currentUser?.role;
+
+  if (role === 'BOOKING_DESK') {
+    return <Navigate to="/staff/bookings" replace />;
+  }
+  if (role === 'HOUSEKEEPING') {
+    return <Navigate to="/staff/housekeeping" replace />;
+  }
+  if (role === 'KITCHEN') {
+    return <Navigate to="/staff/kitchen" replace />;
+  }
+  if (role === 'ACCOUNTS') {
+    return <Navigate to="/staff/accounts" replace />;
+  }
+  return <Navigate to="/staff/reception" replace />;
+};
 
 export default function App() {
   React.useEffect(() => {
@@ -100,9 +122,9 @@ export default function App() {
             <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="dashboard" element={<SuperDashboard />} />
             <Route path="admins" element={<SuperDashboard />} />
-            <Route path="geo-rules" element={<GeoRulesPage />} />
-            <Route path="locations" element={<LocationsPage />} />
-            <Route path="catalogue" element={<CataloguePage />} />
+            <Route path="geo-rules" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="locations" element={<Navigate to="/super-admin/dashboard" replace />} />
+            <Route path="catalogue" element={<Navigate to="/super-admin/dashboard" replace />} />
             <Route path="plans" element={<PlansPage />} />
             <Route path="hotels" element={<SuperDashboard />} />
           </Route>
@@ -124,8 +146,9 @@ export default function App() {
 
           {/* Hotel Staff Operational Queues */}
           <Route path="/staff" element={<StaffLayout />}>
-            <Route index element={<Navigate to="/staff/reception" replace />} />
+            <Route index element={<StaffRoleIndexRedirect />} />
             <Route path="reception" element={<ReceptionDesk />} />
+            <Route path="bookings" element={<BookingDesk />} />
             <Route path="kitchen" element={<KitchenKDS />} />
             <Route path="housekeeping" element={<HousekeepingView />} />
             <Route path="accounts" element={<AccountsFolio />} />

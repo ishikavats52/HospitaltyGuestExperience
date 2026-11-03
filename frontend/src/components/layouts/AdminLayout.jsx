@@ -176,7 +176,7 @@ export const AdminLayout = () => {
 
           {/* Additional Quick Hubs */}
           <div style={{ margin: '12px 0 6px', padding: '0 8px', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Operations & Reception
+            Live Staff Operations
           </div>
 
           <Link
@@ -191,7 +191,7 @@ export const AdminLayout = () => {
             onClick={() => setMobileOpen(false)}
           >
             <UserCheck size={18} />
-            <span>Reception Desk Portal</span>
+            <span>Staff Operations Live Suite</span>
             <ExternalLink size={14} style={{ marginLeft: 'auto' }} />
           </Link>
         </nav>
