@@ -10,7 +10,37 @@ const api = axios.create({
 // Request interceptor to attach JWT token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('aura_token');
+    const pathname = window.location.pathname || '';
+    const isGuestPath = pathname.startsWith('/guest') || pathname.startsWith('/stay');
+
+    let token = null;
+
+    if (isGuestPath) {
+      // Guest Portal & Express Stay Links
+      token = localStorage.getItem('aura_guest_token') || localStorage.getItem('aura_token');
+    } else {
+      // Admin, Staff & SuperAdmin Portals (Always prioritize Admin / Staff credentials)
+      token = localStorage.getItem('aura_admin_token') || localStorage.getItem('aura_staff_token');
+
+      if (!token) {
+        const generalToken = localStorage.getItem('aura_token');
+        if (generalToken) {
+          try {
+            // Safely inspect JWT payload role
+            const base64Url = generalToken.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const payload = JSON.parse(window.atob(base64));
+            // Never send guest tokens to admin or staff endpoints
+            if (payload.role !== 'GUEST' && !payload.isGuest) {
+              token = generalToken;
+            }
+          } catch (_) {
+            token = generalToken;
+          }
+        }
+      }
+    }
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

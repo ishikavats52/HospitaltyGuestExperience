@@ -810,16 +810,20 @@ export class UsersController {
       const allDepts = await Department.find();
       let hotelDepts = allDepts.filter((d) => !d.hotelId || String(d.hotelId) === String(hotelId));
 
-      // Seed defaults if this hotel has no departments configured yet
-      if (hotelDepts.length === 0) {
-        hotelDepts = [];
-        for (const def of DEFAULT_DEPARTMENTS) {
-          const created = await Department.create({
-            ...def,
-            hotelId: String(hotelId),
-            createdAt: new Date().toISOString(),
-          });
-          hotelDepts.push(created);
+      // Ensure all default departments (including BOOKING_DESK) exist for this hotel
+      for (const def of DEFAULT_DEPARTMENTS) {
+        const found = hotelDepts.find((d) => d.code === def.code);
+        if (!found) {
+          try {
+            const created = await Department.create({
+              ...def,
+              hotelId: String(hotelId),
+              createdAt: new Date().toISOString(),
+            });
+            hotelDepts.push(created);
+          } catch (_) {
+            hotelDepts.push({ ...def, hotelId: String(hotelId) });
+          }
         }
       }
 

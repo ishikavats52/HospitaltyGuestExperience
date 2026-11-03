@@ -223,6 +223,44 @@ export const AdminLayout = () => {
 
       {/* Main View Area */}
       <main className="admin-main" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: '32px 36px' }}>
+        {/* Guest Session Collision Warning Banner */}
+        {currentUser?.role === 'GUEST' && (
+          <div
+            style={{
+              background: '#FFF5F5',
+              border: '1px solid #FEB2B2',
+              borderRadius: '12px',
+              padding: '14px 20px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 12px rgba(229, 62, 62, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '1.4rem' }}>⚠️</span>
+              <div>
+                <div style={{ fontWeight: 800, color: '#C53030', fontSize: '0.92rem' }}>
+                  Guest Test Session Active in this Browser
+                </div>
+                <div style={{ color: '#742A2A', fontSize: '0.82rem', marginTop: '2px' }}>
+                  You recently opened an Express Guest magic link in this browser. Administrative actions (adding employees, updating rooms) require your Hotel Admin account.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="btn btn-gold"
+              style={{ padding: '8px 18px', fontSize: '0.84rem', fontWeight: 700, whiteSpace: 'nowrap' }}
+            >
+              Sign In as Hotel Admin →
+            </button>
+          </div>
+        )}
         <Outlet />
         <div className="dapd-footer-trust" style={{ marginTop: 'auto', paddingTop: '36px' }}>
           🔒 AURA SaaS • Enterprise Hospitality System

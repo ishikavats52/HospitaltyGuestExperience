@@ -25,25 +25,34 @@ export const MagicStayResolver = () => {
         const res = await api.get(`/bookings/magic/${encodeURIComponent(bookingRef.trim())}`);
         const data = res.data;
 
-        // Auto authenticate guest
+        // Auto authenticate guest (in isolated guest namespace)
         if (data.token) {
-          localStorage.setItem('aura_token', data.token);
+          localStorage.setItem('aura_guest_token', data.token);
+
+          // Only set aura_token if no active admin session is present
+          const existingAdminToken = localStorage.getItem('aura_admin_token');
+          if (!existingAdminToken) {
+            localStorage.setItem('aura_token', data.token);
+          }
+
           if (data.guest) {
-            localStorage.setItem(
-              'aura_user',
-              JSON.stringify({
-                ...data.guest,
-                role: 'GUEST',
-                isGuest: true,
-                stayId: data.stay?._id || data.booking?._id,
-                stay: data.stay,
-                booking: data.booking,
-                bookingId: data.booking?._id,
-                bookingNumber: data.booking?.bookingNumber,
-                roomNumber: data.room?.roomNumber || data.booking?.roomNumber,
-                isStayActive: data.isStayActive,
-              })
-            );
+            const guestPayload = JSON.stringify({
+              ...data.guest,
+              role: 'GUEST',
+              isGuest: true,
+              stayId: data.stay?._id || data.booking?._id,
+              stay: data.stay,
+              booking: data.booking,
+              bookingId: data.booking?._id,
+              bookingNumber: data.booking?.bookingNumber,
+              roomNumber: data.room?.roomNumber || data.booking?.roomNumber,
+              isStayActive: data.isStayActive,
+            });
+
+            localStorage.setItem('aura_guest_user', guestPayload);
+            if (!existingAdminToken) {
+              localStorage.setItem('aura_user', guestPayload);
+            }
           }
         }
 

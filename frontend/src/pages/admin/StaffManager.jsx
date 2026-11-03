@@ -35,11 +35,89 @@ import {
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
+export const FALLBACK_DEPARTMENTS = [
+  {
+    code: 'BOOKING_DESK',
+    name: 'Booking & Reservations Desk',
+    description: 'Manual customer intake, phone/in-person reservations, date-wise room allotment, and stay folios',
+    icon: 'CalendarCheck',
+    subDepartments: [
+      'Manual Reservation Desk Agent',
+      'Walk-In Booking Specialist',
+      'Date & Inventory Coordinator',
+      'Corporate & Group Reservations',
+    ],
+  },
+  {
+    code: 'RECEPTION',
+    name: 'Front Desk (Reception)',
+    description: 'Guest check-in/out, concierge, reservations, night audit, and lobby relations',
+    icon: 'ConciergeBell',
+    subDepartments: [
+      'Front Desk Receptionist',
+      'Concierge & Guest Relations',
+      'Night Auditor',
+      'Bellhop & Valet Services',
+      'Reservations & Bookings',
+      'VIP Guest Host',
+    ],
+  },
+  {
+    code: 'HOUSEKEEPING',
+    name: 'Housekeeping',
+    description: 'Room cleaning, linen, floor supervision, and public area sanitation',
+    icon: 'Sparkles',
+    subDepartments: [
+      'Room Cleaning & Turn Down',
+      'Laundry & Linen Management',
+      'Floor Supervisor',
+      'Public Area Cleaning',
+      'Deep Cleaning & Sanitization',
+    ],
+  },
+  {
+    code: 'KITCHEN',
+    name: 'Kitchen Staff & F&B',
+    description: 'Culinary preparation, Kitchen Display System (KDS), line cooking, and stewarding',
+    icon: 'ChefHat',
+    subDepartments: [
+      'Executive / Head Chef',
+      'Line Cook & Station Chef',
+      'Pastry & Bakery Chef',
+      'Kitchen Steward & Dishwashing',
+      'In-Room Dining Runner',
+    ],
+  },
+  {
+    code: 'ACCOUNTS',
+    name: 'Accounts & Billing',
+    description: 'Folio settlement, invoice generation, revenue management, and audit verification',
+    icon: 'DollarSign',
+    subDepartments: [
+      'Front Office Cashier',
+      'Night Audit & Revenue Settlement',
+      'Accounts Receivable & Ledger',
+    ],
+  },
+  {
+    code: 'MAINTENANCE',
+    name: 'Maintenance & Engineering',
+    description: 'HVAC systems, electricals, plumbing, equipment repair, and property upkeep',
+    icon: 'Wrench',
+    subDepartments: [
+      'HVAC & Air Conditioning',
+      'Electrical Systems',
+      'Plumbing & Water Management',
+      'Carpentry & Furnishing',
+    ],
+  },
+];
+
 export const StaffManager = () => {
   const { currentUser } = useAuth();
   const [staffList, setStaffList] = useState([]);
   const [properties, setProperties] = useState([]);
-  const [departments, setDepartments] = useState([]);
+  const [departments, setDepartments] = useState(FALLBACK_DEPARTMENTS);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
@@ -146,7 +224,13 @@ export const StaffManager = () => {
       setStaffList(filteredStaff);
       setProperties(propRes.data || []);
       const fetchedDepts = deptsRes.data || [];
-      setDepartments(fetchedDepts);
+      const mergedDepts = [...fetchedDepts];
+      for (const def of FALLBACK_DEPARTMENTS) {
+        if (!mergedDepts.some((d) => d.code === def.code)) {
+          mergedDepts.push(def);
+        }
+      }
+      setDepartments(mergedDepts);
 
       if (propRes.data?.length > 0 && !propertyId) {
         setPropertyId(propRes.data[0]._id);
@@ -167,8 +251,8 @@ export const StaffManager = () => {
     setEmail('');
     setPhone('');
     setPassword('');
-    const defaultDept = departments.find((d) => d.code === 'HOUSEKEEPING') || departments[0];
-    const initialRole = defaultDept ? defaultDept.code : 'HOUSEKEEPING';
+    const defaultDept = departments.find((d) => d.code === 'BOOKING_DESK') || departments.find((d) => d.code === 'HOUSEKEEPING') || departments[0];
+    const initialRole = defaultDept ? defaultDept.code : 'BOOKING_DESK';
     setRole(initialRole);
     if (defaultDept && defaultDept.subDepartments?.length > 0) {
       setSubDepartment(defaultDept.subDepartments[0]);
@@ -257,7 +341,11 @@ export const StaffManager = () => {
       setIsAddingCustomDept(false);
       showToast(`Department '${created.name}' created!`);
     } catch (err) {
-      alert(err.message || 'Failed to create department');
+      if (err.message && err.message.includes('GUEST')) {
+        alert("Session Conflict: You are currently signed in as a Guest from a recent guest link test. Please re-authenticate with your Hotel Admin account at /staff/login.");
+      } else {
+        alert(err.message || 'Failed to create department');
+      }
     }
   };
 
@@ -411,7 +499,11 @@ export const StaffManager = () => {
       showToast(`Employee account created for ${name.trim()}!`);
       await fetchStaffData();
     } catch (err) {
-      setCreateError(err.message || 'Failed to create employee account');
+      if (err.message && err.message.includes('GUEST')) {
+        setCreateError("Session Conflict: You are currently signed in as a Guest from a recent guest link test. Please re-authenticate with your Hotel Admin account at /staff/login.");
+      } else {
+        setCreateError(err.message || 'Failed to create employee account');
+      }
     } finally {
       setCreateLoading(false);
     }
@@ -1405,6 +1497,37 @@ Login URL: ${createdCredentials.loginUrl}`;
                   gap: '16px',
                 }}
               >
+                {currentUser?.role === 'GUEST' && (
+                  <div
+                    style={{
+                      padding: '12px 14px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: '#FFF5F5',
+                      border: '1px solid #FEB2B2',
+                      color: '#991B1B',
+                      fontSize: '0.82rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
+                      <AlertCircle size={16} />
+                      <span>Guest Session Conflict</span>
+                    </div>
+                    <div>
+                      An Express Guest stay was tested in this browser, giving you temporary Guest access. Creating employees requires Hotel Admin credentials.
+                    </div>
+                    <a
+                      href="/staff/login"
+                      className="btn btn-gold"
+                      style={{ padding: '6px 12px', fontSize: '0.78rem', textDecoration: 'none', alignSelf: 'flex-start', fontWeight: 700 }}
+                    >
+                      Sign In as Hotel Admin →
+                    </a>
+                  </div>
+                )}
+
                 {createError && (
                   <div
                     style={{
