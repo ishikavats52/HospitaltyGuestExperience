@@ -1015,7 +1015,7 @@ export const SuperDashboard = () => {
             </div>
 
             {/* Step Progress Bar */}
-            <div style={{ display: 'flex', gap: '6px', padding: '0 28px', marginTop: '12px' }}>
+            <div style={{ display: 'flex', gap: '6px', padding: '0 20px', marginTop: '8px', marginBottom: '4px' }}>
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 1 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 2 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
               <div style={{ flex: 1, height: '4px', borderRadius: '2px', background: wizardStep >= 3 ? 'var(--gold-primary)' : 'var(--border-color)' }} />
@@ -1469,7 +1469,6 @@ export const SuperDashboard = () => {
                   type="button"
                   onClick={() => setWizardStep(wizardStep - 1)}
                   className="btn btn-outline"
-                  style={{ padding: '10px 18px', fontSize: '0.85rem' }}
                 >
                   Back
                 </button>
@@ -1489,7 +1488,6 @@ export const SuperDashboard = () => {
                     setWizardStep(wizardStep + 1);
                   }}
                   className="btn btn-gold"
-                  style={{ padding: '10px 22px', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
                 >
                   <span>Continue to Step {wizardStep + 1}</span>
                   <ChevronRight size={16} />
@@ -1500,7 +1498,6 @@ export const SuperDashboard = () => {
                   disabled={createLoading}
                   onClick={handleFinalSubmitAdmin}
                   className="btn btn-gold"
-                  style={{ padding: '10px 26px', fontSize: '0.85rem', borderRadius: 'var(--radius-full)' }}
                 >
                   {createLoading ? 'Provisioning Profile...' : 'Complete & Launch Admin Profile'}
                 </button>

@@ -86,11 +86,11 @@ export const WalkInGuestModal = ({
           try {
             target.scrollIntoView({
               behavior: 'smooth',
-              block: 'center',
+              block: 'nearest',
               inline: 'nearest',
             });
           } catch (_) {}
-        }, 220);
+        }, 150);
       }
     };
 
@@ -328,9 +328,7 @@ export const WalkInGuestModal = ({
           ref={bodyScrollRef}
           className="modal-body"
           style={{
-            padding: '20px 22px',
-            paddingBottom: 'clamp(180px, 35vh, 260px)',
-            scrollPaddingBottom: '200px',
+            padding: '16px 20px 24px',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
@@ -339,7 +337,7 @@ export const WalkInGuestModal = ({
             minHeight: 0,
             display: 'flex',
             flexDirection: 'column',
-            gap: '18px',
+            gap: '16px',
           }}
         >
           {/* SUCCESS STATE */}
@@ -857,10 +855,11 @@ export const WalkInGuestModal = ({
           <div
             className="modal-footer"
             style={{
-              padding: '14px 20px',
+              padding: '12px 18px',
               borderTop: '1px solid var(--border-color)',
-              background: 'var(--bg-secondary)',
+              background: '#FFFFFF',
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'flex-end',
               gap: '10px',
               flexShrink: 0,
@@ -884,10 +883,9 @@ export const WalkInGuestModal = ({
                 padding: '10px 22px',
                 fontSize: '0.88rem',
                 fontWeight: 700,
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                minWidth: '200px',
                 justifyContent: 'center',
               }}
             >

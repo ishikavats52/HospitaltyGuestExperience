@@ -1489,9 +1489,7 @@ Login URL: ${createdCredentials.loginUrl}`;
               <div
                 className="modal-body"
                 style={{
-                  padding: '22px 24px',
-                  paddingBottom: 'clamp(180px, 35vh, 260px)',
-                  scrollPaddingBottom: '200px',
+                  padding: '18px 20px 24px',
                   flex: 1,
                   overflowY: 'auto',
                   WebkitOverflowScrolling: 'touch',

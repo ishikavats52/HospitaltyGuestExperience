@@ -78,7 +78,7 @@ export default function App() {
           try {
             target.scrollIntoView({
               behavior: 'smooth',
-              block: 'center',
+              block: 'nearest',
               inline: 'nearest',
             });
           } catch (_) {}
