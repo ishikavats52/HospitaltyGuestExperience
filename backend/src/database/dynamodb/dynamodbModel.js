@@ -21,6 +21,26 @@ function matchesFilter(item, filter = {}) {
         if (!val.$in.includes(item[key])) return false;
         continue;
       }
+      if ('$gt' in val) {
+        if (!(Number(item[key]) > Number(val.$gt))) return false;
+        continue;
+      }
+      if ('$gte' in val) {
+        if (!(Number(item[key]) >= Number(val.$gte))) return false;
+        continue;
+      }
+      if ('$lt' in val) {
+        if (!(Number(item[key]) < Number(val.$lt))) return false;
+        continue;
+      }
+      if ('$lte' in val) {
+        if (!(Number(item[key]) <= Number(val.$lte))) return false;
+        continue;
+      }
+      if ('$ne' in val) {
+        if (String(item[key]) === String(val.$ne)) return false;
+        continue;
+      }
     }
 
     const itemVal = item[key] !== undefined && item[key] !== null ? String(item[key]) : item[key];

@@ -35,9 +35,13 @@ export const MagicStayResolver = () => {
                 ...data.guest,
                 role: 'GUEST',
                 isGuest: true,
-                stayId: data.stay?._id,
+                stayId: data.stay?._id || data.booking?._id,
+                stay: data.stay,
+                booking: data.booking,
                 bookingId: data.booking?._id,
                 bookingNumber: data.booking?.bookingNumber,
+                roomNumber: data.room?.roomNumber || data.booking?.roomNumber,
+                isStayActive: data.isStayActive,
               })
             );
           }

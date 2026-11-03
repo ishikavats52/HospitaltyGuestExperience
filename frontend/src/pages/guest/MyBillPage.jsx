@@ -10,15 +10,14 @@ export const MyBillPage = () => {
   const [settling, setSettling] = useState(false);
   const [settled, setSettled] = useState(false);
 
-  const stayId = currentUser?.stay?._id || currentUser?.stayId || (typeof currentUser?.stay === 'string' ? currentUser?.stay : null);
+  const stayId = currentUser?.stay?._id || currentUser?.stayId || currentUser?.bookingId || (typeof currentUser?.stay === 'string' ? currentUser?.stay : 'me');
 
   useEffect(() => {
     const fetchFolio = async () => {
       try {
-        if (stayId) {
-          const res = await api.get(`/billing/stay/${stayId}/folio`);
-          setFolio(res.data);
-        }
+        const idToQuery = stayId || 'me';
+        const res = await api.get(`/billing/stay/${idToQuery}/folio`);
+        setFolio(res.data);
       } catch (err) {
         console.error('Failed to load folio:', err);
       } finally {
@@ -31,7 +30,8 @@ export const MyBillPage = () => {
   const handleSettleFolio = async () => {
     setSettling(true);
     try {
-      await api.post(`/billing/stay/${stayId}/settle`, {
+      const targetStayId = folio?.stayId || stayId || 'me';
+      await api.post(`/billing/stay/${targetStayId}/settle`, {
         paymentMethod: 'RAZORPAY_UPI',
         amountPaid: folio?.totalAmount || 0,
       });
@@ -88,8 +88,18 @@ export const MyBillPage = () => {
             {folio.items.map((item, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem' }}>
                 <div style={{ flex: 1, paddingRight: '10px' }}>
-                  <span className="badge badge-gold" style={{ fontSize: '0.65rem', marginRight: '8px' }}>
-                    {item.itemType}
+                  <span
+                    className="badge"
+                    style={{
+                      fontSize: '0.65rem',
+                      marginRight: '8px',
+                      background: item.itemType === 'ROOM' ? 'var(--gold-soft)' : item.itemType === 'FOOD' ? '#ECFDF5' : '#EFF6FF',
+                      color: item.itemType === 'ROOM' ? 'var(--gold-dark)' : item.itemType === 'FOOD' ? '#047857' : '#1D4ED8',
+                      border: `1px solid ${item.itemType === 'ROOM' ? 'var(--border-active)' : item.itemType === 'FOOD' ? '#A7F3D0' : '#BFDBFE'}`,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {item.itemType === 'ROOM' ? 'ROOM' : item.itemType === 'FOOD' ? 'DINING' : 'SERVICE'}
                   </span>
                   <span style={{ color: 'var(--text-primary)' }}>{item.description}</span>
                 </div>

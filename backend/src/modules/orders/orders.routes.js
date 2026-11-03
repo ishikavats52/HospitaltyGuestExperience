@@ -31,45 +31,36 @@ router.post('/', authenticate, async (req, res, next) => {
     if (!stay && req.user?.bookingId) {
       stay = await Stay.findOne({ bookingId: req.user.bookingId });
     }
-    if (!stay) {
-      stay = await Stay.findOne();
+    if (!stay && req.user?.guestId) {
+      stay = await Stay.findOne({ guestId: req.user.guestId });
     }
-    if (!stay) {
-      stay = await Stay.create({
-        hotelId: req.user?.hotelId || 'HOTEL-DELHI-01',
-        propertyId: req.user?.propertyId || 'PROP-DELHI-01',
-        bookingId: req.user?.bookingId || 'BK-DELHI-101',
-        roomId: 'ROOM-302',
-        status: 'BOOKING_CONFIRMED',
-        folioBalance: 0,
-      });
-    }
-
-    if (stay && stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
-      return ApiResponse.error(
-        res,
-        'Check-In verification required: Please complete contactless check-in with your Aadhaar card and selfie before placing in-room dining orders.',
-        403
-      );
+    if (!stay && req.user?.roomNumber) {
+      stay = await Stay.findOne({ roomNumber: String(req.user.roomNumber) });
     }
 
     const totalAmount = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
     const order = await FoodOrder.create({
-      hotelId: stay.hotelId,
-      propertyId: stay.propertyId,
-      stayId: stay._id,
-      roomId: stay.roomId,
+      hotelId: stay?.hotelId || req.user?.hotelId || 'DEFAULT',
+      propertyId: stay?.propertyId || req.user?.propertyId || 'DEFAULT',
+      stayId: stay?._id || stayId || req.user?.stayId,
+      bookingId: stay?.bookingId || req.user?.bookingId,
+      roomId: stay?.roomId || req.user?.roomId,
+      roomNumber: stay?.roomNumber || req.user?.roomNumber,
       orderNumber,
       items,
       totalAmount,
-      specialInstructions,
+      specialInstructions: specialInstructions || 'Delivered to room',
+      status: 'PLACED',
+      createdAt: new Date().toISOString(),
     });
 
     // Update folio balance on stay
-    stay.folioBalance = (stay.folioBalance || 0) + totalAmount;
-    await stay.save();
+    if (stay) {
+      stay.folioBalance = (stay.folioBalance || 0) + totalAmount;
+      await stay.save();
+    }
 
     return ApiResponse.success(res, 'Food order placed successfully and added to folio', order, 201);
   } catch (err) {
