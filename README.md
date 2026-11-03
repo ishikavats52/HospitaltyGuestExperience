@@ -7,7 +7,7 @@ A next-generation, multi-tenant Guest Experience Platform built with the MERN st
 ## 🌟 Core Features & Architecture
 
 1. **Multi-Tenant Hierarchy**:
-   - `Hotel` (Tenant with location hierarchy: Country → State → City → Local Area)
+   - `Hotel` (Tenant with aura: Country → State → City → Local Area)
    - `Property` (Physical hotel branches)
    - `Rooms`, `Staff`, `Menu`, and `Services` scoped strictly under properties.
 

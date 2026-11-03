@@ -73,6 +73,31 @@ export const WalkInGuestModal = ({
     }
   }, [isOpen, availableRooms]);
 
+  // Mobile virtual keyboard prevention: scroll focused input into center view
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollContainer = bodyScrollRef.current;
+    if (!scrollContainer) return;
+
+    const handleFocus = (e) => {
+      const target = e.target;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) {
+        setTimeout(() => {
+          try {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'nearest',
+            });
+          } catch (_) {}
+        }, 220);
+      }
+    };
+
+    scrollContainer.addEventListener('focusin', handleFocus);
+    return () => scrollContainer.removeEventListener('focusin', handleFocus);
+  }, [isOpen]);
+
   const fetchActiveBookings = async () => {
     try {
       const res = await api.get('/bookings');
@@ -225,36 +250,16 @@ export const WalkInGuestModal = ({
     <div
       role="dialog"
       aria-modal="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 10000,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(5px)',
-        WebkitBackdropFilter: 'blur(5px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '12px',
-        animation: 'fadeIn 0.2s ease',
-      }}
+      className="modal-backdrop active"
       onClick={(e) => {
         if (e.target === e.currentTarget && !submitting) onClose();
       }}
     >
       <div
         className="modal-content has-modal-body"
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: 'min(96vw, 640px)',
-          height: '90dvh',
-          maxHeight: '92dvh',
-          backgroundColor: '#FFFFFF',
-          borderRadius: 'var(--radius-lg, 16px)',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.25)',
-          border: '1px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
           animation: 'modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}
       >
@@ -324,8 +329,12 @@ export const WalkInGuestModal = ({
           className="modal-body"
           style={{
             padding: '20px 22px',
+            paddingBottom: 'clamp(180px, 35vh, 260px)',
+            scrollPaddingBottom: '200px',
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y',
             flex: '1 1 auto',
             minHeight: 0,
             display: 'flex',
@@ -455,7 +464,7 @@ export const WalkInGuestModal = ({
               id="walk-in-form"
               noValidate
               onSubmit={handleSubmit}
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', overflow: 'visible', flex: 'none' }}
             >
               {/* Prominent Error Banner */}
               {error && (

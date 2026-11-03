@@ -45,6 +45,29 @@ import { HousekeepingView } from './pages/staff/HousekeepingView.jsx';
 import { AccountsFolio } from './pages/staff/AccountsFolio.jsx';
 
 export default function App() {
+  React.useEffect(() => {
+    // Global Mobile Keypad Protection:
+    // When any input inside a modal or scrollable container receives focus,
+    // smoothly scroll it into center view so it never hides behind the virtual keyboard.
+    const handleFocusIn = (e) => {
+      const target = e.target;
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(target?.tagName)) {
+        setTimeout(() => {
+          try {
+            target.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'nearest',
+            });
+          } catch (_) {}
+        }, 250);
+      }
+    };
+
+    document.addEventListener('focusin', handleFocusIn, { passive: true });
+    return () => document.removeEventListener('focusin', handleFocusIn);
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
@@ -94,7 +117,7 @@ export default function App() {
             <Route path="rooms" element={<RoomManager />} />
             <Route path="staff" element={<StaffManager />} />
             <Route path="menu" element={<MenuManager />} />
-            <Route path="services" element={<ServiceManager />} />
+            <Route path="services" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="billing" element={<BillingPage />} />
           </Route>

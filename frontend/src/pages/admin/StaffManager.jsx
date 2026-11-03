@@ -1490,8 +1490,13 @@ Login URL: ${createdCredentials.loginUrl}`;
                 className="modal-body"
                 style={{
                   padding: '22px 24px',
+                  paddingBottom: 'clamp(180px, 35vh, 260px)',
+                  scrollPaddingBottom: '200px',
                   flex: 1,
                   overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  touchAction: 'pan-y',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '16px',

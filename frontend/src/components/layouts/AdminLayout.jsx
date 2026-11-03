@@ -164,19 +164,14 @@ export const AdminLayout = () => {
             <span>4. Menu</span>
           </NavLink>
 
-          <NavLink to="/admin/services" style={navItemStyle} onClick={() => setMobileOpen(false)}>
-            <Sparkles size={18} />
-            <span>5. Services</span>
-          </NavLink>
-
           <NavLink to="/admin/reports" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <BarChart3 size={18} />
-            <span>6. Reports</span>
+            <span>5. Reports</span>
           </NavLink>
 
           <NavLink to="/admin/billing" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <CreditCard size={18} />
-            <span>7. Billing</span>
+            <span>6. Billing</span>
           </NavLink>
 
           {/* Additional Quick Hubs */}
