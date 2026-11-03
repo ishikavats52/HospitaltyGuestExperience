@@ -641,6 +641,24 @@ export const RoomManager = () => {
         </div>
       )}
 
+      {/* Global Hidden File Inputs for Native Camera & Gallery Pickers (Always mounted for both Add & Edit modals) */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        multiple
+        onChange={handleGalleryUpload}
+        style={{ display: 'none' }}
+      />
+      <input
+        type="file"
+        ref={cameraInputRef}
+        accept="image/*"
+        capture="environment"
+        onChange={handleCameraFileInput}
+        style={{ display: 'none' }}
+      />
+
       {/* Header & Main Action */}
       <div
         style={{
@@ -1098,7 +1116,7 @@ export const RoomManager = () => {
             style={{
               maxWidth: '760px',
               width: '96%',
-              height: '90vh',
+              height: '90dvh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
@@ -1155,7 +1173,7 @@ export const RoomManager = () => {
             </div>
 
             {/* Scrollable Body */}
-            <div className="modal-body" style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div className="modal-body" style={{ flex: '1 1 0%', minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
             {/* Photos Strip */}
             <div style={{ marginBottom: '22px' }}>
@@ -1275,7 +1293,7 @@ export const RoomManager = () => {
             style={{
               maxWidth: '800px',
               width: '96%',
-              height: '90vh',
+              height: '90dvh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
@@ -1969,24 +1987,6 @@ export const RoomManager = () => {
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '14px' }}>
                     Upload photos directly from your device gallery or take live photos using the camera.
                   </div>
-
-                  {/* Hidden File Inputs for Native Camera & Gallery Pickers */}
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryUpload}
-                    style={{ display: 'none' }}
-                  />
-                  <input
-                    type="file"
-                    ref={cameraInputRef}
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleCameraFileInput}
-                    style={{ display: 'none' }}
-                  />
 
                   {/* Prominent Action Cards for Gallery & Camera */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '16px' }}>

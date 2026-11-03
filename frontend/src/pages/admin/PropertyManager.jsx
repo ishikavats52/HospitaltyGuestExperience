@@ -691,11 +691,12 @@ export const PropertyManager = () => {
       {isAddModalOpen && (
         <div className="modal-backdrop active" onClick={() => setIsAddModalOpen(false)}>
           <div
-            className="modal-content glass-panel"
+            className="modal-content has-modal-body glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '640px',
               width: '96%',
+              height: '90dvh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',
@@ -909,11 +910,12 @@ export const PropertyManager = () => {
       {editingProperty && (
         <div className="modal-backdrop active" onClick={() => setEditingProperty(null)}>
           <div
-            className="modal-content glass-panel"
+            className="modal-content has-modal-body glass-panel"
             onClick={(e) => e.stopPropagation()}
             style={{
               maxWidth: '600px',
               width: '96%',
+              height: '90dvh',
               maxHeight: '92dvh',
               display: 'flex',
               flexDirection: 'column',

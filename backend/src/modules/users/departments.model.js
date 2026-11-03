@@ -33,6 +33,19 @@ export const DEFAULT_DEPARTMENTS = [
     ],
   },
   {
+    code: 'BOOKING_DESK',
+    name: 'Booking & Reservations Desk',
+    description: 'Manual customer intake, phone/in-person reservations, date-wise room allotment, and stay folios',
+    icon: 'CalendarCheck',
+    isSystem: true,
+    subDepartments: [
+      'Manual Reservation Desk Agent',
+      'Walk-In Booking Specialist',
+      'Date & Inventory Coordinator',
+      'Corporate & Group Reservations',
+    ],
+  },
+  {
     code: 'KITCHEN',
     name: 'Kitchen Staff & F&B',
     description: 'Culinary preparation, Kitchen Display System (KDS), line cooking, and stewarding',

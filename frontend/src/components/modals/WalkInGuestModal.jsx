@@ -43,19 +43,28 @@ export const WalkInGuestModal = ({
 
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [roomsList, setRoomsList] = useState(availableRooms || []);
+  const [existingBookings, setExistingBookings] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [createdResult, setCreatedResult] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const bodyScrollRef = useRef(null);
+  const prevIsOpenRef = useRef(false);
 
-  // If availableRooms was not passed or empty, fetch them
+  // Fresh reset ONLY when modal transitions from closed to open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setError(null);
       setCreatedResult(null);
       setCopiedLink(false);
+      fetchActiveBookings();
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
 
+  // Keep rooms synced without resetting createdResult
+  useEffect(() => {
+    if (isOpen) {
       if (availableRooms && availableRooms.length > 0) {
         setRoomsList(availableRooms);
       } else {
@@ -63,6 +72,16 @@ export const WalkInGuestModal = ({
       }
     }
   }, [isOpen, availableRooms]);
+
+  const fetchActiveBookings = async () => {
+    try {
+      const res = await api.get('/bookings');
+      const list = res.data?.bookings || res.data || [];
+      setExistingBookings(Array.isArray(list) ? list : []);
+    } catch (_) {
+      setExistingBookings([]);
+    }
+  };
 
   const fetchRooms = async () => {
     setLoadingRooms(true);
@@ -77,12 +96,34 @@ export const WalkInGuestModal = ({
     }
   };
 
+  // Check if a room has a date-overlap conflict with existing active bookings
+  const getRoomAllotmentConflict = (roomId, checkIn, checkOut) => {
+    if (!roomId || !checkIn || !checkOut) return null;
+    const reqStart = new Date(checkIn).getTime();
+    const reqEnd = new Date(checkOut).getTime();
+    if (isNaN(reqStart) || isNaN(reqEnd) || reqStart >= reqEnd) return null;
+
+    const conflict = existingBookings.find((b) => {
+      const bRoomId = String(b.roomId?._id || b.roomId || '');
+      if (bRoomId !== String(roomId)) return false;
+      if (b.status === 'CANCELLED' || b.status === 'CHECKED_OUT') return false;
+
+      const bStart = new Date(b.checkInDate).getTime();
+      const bEnd = new Date(b.checkOutDate).getTime();
+      if (isNaN(bStart) || isNaN(bEnd)) return false;
+
+      return reqStart < bEnd && reqEnd > bStart;
+    });
+
+    return conflict;
+  };
+
   // Pre-fill preselected room or default first available room
   useEffect(() => {
     if (isOpen && roomsList.length > 0) {
       const targetRoom = preselectedRoomId
         ? roomsList.find((r) => String(r._id) === String(preselectedRoomId))
-        : roomsList.find((r) => r.status === 'AVAILABLE') || roomsList[0];
+        : roomsList.find((r) => r.status === 'AVAILABLE' && !getRoomAllotmentConflict(r._id, formData.checkInDate, formData.checkOutDate)) || roomsList[0];
 
       if (targetRoom) {
         setFormData((prev) => ({
@@ -93,7 +134,7 @@ export const WalkInGuestModal = ({
         }));
       }
     }
-  }, [isOpen, preselectedRoomId, roomsList]);
+  }, [isOpen, preselectedRoomId, roomsList, existingBookings]);
 
   if (!isOpen) return null;
 
@@ -205,7 +246,7 @@ export const WalkInGuestModal = ({
         className="modal-content has-modal-body"
         style={{
           width: 'min(96vw, 640px)',
-          height: '90vh',
+          height: '90dvh',
           maxHeight: '92dvh',
           backgroundColor: '#FFFFFF',
           borderRadius: 'var(--radius-lg, 16px)',
@@ -577,72 +618,17 @@ export const WalkInGuestModal = ({
                 </div>
               </div>
 
-              {/* 3. ROOM ALLOTMENT & TARIFF */}
+              {/* 3. ROOM ALLOTMENT & STAY TARIFF */}
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px' }}>
                 <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>
-                  3. Room Allotment & Stay Tariff
+                  3. Stay Dates & Dynamic Room Allotment
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                      <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        Select Room from Available Inventory <span style={{ color: 'var(--danger)' }}>*</span>
-                      </label>
-                      {roomsList.length > 0 && (
-                        <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-                          {roomsList.filter((r) => r.status === 'AVAILABLE').length} Available
-                        </span>
-                      )}
-                    </div>
-
-                    {roomsList.length === 0 ? (
-                      <div
-                        style={{
-                          padding: '12px 14px',
-                          borderRadius: '8px',
-                          backgroundColor: '#FFFBEB',
-                          border: '1px solid #FDE68A',
-                          color: '#92400E',
-                          fontSize: '0.82rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                        }}
-                      >
-                        <AlertCircle size={16} />
-                        <span>No rooms found. Please add rooms in Room Manager first.</span>
-                      </div>
-                    ) : (
-                      <select
-                        value={formData.roomId}
-                        onChange={handleRoomChange}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: error && !formData.roomId ? '2px solid #DC2626' : '1px solid var(--border-color)',
-                          fontSize: '0.88rem',
-                          backgroundColor: '#FFFFFF',
-                          boxSizing: 'border-box',
-                        }}
-                      >
-                        <option value="">-- Choose Room from Inventory --</option>
-                        {roomsList.map((r) => {
-                          const isAvailable = r.status === 'AVAILABLE';
-                          return (
-                            <option key={r._id} value={r._id}>
-                              {isAvailable ? '🟢' : '⚪'} Room {r.roomNumber} • {r.roomTypeName || 'Deluxe'} • Floor {r.floor || 1} • ₹{r.pricePerNight || 4500}/night [{r.status}]
-                            </option>
-                          );
-                        })}
-                      </select>
-                    )}
-                  </div>
-
+                {/* Stay Date Range Selection (Dates dynamically calculate room allotment) */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                      Check-In Date
+                      Check-In Date <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <input
                       type="date"
@@ -650,7 +636,7 @@ export const WalkInGuestModal = ({
                       onChange={(e) => setFormData({ ...formData, checkInDate: e.target.value })}
                       style={{
                         width: '100%',
-                        padding: '9px 12px',
+                        padding: '10px 12px',
                         borderRadius: '8px',
                         border: '1px solid var(--border-color)',
                         fontSize: '0.85rem',
@@ -661,7 +647,7 @@ export const WalkInGuestModal = ({
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                      Check-Out Date
+                      Check-Out Date <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
                     <input
                       type="date"
@@ -669,7 +655,7 @@ export const WalkInGuestModal = ({
                       onChange={(e) => setFormData({ ...formData, checkOutDate: e.target.value })}
                       style={{
                         width: '100%',
-                        padding: '9px 12px',
+                        padding: '10px 12px',
                         borderRadius: '8px',
                         border: '1px solid var(--border-color)',
                         fontSize: '0.85rem',
@@ -677,31 +663,146 @@ export const WalkInGuestModal = ({
                       }}
                     />
                   </div>
+                </div>
 
-                  <div style={{ gridColumn: '1 / -1' }}>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
-                      Room Tariff Per Night (₹)
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--gold-primary)' }}>
-                        ₹
-                      </span>
-                      <input
-                        type="number"
-                        placeholder="4500"
-                        value={formData.totalAmount}
-                        onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                {/* Date Conflict Warning Banner */}
+                {(() => {
+                  const conflict = getRoomAllotmentConflict(formData.roomId, formData.checkInDate, formData.checkOutDate);
+                  if (conflict) {
+                    return (
+                      <div
                         style={{
-                          width: '100%',
-                          padding: '10px 12px 10px 30px',
+                          marginBottom: '12px',
+                          padding: '10px 14px',
                           borderRadius: '8px',
-                          border: '1px solid var(--border-color)',
-                          fontSize: '0.88rem',
-                          outline: 'none',
-                          boxSizing: 'border-box',
+                          backgroundColor: '#FEF2F2',
+                          border: '1px solid #F87171',
+                          color: '#991B1B',
+                          fontSize: '0.82rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
                         }}
-                      />
-                    </div>
+                      >
+                        <AlertCircle size={16} color="#DC2626" style={{ flexShrink: 0 }} />
+                        <span>
+                          <strong>Selected Room is Already Allotted!</strong> It is booked from {conflict.checkInDate} to {conflict.checkOutDate} {conflict.guestName ? `(${conflict.guestName})` : ''}. Please select an unallotted room below.
+                        </span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                {/* Room Inventory Selection */}
+                <div>
+                  {(() => {
+                    const unallotted = [];
+                    const allotted = [];
+
+                    roomsList.forEach((r) => {
+                      const conflict = getRoomAllotmentConflict(r._id, formData.checkInDate, formData.checkOutDate);
+                      if (conflict || r.status === 'OCCUPIED') {
+                        allotted.push({ room: r, conflict });
+                      } else {
+                        unallotted.push(r);
+                      }
+                    });
+
+                    return (
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                            Select Room from Available Inventory <span style={{ color: 'var(--danger)' }}>*</span>
+                          </label>
+                          <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 700 }}>
+                            {unallotted.length} Unallotted & Available
+                          </span>
+                        </div>
+
+                        {roomsList.length === 0 ? (
+                          <div
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: '8px',
+                              backgroundColor: '#FFFBEB',
+                              border: '1px solid #FDE68A',
+                              color: '#92400E',
+                              fontSize: '0.82rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                            }}
+                          >
+                            <AlertCircle size={16} />
+                            <span>No rooms found. Please add rooms in Room Manager first.</span>
+                          </div>
+                        ) : (
+                          <select
+                            value={formData.roomId}
+                            onChange={handleRoomChange}
+                            style={{
+                              width: '100%',
+                              padding: '10px 12px',
+                              borderRadius: '8px',
+                              border: error && !formData.roomId ? '2px solid #DC2626' : '1px solid var(--border-color)',
+                              fontSize: '0.88rem',
+                              backgroundColor: '#FFFFFF',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            <option value="">-- Choose Room from Inventory --</option>
+                            {unallotted.length > 0 && (
+                              <optgroup label={`🟢 Available Unallotted Rooms (${unallotted.length})`}>
+                                {unallotted.map((r) => (
+                                  <option key={r._id} value={r._id}>
+                                    Room {r.roomNumber} • {r.roomTypeName || 'Deluxe'} • Floor {r.floor || 1} • ₹{r.pricePerNight || 4500}/night [AVAILABLE]
+                                  </option>
+                                ))}
+                              </optgroup>
+                            )}
+                            {allotted.length > 0 && (
+                              <optgroup label={`🔴 Already Allotted / Occupied for Dates (${allotted.length})`}>
+                                {allotted.map(({ room: r, conflict }) => {
+                                  const conflictNote = conflict ? ` (Booked: ${conflict.checkInDate} to ${conflict.checkOutDate})` : ` [${r.status}]`;
+                                  return (
+                                    <option key={r._id} value={r._id} disabled style={{ color: '#9CA3AF' }}>
+                                      Room {r.roomNumber} • {r.roomTypeName || 'Deluxe'}{conflictNote}
+                                    </option>
+                                  );
+                                })}
+                              </optgroup>
+                            )}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ marginTop: '14px' }}>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
+                    Room Tariff Per Night (₹)
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--gold-primary)' }}>
+                      ₹
+                    </span>
+                    <input
+                      type="number"
+                      placeholder="4500"
+                      value={formData.totalAmount}
+                      onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px 10px 30px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        fontSize: '0.88rem',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                      }}
+                    />
                   </div>
                 </div>
               </div>

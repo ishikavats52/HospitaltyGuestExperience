@@ -516,6 +516,12 @@ Login URL: ${createdCredentials.loginUrl}`;
 
   const getRoleBadge = (r, deptName) => {
     switch (r) {
+      case 'BOOKING_DESK':
+        return (
+          <span className="badge" style={{ background: '#ECFDF5', color: '#047857', border: '1px solid #A7F3D0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={12} /> {deptName || 'Booking & Reservations Desk'}
+          </span>
+        );
       case 'RECEPTION':
         return (
           <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -790,6 +796,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                     fontSize: '0.8rem',
                     fontWeight: 600,
                     whiteSpace: 'nowrap',
+                    minWidth: 'max-content',
                     flexShrink: 0,
                     borderRadius: 'var(--radius-full)',
                   }}
@@ -809,6 +816,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                         fontSize: '0.8rem',
                         fontWeight: 600,
                         whiteSpace: 'nowrap',
+                        minWidth: 'max-content',
                         flexShrink: 0,
                         borderRadius: 'var(--radius-full)',
                       }}
@@ -2103,6 +2111,7 @@ Login URL: ${createdCredentials.loginUrl}`;
                       style={{ fontSize: '0.85rem' }}
                     >
                       <option value="RECEPTION">Reception & Front Desk</option>
+                      <option value="BOOKING_DESK">Booking & Reservations Staff (Manual Intake)</option>
                       <option value="HOUSEKEEPING">Housekeeping Operations</option>
                       <option value="KITCHEN">Kitchen & Dining / KDS</option>
                       <option value="ACCOUNTS">Finance & Accounts</option>

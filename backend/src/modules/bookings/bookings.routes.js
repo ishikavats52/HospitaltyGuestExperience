@@ -345,6 +345,28 @@ router.post('/', authenticate, enforceTenantIsolation, async (req, res, next) =>
 
     const finalTariff = Number(totalAmount) || resolvedRoom?.pricePerNight || 4500;
 
+    // 4b. Strict Date-Aware Allotment Conflict Check: A room cannot be double-booked for overlapping dates
+    if (resolvedRoom) {
+      const allRoomBookings = await Booking.find({ roomId: String(resolvedRoom._id) });
+      const reqStart = new Date(finalCheckInDate).getTime();
+      const reqEnd = new Date(finalCheckOutDate).getTime();
+
+      const conflictingBooking = allRoomBookings.find((b) => {
+        if (b.status === 'CANCELLED' || b.status === 'CHECKED_OUT') return false;
+        const bStart = new Date(b.checkInDate).getTime();
+        const bEnd = new Date(b.checkOutDate).getTime();
+        return reqStart < bEnd && reqEnd > bStart;
+      });
+
+      if (conflictingBooking) {
+        return ApiResponse.error(
+          res,
+          `Room ${resolvedRoom.roomNumber} is already allotted from ${conflictingBooking.checkInDate} to ${conflictingBooking.checkOutDate} for guest "${conflictingBooking.guestName}". Please select an unallotted room.`,
+          409
+        );
+      }
+    }
+
     // 5. Create Booking
     const newBooking = await Booking.create({
       bookingNumber,
@@ -569,6 +591,53 @@ router.patch('/:id/checkin', authenticate, async (req, res, next) => {
       booking,
       stay,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Purge Test Bookings, Guests, and Stays for Clean Slate
+ */
+router.delete('/purge-test', authenticate, enforceTenantIsolation, async (req, res, next) => {
+  try {
+    const hotelId = req.tenant.hotelId || req.user?.hotelId;
+    const filter = hotelId ? { hotelId } : {};
+
+    const bookings = await Booking.find(filter);
+    const roomIds = bookings.map((b) => b.roomId).filter(Boolean);
+
+    await Booking.deleteMany(filter);
+    await Stay.deleteMany(filter);
+    await Guest.deleteMany(filter);
+
+    // Reset rooms to AVAILABLE
+    for (const rId of roomIds) {
+      await Room.findByIdAndUpdate(rId, { status: 'AVAILABLE' });
+    }
+
+    return ApiResponse.success(res, 'All test bookings, guests, and stay folios purged. All rooms reset to AVAILABLE.');
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * Cancel or Delete a Booking and release the room back to AVAILABLE
+ */
+router.delete('/:id', authenticate, enforceTenantIsolation, async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return ApiResponse.error(res, 'Booking not found', 404);
+
+    if (booking.roomId) {
+      await Room.findByIdAndUpdate(booking.roomId, { status: 'AVAILABLE' });
+    }
+
+    await Booking.deleteMany({ _id: req.params.id });
+    await Stay.deleteMany({ bookingId: req.params.id });
+
+    return ApiResponse.success(res, `Booking ${booking.bookingNumber} deleted and Room ${booking.roomNumber} is now AVAILABLE.`);
   } catch (err) {
     next(err);
   }

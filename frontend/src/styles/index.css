@@ -726,6 +726,8 @@ body {
 
 /* Touch scroll helper */
 .touch-scroll-x {
+  display: flex !important;
+  flex-wrap: nowrap !important;
   overflow-x: auto !important;
   -webkit-overflow-scrolling: touch !important;
   scrollbar-width: none !important;
@@ -739,6 +741,7 @@ body {
 /* Children inside horizontal scroll bars must not shrink or wrap */
 .touch-scroll-x > * {
   flex-shrink: 0 !important;
+  min-width: max-content !important;
   white-space: nowrap !important;
 }
 
@@ -927,12 +930,14 @@ body {
   background-color: #FFFFFF !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--border-color) !important;
-  max-height: calc(100vh - 32px) !important;
-  max-height: calc(100dvh - 32px) !important;
+  height: 90vh !important;
+  height: 90dvh !important;
+  max-height: 92dvh !important;
   display: flex !important;
   flex-direction: column !important;
   margin: auto !important;
   box-sizing: border-box !important;
+  overflow: hidden !important;
   animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -943,6 +948,7 @@ body {
   display: flex !important;
   flex-direction: column !important;
   height: 90vh !important;
+  height: 90dvh !important;
   max-height: 92dvh !important;
 }
 
@@ -955,16 +961,18 @@ body {
   overscroll-behavior: contain !important;
 }
 
-/* Forms inside modal-content must flex and not collapse scroll */
-.modal-content > form {
+/* Forms inside modal-content must flex and fill remaining space between header and footer */
+.modal-content > form,
+.modal-content form {
   display: flex !important;
   flex-direction: column !important;
-  flex: 1 !important;
+  flex: 1 1 0% !important;
   min-height: 0 !important;
+  overflow: hidden !important;
 }
 
 .modal-header {
-  padding: 20px 26px !important;
+  padding: 18px 24px !important;
   background: linear-gradient(135deg, #FFF9FA 0%, #FFFFFF 100%) !important;
   border-bottom: 1px solid var(--border-color) !important;
   display: flex !important;
@@ -978,12 +986,12 @@ body {
 }
 
 .modal-body {
-  padding: 24px 26px !important;
+  padding: 20px 24px !important;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
-  flex: 1 !important;
+  flex: 1 1 0% !important;
   min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -992,7 +1000,7 @@ body {
 }
 
 .modal-footer {
-  padding: 16px 26px !important;
+  padding: 14px 24px !important;
   background: var(--bg-primary) !important;
   border-top: 1px solid var(--border-color) !important;
   display: flex !important;
@@ -1027,32 +1035,32 @@ body {
 /* Mobile & Tablet Modal Optimizations */
 @media (max-width: 640px) {
   .modal-backdrop {
-    padding: 0 !important;
-    align-items: flex-end !important;
+    padding: 8px !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .modal-content {
     max-width: 100% !important;
-    max-height: 92vh !important;
-    max-height: 92dvh !important;
-    border-bottom-left-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
-    border-top-left-radius: 20px !important;
-    border-top-right-radius: 20px !important;
+    width: 100% !important;
+    height: 92dvh !important;
+    max-height: 94dvh !important;
+    border-radius: 16px !important;
     margin: 0 !important;
   }
 
   .modal-header {
-    padding: 18px 18px !important;
+    padding: 16px 16px !important;
   }
 
   .modal-body {
-    padding: 18px 16px !important;
-    gap: 16px !important;
+    padding: 16px 14px !important;
+    gap: 14px !important;
   }
 
   .modal-footer {
-    padding: 14px 16px !important;
+    padding: 12px 14px !important;
+    padding-bottom: max(14px, env(safe-area-inset-bottom, 14px)) !important;
     flex-direction: column-reverse !important;
     gap: 8px !important;
   }
