@@ -64,6 +64,8 @@ const PRESET_AMENITIES = [
   'Plush Bathrobes & Slippers',
 ];
 
+const COMMON_AMENITIES = PRESET_AMENITIES;
+
 export const RoomManager = () => {
   const { currentUser } = useAuth();
   const [searchParams] = useSearchParams();
@@ -1556,7 +1558,7 @@ export const RoomManager = () => {
 
                 {/* Preset Amenities */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-                  {COMMON_AMENITIES.map((amenity, i) => {
+                  {PRESET_AMENITIES.map((amenity, i) => {
                     const isSelected = editSelectedAmenities.includes(amenity);
                     return (
                       <button
