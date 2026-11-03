@@ -15,12 +15,14 @@ import {
   Building2,
   Sparkles,
   ArrowRight,
+  Trash2,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const BillingPage = () => {
   const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'HOTEL_ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,6 +80,23 @@ export const BillingPage = () => {
       alert(err.message || 'Settlement failed');
     } finally {
       setSettling(false);
+    }
+  };
+
+  const handleDeleteBooking = async (guest) => {
+    if (!isAdmin) {
+      alert('Access Restricted: Only Hotel Admins have permission to delete bookings. Booking staff can create bookings only.');
+      return;
+    }
+    const confirmMsg = `Are you sure you want to delete booking & stay folio for ${guest.name} (Room ${guest.roomNumber || ''})?\n\n• The room will be restored to AVAILABLE.\n• This action cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      await api.delete(`/bookings/${guest.stayId || guest.bookingNumber}`);
+      showToast(`Booking & stay folio for ${guest.name} deleted.`);
+      await fetchGuestsAndBilling();
+    } catch (err) {
+      alert(err.message || 'Failed to delete booking');
     }
   };
 
@@ -561,6 +580,29 @@ export const BillingPage = () => {
                               }}
                             >
                               Settle
+                            </button>
+                          )}
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBooking(g)}
+                              className="btn btn-outline"
+                              style={{
+                                padding: '7px 11px',
+                                fontSize: '0.78rem',
+                                color: '#DC2626',
+                                borderColor: '#FCA5A5',
+                                backgroundColor: '#FEF2F2',
+                                borderRadius: 'var(--radius-sm)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                              title="Admin Only: Delete Booking & Free Room"
+                            >
+                              <Trash2 size={13} />
+                              <span>Delete</span>
                             </button>
                           )}
                         </div>

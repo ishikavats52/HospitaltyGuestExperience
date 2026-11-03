@@ -35,6 +35,7 @@ import {
   Brush,
   Wrench,
   Key,
+  Trash2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
@@ -43,6 +44,7 @@ import { WalkInGuestModal } from '../../components/modals/WalkInGuestModal.jsx';
 
 export const HotelDashboard = () => {
   const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'HOTEL_ADMIN' || currentUser?.role === 'SUPER_ADMIN';
   const [hotelInfo, setHotelInfo] = useState(null);
 
   // Today's Bookings State
@@ -186,6 +188,28 @@ export const HotelDashboard = () => {
       await fetchAllData();
     } catch (err) {
       alert(err.message || 'Check-out failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Admin-Only: Permanently delete booking and release room back to AVAILABLE
+  const handleDeleteBooking = async (booking) => {
+    if (!isAdmin) {
+      alert('Access Restricted: Only Hotel Admins have permission to delete bookings. Booking staff can create bookings only.');
+      return;
+    }
+
+    const confirmMsg = `Are you sure you want to permanently delete booking "${booking.bookingNumber}" for ${booking.guestName}?\n\n• The stay folio will be deleted from database.\n• Room ${booking.roomNumber || ''} will immediately be restored to AVAILABLE.\n• This action cannot be undone.`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setActionLoading(true);
+    try {
+      await api.delete(`/bookings/${booking._id}`);
+      showToast(`Booking ${booking.bookingNumber} deleted & Room ${booking.roomNumber || ''} restored to Available!`);
+      await fetchAllData();
+    } catch (err) {
+      alert(err.message || 'Failed to delete booking');
     } finally {
       setActionLoading(false);
     }
@@ -621,6 +645,29 @@ export const HotelDashboard = () => {
                           style={{ padding: '5px 10px', fontSize: '0.74rem', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
                         >
                           <LogOut size={12} /> Check-Out
+                        </button>
+                      )}
+
+                      {/* Admin-Only Delete Booking Option (Booking Staff Cannot Delete) */}
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBooking(b)}
+                          disabled={actionLoading}
+                          className="btn btn-outline"
+                          style={{
+                            padding: '5px 9px',
+                            fontSize: '0.74rem',
+                            color: '#DC2626',
+                            borderColor: '#FCA5A5',
+                            backgroundColor: '#FEF2F2',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                          title="Admin Only: Permanently Delete Booking & Free Room"
+                        >
+                          <Trash2 size={12} /> Delete
                         </button>
                       )}
                     </div>

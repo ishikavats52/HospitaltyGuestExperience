@@ -11,6 +11,7 @@ import { GUEST_JOURNEY_STATES } from '../stays/stays.constants.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { enforceTenantIsolation } from '../../middleware/tenant.middleware.js';
+import { requireHotelAdmin } from '../../middleware/role.middleware.js';
 import { ENV } from '../../config/env.js';
 
 const router = Router();
@@ -597,9 +598,9 @@ router.patch('/:id/checkin', authenticate, async (req, res, next) => {
 });
 
 /**
- * Purge Test Bookings, Guests, and Stays for Clean Slate
+ * Purge Test Bookings, Guests, and Stays for Clean Slate (Admin Only)
  */
-router.delete('/purge-test', authenticate, enforceTenantIsolation, async (req, res, next) => {
+router.delete('/purge-test', authenticate, enforceTenantIsolation, requireHotelAdmin, async (req, res, next) => {
   try {
     const hotelId = req.tenant.hotelId || req.user?.hotelId;
     const filter = hotelId ? { hotelId } : {};
@@ -623,21 +624,43 @@ router.delete('/purge-test', authenticate, enforceTenantIsolation, async (req, r
 });
 
 /**
- * Cancel or Delete a Booking and release the room back to AVAILABLE
+ * Permanently Delete a Booking and release the room back to AVAILABLE
+ * Strictly restricted to Hotel Admin / Super Admin (Booking staff cannot delete)
  */
-router.delete('/:id', authenticate, enforceTenantIsolation, async (req, res, next) => {
+router.delete('/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, async (req, res, next) => {
   try {
-    const booking = await Booking.findById(req.params.id);
-    if (!booking) return ApiResponse.error(res, 'Booking not found', 404);
-
-    if (booking.roomId) {
-      await Room.findByIdAndUpdate(booking.roomId, { status: 'AVAILABLE' });
+    const bookingId = req.params.id;
+    let booking = await Booking.findById(bookingId);
+    if (!booking) {
+      booking = await Booking.findOne({ bookingNumber: bookingId });
+    }
+    if (!booking) {
+      const stay = await Stay.findById(bookingId);
+      if (stay && stay.bookingId) {
+        booking = await Booking.findById(stay.bookingId);
+      }
     }
 
-    await Booking.deleteMany({ _id: req.params.id });
-    await Stay.deleteMany({ bookingId: req.params.id });
+    if (!booking) return ApiResponse.error(res, 'Booking record not found in database', 404);
 
-    return ApiResponse.success(res, `Booking ${booking.bookingNumber} deleted and Room ${booking.roomNumber} is now AVAILABLE.`);
+    const targetBookingId = String(booking._id || bookingId);
+    const resolvedRoomId = booking.roomId;
+
+    // 1. Release room back to AVAILABLE immediately
+    if (resolvedRoomId) {
+      await Room.findByIdAndUpdate(resolvedRoomId, { status: 'AVAILABLE' });
+    }
+
+    // 2. Delete the booking from database
+    await Booking.deleteMany({ _id: targetBookingId });
+
+    // 3. Delete any associated stay records
+    await Stay.deleteMany({ bookingId: targetBookingId });
+
+    return ApiResponse.success(
+      res,
+      `Booking ${booking.bookingNumber} (${booking.guestName}) has been permanently deleted by Admin, and Room ${booking.roomNumber || ''} is now restored to AVAILABLE.`
+    );
   } catch (err) {
     next(err);
   }
