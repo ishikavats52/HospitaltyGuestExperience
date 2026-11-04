@@ -729,15 +729,15 @@ export const RoomManager = () => {
       >
         <div style={{ display: 'flex', gap: '14px', flex: 1, minWidth: '280px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Search Box */}
-          <div style={{ position: 'relative', minWidth: '240px', flex: 1 }}>
-            <Search size={18} color="var(--gold-primary)" style={{ position: 'absolute', left: '14px', top: '13px' }} />
+          <div style={{ position: 'relative', minWidth: '240px', flex: 1, display: 'flex', alignItems: 'center' }}>
+            <Search size={18} color="var(--gold-primary)" style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
             <input
               type="text"
               placeholder="Search by room #, suite type, property..."
-              className="input-control"
+              className="input-control input-icon-left"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '42px', borderRadius: 'var(--radius-full)' }}
+              style={{ paddingLeft: '44px', borderRadius: 'var(--radius-full)' }}
             />
           </div>
 

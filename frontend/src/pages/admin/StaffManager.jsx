@@ -854,15 +854,15 @@ Login URL: ${createdCredentials.loginUrl}`;
           <section className="glass-panel animate-fade-in" style={{ padding: '24px 20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
             {/* Search & Filter Header */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
-              <div style={{ position: 'relative', width: '100%' }}>
-                <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '12px' }} />
+              <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+                <Search size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
                 <input
                   type="text"
                   placeholder="Search employee by name, email, department, sub-department, phone..."
-                  className="input-control"
+                  className="input-control input-icon-left"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  style={{ paddingLeft: '38px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
+                  style={{ paddingLeft: '40px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' }}
                 />
               </div>
 
@@ -2131,16 +2131,16 @@ Login URL: ${createdCredentials.loginUrl}`;
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
                     Full Name *
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <Users size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <Users size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                     <input
                       type="text"
-                      className="input-control"
+                      className="input-control input-icon-left"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="e.g. Ramesh Chandra"
                       required
-                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                      style={{ paddingLeft: '40px', fontSize: '0.86rem' }}
                     />
                   </div>
                 </div>
@@ -2150,16 +2150,16 @@ Login URL: ${createdCredentials.loginUrl}`;
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
                     Work Email *
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                     <input
                       type="email"
-                      className="input-control"
+                      className="input-control input-icon-left"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       placeholder="e.g. ramesh@hotel.com"
                       required
-                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                      style={{ paddingLeft: '40px', fontSize: '0.86rem' }}
                     />
                   </div>
                 </div>
@@ -2169,15 +2169,15 @@ Login URL: ${createdCredentials.loginUrl}`;
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-primary)' }}>
                     Phone / WhatsApp Number
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <Phone size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <Phone size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                     <input
                       type="tel"
-                      className="input-control"
+                      className="input-control input-icon-left"
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="+91 98765 43210"
-                      style={{ paddingLeft: '36px', fontSize: '0.86rem' }}
+                      style={{ paddingLeft: '40px', fontSize: '0.86rem' }}
                     />
                   </div>
                 </div>
@@ -2289,15 +2289,15 @@ Login URL: ${createdCredentials.loginUrl}`;
                   <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0 0 8px 0' }}>
                     Leave blank to keep the employee's existing login password unchanged.
                   </p>
-                  <div style={{ position: 'relative' }}>
-                    <Lock size={15} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-muted)' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <Lock size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                     <input
                       type={showEditPassword ? 'text' : 'password'}
-                      className="input-control"
+                      className="input-control input-icon-both"
                       value={editPassword}
                       onChange={(e) => setEditPassword(e.target.value)}
                       placeholder="Enter new password (min. 6 chars)"
-                      style={{ paddingLeft: '36px', paddingRight: '40px', fontSize: '0.86rem' }}
+                      style={{ paddingLeft: '40px', paddingRight: '42px', fontSize: '0.86rem' }}
                     />
                     <button
                       type="button"
@@ -2312,6 +2312,10 @@ Login URL: ${createdCredentials.loginUrl}`;
                         color: 'var(--text-muted)',
                         cursor: 'pointer',
                         padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 2,
                       }}
                     >
                       {showEditPassword ? <EyeOff size={15} /> : <Eye size={15} />}

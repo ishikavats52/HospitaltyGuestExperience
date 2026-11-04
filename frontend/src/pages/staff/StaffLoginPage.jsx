@@ -228,21 +228,32 @@ export const StaffLoginPage = () => {
         )}
 
         {/* Quick Platform Role Preset */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-              Platform SuperAdmin:
+        <div
+          style={{
+            marginBottom: '22px',
+            padding: '12px 14px',
+            background: 'var(--bg-secondary)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Platform SuperAdmin
             </span>
             <button
               type="button"
               onClick={() => handleQuickPreset('superadmin@platform.com')}
               className="btn btn-outline"
-              style={{ fontSize: '0.75rem', padding: '5px 12px', borderRadius: 'var(--radius-full)' }}
+              style={{ fontSize: '0.74rem', padding: '5px 12px', borderRadius: 'var(--radius-full)', whiteSpace: 'nowrap' }}
             >
-              Fill SuperAdmin (superadmin@platform.com)
+              ⚡ Fill SuperAdmin Credentials
             </button>
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>
             Sign in as SuperAdmin to create and govern all your real Hotel Admin and Property profiles.
           </div>
         </div>
@@ -252,17 +263,32 @@ export const StaffLoginPage = () => {
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Work Email Address
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Mail
+                size={18}
+                color="var(--gold-primary)"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
               <input
                 type="email"
-                className="input-control"
+                className="input-control input-icon-left"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@hotel.com"
                 required
-                style={{ paddingLeft: '40px', borderRadius: 'var(--radius-sm)' }}
+                style={{
+                  paddingLeft: '44px',
+                  borderRadius: 'var(--radius-sm)',
+                  height: '46px',
+                }}
               />
-              <Mail size={17} color="var(--gold-primary)" style={{ position: 'absolute', left: '13px', top: '14px' }} />
             </div>
             <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
               Your administrator or staff profile email.
@@ -273,21 +299,51 @@ export const StaffLoginPage = () => {
             <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
               Password
             </label>
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <Lock
+                size={18}
+                color="var(--gold-primary)"
+                style={{
+                  position: 'absolute',
+                  left: '14px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              />
               <input
                 type={showPassword ? 'text' : 'password'}
-                className="input-control"
+                className="input-control input-icon-both"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter account password"
                 required
-                style={{ paddingLeft: '40px', paddingRight: '42px', borderRadius: 'var(--radius-sm)' }}
+                style={{
+                  paddingLeft: '44px',
+                  paddingRight: '44px',
+                  borderRadius: 'var(--radius-sm)',
+                  height: '46px',
+                }}
               />
-              <Lock size={17} color="var(--gold-primary)" style={{ position: 'absolute', left: '13px', top: '14px' }} />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{ position: 'absolute', right: '12px', top: '13px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '4px',
+                  zIndex: 2,
+                }}
                 title={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

@@ -582,15 +582,15 @@ export const SuperDashboard = () => {
 
         {/* Search & Filter */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flex: 1, maxWidth: '420px', minWidth: '240px' }}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <Search size={16} color="var(--gold-primary)" style={{ position: 'absolute', left: '12px', top: '11px' }} />
+          <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center' }}>
+            <Search size={16} color="var(--gold-primary)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 2 }} />
             <input
               type="text"
               placeholder="Search by admin name, email, hotel..."
-              className="input-control"
+              className="input-control input-icon-left"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ paddingLeft: '36px', height: '38px', fontSize: '0.84rem', borderRadius: 'var(--radius-full)' }}
+              style={{ paddingLeft: '40px', height: '38px', fontSize: '0.84rem', borderRadius: 'var(--radius-full)' }}
             />
           </div>
 

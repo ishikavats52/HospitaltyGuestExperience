@@ -520,10 +520,11 @@ export const WalkInGuestModal = ({
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
                       Mobile / WhatsApp Number <span style={{ color: 'var(--danger)' }}>*</span>
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <Phone size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <Phone size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                       <input
                         type="tel"
+                        className="input-control input-icon-left"
                         placeholder="+91 98765 43210"
                         value={formData.phone}
                         onChange={(e) => {
@@ -532,10 +533,10 @@ export const WalkInGuestModal = ({
                         }}
                         style={{
                           width: '100%',
-                          padding: '10px 12px 10px 32px',
+                          paddingLeft: '40px',
                           borderRadius: '8px',
                           border: '1px solid var(--border-color)',
-                          fontSize: '0.88rem',
+                          fontSize: '16px',
                           outline: 'none',
                           boxSizing: 'border-box',
                         }}
@@ -547,19 +548,20 @@ export const WalkInGuestModal = ({
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
                       Email Address (Optional)
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <Mail size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <Mail size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                       <input
                         type="email"
+                        className="input-control input-icon-left"
                         placeholder="guest@example.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '10px 12px 10px 32px',
+                          paddingLeft: '40px',
                           borderRadius: '8px',
                           border: '1px solid var(--border-color)',
-                          fontSize: '0.88rem',
+                          fontSize: '16px',
                           outline: 'none',
                           boxSizing: 'border-box',
                         }}
@@ -603,19 +605,20 @@ export const WalkInGuestModal = ({
                     <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
                       ID Document Number
                     </label>
-                    <div style={{ position: 'relative' }}>
-                      <ShieldCheck size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <ShieldCheck size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
                       <input
                         type="text"
+                        className="input-control input-icon-left"
                         placeholder="e.g. 4126-3082-2252"
                         value={formData.idNumber}
                         onChange={(e) => setFormData({ ...formData, idNumber: e.target.value })}
                         style={{
                           width: '100%',
-                          padding: '10px 12px 10px 32px',
+                          paddingLeft: '40px',
                           borderRadius: '8px',
                           border: '1px solid var(--border-color)',
-                          fontSize: '0.88rem',
+                          fontSize: '16px',
                           outline: 'none',
                           boxSizing: 'border-box',
                         }}
@@ -791,21 +794,22 @@ export const WalkInGuestModal = ({
                   <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '5px' }}>
                     Room Tariff Per Night (₹)
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--gold-primary)' }}>
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontWeight: 700, color: 'var(--gold-primary)', pointerEvents: 'none', zIndex: 2 }}>
                       ₹
                     </span>
                     <input
                       type="number"
+                      className="input-control input-icon-left"
                       placeholder="4500"
                       value={formData.totalAmount}
                       onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
                       style={{
                         width: '100%',
-                        padding: '10px 12px 10px 30px',
+                        paddingLeft: '38px',
                         borderRadius: '8px',
                         border: '1px solid var(--border-color)',
-                        fontSize: '0.88rem',
+                        fontSize: '16px',
                         outline: 'none',
                         boxSizing: 'border-box',
                       }}

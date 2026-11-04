@@ -419,16 +419,17 @@ export const HotelDashboard = () => {
 
           {/* Quick Search & Filter Chips */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ position: 'relative', minWidth: '200px' }}>
-              <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <div style={{ position: 'relative', minWidth: '200px', display: 'flex', alignItems: 'center' }}>
+              <Search size={14} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
               <input
                 type="text"
                 placeholder="Search guest or room..."
+                className="input-control input-icon-left"
                 value={bookingSearch}
                 onChange={(e) => setBookingSearch(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '7px 12px 7px 30px',
+                  paddingLeft: '38px',
                   fontSize: '0.82rem',
                   borderRadius: '8px',
                   border: '1px solid var(--border-color)',

@@ -724,6 +724,40 @@ body {
   background: #FFFFFF;
 }
 
+/* Icon-Safe Input Classes: Guarantee zero overlapping of text and icons */
+.input-icon-left,
+input.input-icon-left,
+.input-control.input-icon-left,
+div:has(> svg:first-child) > input,
+div:has(> svg:first-child) > .input-control,
+div:has(> svg[style*="left"]) > input,
+div:has(> svg[style*="left"]) > .input-control,
+div:has(> span[style*="left"]) > input,
+div:has(> span[style*="left"]) > .input-control {
+  padding-left: 44px !important;
+}
+
+.input-icon-right,
+input.input-icon-right,
+.input-control.input-icon-right,
+div:has(> button[style*="right"]) > input,
+div:has(> button[style*="right"]) > .input-control,
+div:has(> svg[style*="right"]) > input,
+div:has(> svg[style*="right"]) > .input-control {
+  padding-right: 46px !important;
+}
+
+.input-icon-both,
+input.input-icon-both,
+.input-control.input-icon-both,
+div:has(> svg:first-child):has(> button[style*="right"]) > input,
+div:has(> svg:first-child):has(> button[style*="right"]) > .input-control,
+div:has(> svg[style*="left"]):has(> button[style*="right"]) > input,
+div:has(> svg[style*="left"]):has(> button[style*="right"]) > .input-control {
+  padding-left: 44px !important;
+  padding-right: 46px !important;
+}
+
 /* Touch scroll helper */
 .touch-scroll-x {
   display: flex !important;
@@ -1130,9 +1164,17 @@ body {
   .input-control {
     font-size: 16px !important;
     min-height: 44px !important;
-    padding: 10px 12px !important;
     border-radius: 8px !important;
     box-sizing: border-box !important;
+  }
+
+  /* Default padding for inputs without icons */
+  input:not(.input-icon-left):not(.input-icon-both),
+  select,
+  textarea,
+  .input-control:not(.input-icon-left):not(.input-icon-both) {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
   }
 
   label {

@@ -275,15 +275,15 @@ export const BookingDesk = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '260px' }}>
-          <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
-            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <div style={{ position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center' }}>
+            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none', zIndex: 2 }} />
             <input
               type="text"
               placeholder="Search by Guest Name, Room #, or Phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-control"
-              style={{ paddingLeft: '36px', fontSize: '0.84rem' }}
+              className="input-control input-icon-left"
+              style={{ paddingLeft: '40px', fontSize: '0.84rem' }}
             />
           </div>
         </div>
