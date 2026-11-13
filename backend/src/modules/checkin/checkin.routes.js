@@ -44,7 +44,8 @@ router.post('/submit', authenticate, async (req, res, next) => {
         propertyId: req.user?.propertyId || req.guest?.propertyId || 'PROP-DELHI-01',
         bookingId: bookingId || 'BK-DELHI-101',
         guestId: req.user?.guestId || req.guest?.guestId || 'GUEST-AARAV-01',
-        roomId: 'ROOM-302',
+        roomId: null,
+        roomNumber: 'Assigned',
         status: GUEST_JOURNEY_STATES.BOOKING_CONFIRMED,
       });
     }
@@ -60,6 +61,7 @@ router.post('/submit', authenticate, async (req, res, next) => {
     }
 
     const verifiedTimestamp = new Date().toISOString();
+    const verifiedTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     const finalIdType = idType || 'AADHAAR';
     const finalIdNumber = idNumber || '412630822252';
 
@@ -87,9 +89,10 @@ router.post('/submit', authenticate, async (req, res, next) => {
 
     const qrDataUrl = await generateQRCodeDataUrl(qrPayload);
 
-    // Update Stay model: status becomes CHECKED_IN
+    // Update Stay model: status becomes CHECKED_IN with exact checkin timestamp & readable time
     stay.status = GUEST_JOURNEY_STATES.CHECKED_IN;
     stay.checkedInAt = verifiedTimestamp;
+    stay.checkInTime = verifiedTimeStr;
     stay.idType = finalIdType;
     stay.idNumber = finalIdNumber;
     stay.idDocumentUrl = idDocumentUrl || null;
@@ -105,6 +108,7 @@ router.post('/submit', authenticate, async (req, res, next) => {
       await Stay.findByIdAndUpdate(stay._id, {
         status: GUEST_JOURNEY_STATES.CHECKED_IN,
         checkedInAt: verifiedTimestamp,
+        checkInTime: verifiedTimeStr,
         idType: finalIdType,
         idNumber: finalIdNumber,
         idDocumentUrl,
@@ -113,6 +117,16 @@ router.post('/submit', authenticate, async (req, res, next) => {
         isVerified: true,
         qrTokenHash: tokenHash,
         qrPassUrl: qrDataUrl,
+      });
+    }
+
+    // Sync booking status and checkin time
+    if (stay.bookingId) {
+      const bId = typeof stay.bookingId === 'object' ? stay.bookingId._id || stay.bookingId : stay.bookingId;
+      await Booking.findByIdAndUpdate(bId, {
+        status: 'CHECKED_IN',
+        checkedInAt: verifiedTimestamp,
+        checkInTime: verifiedTimeStr,
       });
     }
 
@@ -254,8 +268,8 @@ router.get('/guests', authenticate, enforceTenantIsolation, async (req, res, nex
           },
           room: {
             _id: room?._id || stay.roomId,
-            roomNumber: room?.roomNumber || '302',
-            floor: room?.floor || 3,
+            roomNumber: room?.roomNumber || stay.roomNumber || booking?.roomNumber || 'Assigned',
+            floor: room?.floor || 1,
             status: room?.status || (isCheckedIn ? 'OCCUPIED' : 'AVAILABLE'),
           },
           kyc: {

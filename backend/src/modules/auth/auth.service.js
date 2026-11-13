@@ -129,12 +129,13 @@ export class AuthService {
         propertyId: booking.propertyId?._id || booking.propertyId || 'PROP-DELHI-01',
         bookingId: booking._id,
         guestId: booking.guestId?._id || booking.guestId || 'GUEST-AARAV-01',
-        roomId: 'ROOM-302',
-        status: 'BOOKING_CONFIRMED',
+        roomId: booking.roomId || null,
+        roomNumber: booking.roomNumber || 'Assigned',
+        status: booking.status === 'CHECKED_IN' ? 'CHECKED_IN' : 'BOOKING_CONFIRMED',
       });
     }
 
-    const finalStayId = stay?._id || 'STAY-DELHI-302';
+    const finalStayId = stay?._id || 'STAY-ACTIVE';
     const finalHotelId = booking?.hotelId?._id || booking?.hotelId || stay?.hotelId || 'HOTEL-DELHI-01';
 
     const token = this.generateToken({
@@ -145,9 +146,10 @@ export class AuthService {
       guestId: booking?.guestId?._id || 'GUEST-AARAV-01',
       hotelId: finalHotelId,
       propertyId: booking?.propertyId?._id || stay?.propertyId || 'PROP-DELHI-01',
-      guestName: booking?.guestId?.name || 'Aarav Mehta',
+      guestName: booking?.guestId?.name || booking?.guestName || 'Valued Guest',
+      roomNumber: booking?.roomNumber || stay?.roomNumber || 'Assigned',
     }, '24h');
 
-    return { token, booking, stay: stay || { _id: finalStayId, hotelId: finalHotelId } };
+    return { token, booking, stay: stay || { _id: finalStayId, hotelId: finalHotelId, roomNumber: booking?.roomNumber || 'Assigned' } };
   }
 }

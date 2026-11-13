@@ -133,7 +133,7 @@ export const AccountsFolio = () => {
                       {g.guest?.name || 'Registered Guest'}
                     </span>
                     <span className="badge badge-gold">
-                      Room {g.room?.roomNumber || '302'}
+                      Room {g.room?.roomNumber || g.roomNumber || 'Assigned'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
@@ -172,7 +172,7 @@ export const AccountsFolio = () => {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Suite</div>
                   <div style={{ fontWeight: 700, color: 'var(--gold-primary)' }}>
-                    Room {folioData.roomNumber || '302'}
+                    Room {folioData.roomNumber || 'Assigned'}
                   </div>
                 </div>
               </div>

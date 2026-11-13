@@ -138,7 +138,7 @@ export const QRPassPage = () => {
           >
             <span style={{ color: 'var(--text-secondary)' }}>Room Assigned</span>
             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-              Room {stayData?.roomId?.roomNumber || '302'}
+              Room {stayData?.roomNumber || stayData?.roomId?.roomNumber || stayData?.room?.roomNumber || 'Assigned'}
             </span>
           </div>
         </div>

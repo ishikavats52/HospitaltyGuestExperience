@@ -38,6 +38,23 @@ router.post('/', authenticate, async (req, res, next) => {
       stay = await Stay.findOne({ roomNumber: String(req.user.roomNumber) });
     }
 
+    let finalRoomNumber = stay?.roomNumber || req.user?.roomNumber;
+    if (!finalRoomNumber && stay?.roomId) {
+      try {
+        const { Room } = await import('../rooms/rooms.model.js');
+        const rm = await Room.findById(stay.roomId);
+        if (rm && rm.roomNumber) finalRoomNumber = rm.roomNumber;
+      } catch (_) {}
+    }
+    if (!finalRoomNumber && stay?.bookingId) {
+      try {
+        const { Booking } = await import('../bookings/bookings.model.js');
+        const bk = await Booking.findById(stay.bookingId);
+        if (bk && bk.roomNumber) finalRoomNumber = bk.roomNumber;
+      } catch (_) {}
+    }
+    if (!finalRoomNumber) finalRoomNumber = 'Assigned Room';
+
     const totalAmount = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
@@ -47,7 +64,7 @@ router.post('/', authenticate, async (req, res, next) => {
       stayId: stay?._id || stayId || req.user?.stayId,
       bookingId: stay?.bookingId || req.user?.bookingId,
       roomId: stay?.roomId || req.user?.roomId,
-      roomNumber: stay?.roomNumber || req.user?.roomNumber,
+      roomNumber: finalRoomNumber,
       orderNumber,
       items,
       totalAmount,

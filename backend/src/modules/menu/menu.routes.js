@@ -8,9 +8,14 @@ const router = Router();
 
 router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => {
   try {
-    const filter = req.tenant.isSuperAdmin && !req.tenant.hotelId ? {} : { hotelId: req.tenant.hotelId };
-    let categories = await MenuCategory.find(filter).sort('displayOrder');
-    let items = await MenuItem.find(filter).populate('categoryId', 'name');
+    const hotelId = req.tenant.hotelId || req.user?.hotelId;
+    let categories = [];
+    let items = [];
+
+    if (hotelId && !req.tenant.isSuperAdmin) {
+      categories = await MenuCategory.find({ hotelId }).sort('displayOrder');
+      items = await MenuItem.find({ hotelId }).populate('categoryId', 'name');
+    }
 
     if (!items || items.length === 0) {
       items = await MenuItem.find({}).populate('categoryId', 'name');
@@ -49,7 +54,8 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
 
 router.post('/items', authenticate, enforceTenantIsolation, async (req, res, next) => {
   try {
-    const { name, categoryId, price, description, isVegetarian, isAvailable, image } = req.body;
+    const { name, categoryId, price, description, isVegetarian, isAvailable, image, imageUrl } = req.body;
+    const finalImage = image || imageUrl || '';
     const hotelId = req.tenant.hotelId || req.user?.hotelId;
     const item = await MenuItem.create({
       hotelId,
@@ -60,7 +66,9 @@ router.post('/items', authenticate, enforceTenantIsolation, async (req, res, nex
       description: description || '',
       isVegetarian: isVegetarian !== undefined ? isVegetarian : true,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
-      image: image || '',
+      image: finalImage,
+      imageUrl: finalImage,
+      createdAt: new Date().toISOString(),
     });
     return ApiResponse.success(res, 'Menu item created successfully', item, 201);
   } catch (err) {

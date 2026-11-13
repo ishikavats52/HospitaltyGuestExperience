@@ -368,6 +368,9 @@ router.post('/', authenticate, enforceTenantIsolation, async (req, res, next) =>
       }
     }
 
+    const nowIso = new Date().toISOString();
+    const nowTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
     // 5. Create Booking
     const newBooking = await Booking.create({
       bookingNumber,
@@ -384,9 +387,11 @@ router.post('/', authenticate, enforceTenantIsolation, async (req, res, next) =>
       checkOutDate: finalCheckOutDate,
       totalAmount: finalTariff,
       status: directCheckIn ? 'CHECKED_IN' : 'CONFIRMED',
+      checkedInAt: directCheckIn ? nowIso : null,
+      checkInTime: directCheckIn ? nowTimeStr : null,
       source: isWalkIn ? 'WALK_IN' : 'FRONT_DESK',
       notes: notes || '',
-      createdAt: new Date().toISOString(),
+      createdAt: nowIso,
     });
 
     // 6. Generate QR token & hash
@@ -395,7 +400,6 @@ router.post('/', authenticate, enforceTenantIsolation, async (req, res, next) =>
 
     // 7. Create Stay Record
     const stayStatus = directCheckIn ? GUEST_JOURNEY_STATES.STAY_ACTIVE : 'BOOKING_CONFIRMED';
-    const nowIso = new Date().toISOString();
 
     const stay = await Stay.create({
       hotelId: String(hotelId),
@@ -408,6 +412,7 @@ router.post('/', authenticate, enforceTenantIsolation, async (req, res, next) =>
       checkInToken: rawQrToken,
       qrTokenHash,
       checkedInAt: directCheckIn ? nowIso : null,
+      checkInTime: directCheckIn ? nowTimeStr : null,
       idType: idType || guest.idType || 'AADHAAR',
       idNumber: idNumber || guest.idNumber || '',
       isVerified: Boolean(idNumber || directCheckIn),
@@ -525,7 +530,7 @@ router.get('/magic/:ref', async (req, res, next) => {
       hotelId,
       propertyId,
       guestName: guest.name,
-      roomNumber: room?.roomNumber || booking?.roomNumber || '302',
+      roomNumber: room?.roomNumber || booking?.roomNumber || stay?.roomNumber || 'Assigned',
     });
 
     const isStayActive = stay?.status === 'STAY_ACTIVE' || stay?.status === 'CHECKED_IN';
@@ -559,16 +564,22 @@ router.patch('/:id/checkin', authenticate, async (req, res, next) => {
 
     let stay = await Stay.findOne({ bookingId: booking._id });
     const nowIso = new Date().toISOString();
+    const nowTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
     const targetRoomId = roomId || booking.roomId;
+    let assignedRoom = null;
     if (targetRoomId) {
-      await Room.findByIdAndUpdate(targetRoomId, { status: 'OCCUPIED' });
+      assignedRoom = await Room.findByIdAndUpdate(targetRoomId, { status: 'OCCUPIED' });
     }
 
     if (stay) {
       stay.status = GUEST_JOURNEY_STATES.STAY_ACTIVE;
       stay.checkedInAt = nowIso;
-      if (targetRoomId) stay.roomId = targetRoomId;
+      stay.checkInTime = nowTimeStr;
+      if (targetRoomId) {
+        stay.roomId = targetRoomId;
+        if (assignedRoom?.roomNumber) stay.roomNumber = assignedRoom.roomNumber;
+      }
       await stay.save();
     } else {
       stay = await Stay.create({
@@ -577,15 +588,20 @@ router.patch('/:id/checkin', authenticate, async (req, res, next) => {
         bookingId: booking._id,
         guestId: booking.guestId,
         roomId: targetRoomId || null,
+        roomNumber: assignedRoom?.roomNumber || booking.roomNumber || 'Assigned',
         status: GUEST_JOURNEY_STATES.STAY_ACTIVE,
         checkedInAt: nowIso,
+        checkInTime: nowTimeStr,
         createdAt: nowIso,
       });
     }
 
     await Booking.findByIdAndUpdate(booking._id, {
       status: 'CHECKED_IN',
+      checkedInAt: nowIso,
+      checkInTime: nowTimeStr,
       roomId: targetRoomId || booking.roomId,
+      roomNumber: assignedRoom?.roomNumber || booking.roomNumber || 'Assigned',
     });
 
     return ApiResponse.success(res, `Guest ${booking.guestName || 'Guest'} checked in successfully!`, {

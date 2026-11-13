@@ -1,7 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, Plus, Check, RefreshCw, Power, DollarSign, CheckCircle2, Trash2, Tag, X } from 'lucide-react';
+import { Utensils, Plus, Check, RefreshCw, Power, DollarSign, CheckCircle2, Trash2, Tag, X, Image as ImageIcon, Upload } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+
+const CULINARY_PRESETS = [
+  { label: 'Butter Chicken', url: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Paneer Tikka', url: 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Dal Makhani', url: 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Hyderabadi Biryani', url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Crispy Dosa', url: 'https://images.unsplash.com/photo-1668236543090-82eba5ee5976?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Italian Pizza', url: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Pasta Alfredo', url: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281515?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Chocolate Dessert', url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Fresh Juice / Shake', url: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=400&q=80' },
+  { label: 'Masala Chai / Coffee', url: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=400&q=80' },
+];
 
 export const MenuManager = () => {
   const { currentUser } = useAuth();
@@ -19,6 +32,8 @@ export const MenuManager = () => {
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [isVegetarian, setIsVegetarian] = useState(true);
+  const [image, setImage] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [creating, setCreating] = useState(false);
 
   // Self-Add Category State
@@ -138,11 +153,15 @@ export const MenuManager = () => {
         description,
         isVegetarian,
         isAvailable: true,
+        image: image || imageUrlInput || '',
+        imageUrl: image || imageUrlInput || '',
       });
       showToast(`Dish "${name}" added to in-room dining menu!`);
       setName('');
       setPrice('');
       setDescription('');
+      setImage('');
+      setImageUrlInput('');
       setIsAddModalOpen(false);
       await fetchMenu();
     } catch (err) {
@@ -271,11 +290,48 @@ export const MenuManager = () => {
                 {filteredItems.map((item) => (
                   <tr key={item._id}>
                     <td>
-                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.94rem' }}>
-                        {item.name}
-                      </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                        {item.description}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {item.image || item.imageUrl ? (
+                          <img
+                            src={item.image || item.imageUrl}
+                            alt={item.name}
+                            style={{
+                              width: '46px',
+                              height: '46px',
+                              borderRadius: '8px',
+                              objectFit: 'cover',
+                              border: '1px solid var(--border-color)',
+                              flexShrink: 0,
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: '46px',
+                              height: '46px',
+                              borderRadius: '8px',
+                              background: 'var(--gold-soft)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'var(--gold-primary)',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Utensils size={18} />
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.94rem' }}>
+                            {item.name}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            {item.description}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td>
@@ -467,6 +523,134 @@ export const MenuManager = () => {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Description of the culinary dish..."
                   />
+                </div>
+
+                {/* Dish Photography & Visuals */}
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Dish Photography & Visuals
+                    </label>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                      Optional • Displayed on Guest Menu
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <input
+                      type="file"
+                      id="dish-image-file-input"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setImage(reader.result);
+                            setImageUrlInput('');
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('dish-image-file-input').click()}
+                      className="btn btn-outline"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '7px 14px' }}
+                    >
+                      <Upload size={14} /> Upload from Gallery / Files
+                    </button>
+
+                    {(image || imageUrlInput) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImage('');
+                          setImageUrlInput('');
+                        }}
+                        className="btn btn-outline"
+                        style={{ fontSize: '0.76rem', padding: '6px 12px', color: 'var(--danger)', borderColor: 'var(--danger-bg)' }}
+                      >
+                        ✕ Remove Photo
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Custom URL Input */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="url"
+                      placeholder="Or paste dish image URL (https://...)"
+                      className="input-control"
+                      value={imageUrlInput}
+                      onChange={(e) => {
+                        setImageUrlInput(e.target.value);
+                        setImage(e.target.value);
+                      }}
+                      style={{ fontSize: '0.82rem' }}
+                    />
+                    {imageUrlInput && (
+                      <button
+                        type="button"
+                        onClick={() => setImage(imageUrlInput)}
+                        className="btn btn-gold"
+                        style={{ padding: '6px 14px', fontSize: '0.78rem', whiteSpace: 'nowrap' }}
+                      >
+                        Apply URL
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Quick Curated Culinary Presets */}
+                  <div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>
+                      Quick One-Click Photo Presets:
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {CULINARY_PRESETS.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => {
+                            setImage(preset.url);
+                            setImageUrlInput(preset.url);
+                          }}
+                          className="badge"
+                          style={{
+                            cursor: 'pointer',
+                            fontSize: '0.74rem',
+                            padding: '4px 8px',
+                            background: image === preset.url ? 'var(--gold-soft)' : '#FFFFFF',
+                            borderColor: image === preset.url ? 'var(--gold-primary)' : 'var(--border-color)',
+                            color: image === preset.url ? 'var(--gold-dark)' : 'var(--text-secondary)',
+                            fontWeight: image === preset.url ? 700 : 500,
+                          }}
+                        >
+                          + {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Image Preview Thumbnail */}
+                  {(image || imageUrlInput) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', background: 'var(--bg-secondary)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                      <img
+                        src={image || imageUrlInput}
+                        alt="Dish Preview"
+                        style={{ width: '70px', height: '60px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                        onError={(e) => {
+                          e.target.src = 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=300&q=80';
+                        }}
+                      />
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--success)' }}>✓ Dish photography attached</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>Guests will see this photo when ordering from their suite.</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>

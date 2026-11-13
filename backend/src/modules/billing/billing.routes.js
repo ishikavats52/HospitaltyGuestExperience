@@ -74,15 +74,8 @@ router.get('/stay/:stayId/folio', authenticate, async (req, res, next) => {
     }
 
     const items = [];
-    if (roomTariff > 0) {
-      items.push({
-        itemType: 'ROOM',
-        description: `${roomTypeName} (Room ${roomNumber}) - ${nights} Night${nights > 1 ? 's' : ''}`,
-        quantity: nights,
-        unitPrice: Math.round(roomTariff / nights),
-        totalPrice: roomTariff,
-      });
-    }
+    // Room accommodation tariff is settled/handled at reservation & front desk;
+    // The live in-stay guest folio statement only generates for active items ordered after check-in (in-room dining & paid services).
 
     // 5. Gather Food Orders placed after check-in for this specific guest
     const activeStayId = stay ? String(stay._id || stay.id) : (stayId ? String(stayId) : null);

@@ -492,7 +492,7 @@ export const HousekeepingView = () => {
                           border: '1px solid var(--border-active)',
                         }}
                       >
-                        Room {req.roomId?.roomNumber || '302'}
+                        Room {req.roomNumber || req.roomId?.roomNumber || 'Assigned'}
                       </span>
                     </td>
                     <td style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>

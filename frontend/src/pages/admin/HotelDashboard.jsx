@@ -1205,7 +1205,7 @@ export const HotelDashboard = () => {
                       </td>
                       <td>
                         <span style={{ fontWeight: 700, color: 'var(--gold-dark)' }}>
-                          {g.room?.roomNumber ? `Room ${g.room.roomNumber}` : 'Room 302'}
+                          {g.room?.roomNumber ? `Room ${g.room.roomNumber}` : 'Room Assigned'}
                         </span>
                       </td>
                       <td>
@@ -1318,7 +1318,7 @@ export const HotelDashboard = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>Room Allotted:</span>
-                <strong>Room {selectedKycGuest.room?.roomNumber || '302'}</strong>
+                <strong>Room {selectedKycGuest.room?.roomNumber || 'Assigned'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'var(--text-secondary)' }}>ID Verification:</span>

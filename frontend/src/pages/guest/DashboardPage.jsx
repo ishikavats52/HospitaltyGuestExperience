@@ -37,6 +37,29 @@ export const DashboardPage = () => {
   const booking = currentUser?.booking;
   const stayId = stay?._id || currentUser?.stayId;
 
+  const currentRoomNumber =
+    stay?.roomNumber ||
+    stay?.roomId?.roomNumber ||
+    stay?.room?.roomNumber ||
+    booking?.roomNumber ||
+    booking?.roomId?.roomNumber ||
+    currentUser?.roomNumber ||
+    '';
+
+  const checkInDisplayTime = (() => {
+    if (stay?.checkInTime) return stay.checkInTime;
+    if (booking?.checkInTime) return booking.checkInTime;
+    const rawTime = stay?.checkedInAt || booking?.checkedInAt || stay?.createdAt;
+    if (!rawTime) return null;
+    try {
+      const d = new Date(rawTime);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    } catch (_) {
+      return null;
+    }
+  })();
+
   // Real-time status determination
   const isCheckedIn = stay?.status === 'CHECKED_IN' || stay?.status === 'STAY_ACTIVE';
   const isCheckedOut = stay?.status === 'CHECKED_OUT';
@@ -135,10 +158,10 @@ export const DashboardPage = () => {
               Current Accommodation
             </div>
             <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
-              Room {stay?.roomId?.roomNumber || stay?.room?.roomNumber || '302'}
+              Room {currentRoomNumber || 'Assigned on Arrival'}
             </h2>
             <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-              {booking?.hotelId?.name || 'Hotel Grand Delhi'}
+              {booking?.hotelId?.name || currentUser?.hotelName || 'Grand Heritage Hotel'}
             </div>
           </div>
 
@@ -196,6 +219,15 @@ export const DashboardPage = () => {
             borderTop: '1px solid var(--border-subtle)',
           }}
         >
+          {isCheckedIn ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              <Clock size={16} color="var(--success)" /> Checked In: {checkInDisplayTime || 'Active Stay'}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              <Clock size={16} color="var(--gold-primary)" /> Check-In: From 12:00 PM
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
             <Clock size={16} color="var(--gold-primary)" /> Checkout: 11:00 AM
           </div>
@@ -265,14 +297,14 @@ export const DashboardPage = () => {
             <div style={{ flex: '1 1 240px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span className="badge badge-free" style={{ fontSize: '0.72rem', padding: '3px 8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <ShieldCheck size={12} /> Aadhaar Verified KYC
+                  <ShieldCheck size={12} /> {stay?.idType || 'Aadhaar'} Verified KYC
                 </span>
                 <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem' }}>
-                  Room 302 Active & Verified
+                  {currentRoomNumber ? `Room ${currentRoomNumber} Active & Verified` : 'Stay Active & Verified'}
                 </span>
               </div>
               <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginTop: '4px', lineHeight: 1.4 }}>
-                Contactless check-in complete. All hotel services, dining orders, and your digital key pass are fully operational.
+                Contactless check-in complete{checkInDisplayTime ? ` at ${checkInDisplayTime}` : ''}. All hotel services, dining orders, and your digital key pass are fully operational.
               </div>
             </div>
             <button
@@ -316,7 +348,7 @@ export const DashboardPage = () => {
                 Thank You for Staying With Us
               </div>
               <div style={{ fontSize: '0.83rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                Your departure from Room 302 has been finalized. We hope you had an exceptional hospitality experience.
+                Your departure from {currentRoomNumber ? `Room ${currentRoomNumber}` : 'your suite'} has been finalized. We hope you had an exceptional hospitality experience.
               </div>
             </div>
             <Link to="/guest/bill" className="btn btn-gold" style={{ padding: '9px 18px', fontSize: '0.85rem' }}>
@@ -720,7 +752,7 @@ export const DashboardPage = () => {
               Confirm Express Check-Out
             </h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '20px' }}>
-              Are you ready to depart from <strong>Room {stay?.roomId?.roomNumber || '302'}</strong>? Your digital key will be released and your stay marked as checked out.
+              Are you ready to depart from <strong>Room {currentRoomNumber || 'Assigned'}</strong>? Your digital key will be released and your stay marked as checked out.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

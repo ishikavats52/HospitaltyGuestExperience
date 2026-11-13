@@ -488,7 +488,7 @@ export const BillingPage = () => {
                       <td style={{ padding: '18px 20px' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'var(--gold-dark)' }}>
                           <span style={{ padding: '2px 8px', background: 'var(--gold-soft)', borderRadius: '6px' }}>
-                            Room {g.roomNumber || '302'}
+                            Room {g.roomNumber || g.room?.roomNumber || 'Assigned'}
                           </span>
                         </div>
                         <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
@@ -678,7 +678,7 @@ export const BillingPage = () => {
                 >
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>Room Number: </span>
-                    <strong style={{ color: 'var(--gold-dark)' }}>{folioData.roomNumber || '302'}</strong>
+                    <strong style={{ color: 'var(--gold-dark)' }}>{folioData.roomNumber || 'Assigned'}</strong>
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>Booking Ref: </span>

@@ -126,9 +126,9 @@ export async function compileGuest360(stayId) {
     },
     room: {
       id: room?._id || stay.roomId,
-      roomNumber: room?.roomNumber || '302',
-      floor: room?.floor || 3,
-      type: 'Deluxe Heritage Suite',
+      roomNumber: room?.roomNumber || stay?.roomNumber || booking?.roomNumber || 'Assigned',
+      floor: room?.floor || 1,
+      type: room?.roomTypeName || booking?.roomTypeName || 'Deluxe Room',
     },
     orders: foodOrders.map((ord) => ({
       id: ord._id,
@@ -293,7 +293,7 @@ router.get('/arrivals', staffOrDemoAuth, async (req, res, next) => {
           stayId: s._id,
           guestName,
           status: s.status,
-          roomNumber: '302',
+          roomNumber: s.roomNumber || 'Assigned',
           qrTokenHash: s.qrTokenHash,
         };
       })
