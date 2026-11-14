@@ -480,6 +480,10 @@ body {
     display: flex !important;
   }
 
+  .admin-desktop-top-header {
+    display: none !important;
+  }
+
   .admin-sidebar {
     position: fixed;
     top: 0;

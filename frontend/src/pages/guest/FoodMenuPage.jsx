@@ -105,15 +105,30 @@ export const FoodMenuPage = () => {
         specialInstructions: 'Delivered to room',
       });
 
-      // Instantly notify Kitchen staff across browser tabs & network
+      // Instantly notify Hotel Admin and Culinary / Kitchen staff across all active screens & devices
       try {
         if (typeof window !== 'undefined') {
+          const dispatchPayload = {
+            type: 'DINING',
+            orderId: res.data?._id,
+            orderNumber: res.data?.orderNumber,
+            roomNumber: res.data?.roomNumber || activeStay?.roomNumber || 'Room Assigned',
+            guestName: res.data?.guestName || activeStay?.guestName || 'In-Stay Guest',
+            items: orderItems,
+            totalAmount: res.data?.totalAmount,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem('aura_last_dispatch_event', JSON.stringify(dispatchPayload));
           localStorage.setItem('aura_last_kitchen_order', Date.now().toString());
+          window.dispatchEvent(new CustomEvent('aura_live_dispatch', { detail: dispatchPayload }));
           window.dispatchEvent(new CustomEvent('new_kitchen_order', { detail: res.data }));
           if ('BroadcastChannel' in window) {
-            const bc = new BroadcastChannel('hospitality_kitchen_orders');
-            bc.postMessage({ type: 'NEW_ORDER', order: res.data });
+            const bc = new BroadcastChannel('hospitality_live_dispatches');
+            bc.postMessage(dispatchPayload);
             bc.close();
+            const kbc = new BroadcastChannel('hospitality_kitchen_orders');
+            kbc.postMessage({ type: 'NEW_ORDER', order: res.data });
+            kbc.close();
           }
         }
       } catch (_) {}

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { HotelService, ServiceRequest, SERVICE_REQUEST_STATUS } from './services.model.js';
 import { ServiceCatalogue } from '../serviceCatalogue/serviceCatalogue.model.js';
+import { FoodOrder } from '../orders/orders.model.js';
 import { Hotel } from '../hotels/hotels.model.js';
 import { Stay } from '../stays/stays.model.js';
 import { Room } from '../rooms/rooms.model.js';
@@ -330,53 +331,237 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
 });
 
 /**
- * GET Service Requests (Staff Operational Queue & Guest In-Stay History)
+ * GET Service Requests (Staff Operational Queue, Hotel Admin & In-Stay History)
+ * Seamlessly merges Service Requests (Amenities, Housekeeping, Front Desk) and Food Orders (Dining)
  */
 router.get('/service-requests', authenticate, async (req, res, next) => {
   try {
-    const isSuper = req.user?.role === 'SUPER_ADMIN';
-    const hotelId = req.user?.hotelId;
-    const filter = {};
+    const isSuper = req.user?.role === 'SUPER_ADMIN' || req.tenant?.isSuperAdmin;
+    const hotelId = req.tenant?.hotelId || req.user?.hotelId;
+    const stayId = req.query.stayId;
 
-    if (req.query.stayId) {
-      filter.stayId = req.query.stayId;
-    } else if (!isSuper && hotelId) {
-      filter.hotelId = hotelId;
-    }
+    const [allRequests, allOrders] = await Promise.all([
+      ServiceRequest.find().catch(() => []),
+      FoodOrder.find().catch(() => []),
+    ]);
 
-    const allRequests = await ServiceRequest.find();
-    let requests = allRequests.filter((r) => {
-      if (filter.stayId && String(r.stayId) !== String(filter.stayId)) return false;
-      if (filter.hotelId && r.hotelId && String(r.hotelId) !== String(filter.hotelId)) return false;
+    // Format FoodOrders to match unified operational queue schema
+    const formattedOrders = (allOrders || []).map((o) => {
+      const itemsList = Array.isArray(o.items) ? o.items : [];
+      const itemNames = itemsList.map((it) => `${it.quantity || 1}x ${it.name || 'Dish'}`).join(', ');
+      const prepTime = itemsList.find((it) => it.preparationTime)?.preparationTime || '15-20 mins';
+      const isFulfilled = o.status === 'DELIVERED' || o.status === 'COMPLETED' || o.status === 'FULFILLED';
+
+      return {
+        _id: o._id,
+        isFoodOrder: true,
+        requestType: 'DINING',
+        orderNumber: o.orderNumber || `ORD-${String(o._id).slice(-6)}`,
+        serviceCatalogueId: o._id,
+        serviceName: itemNames || 'In-Room Dining Order',
+        serviceCategory: 'Kitchen / In-Room Dining',
+        roomNumber: o.roomNumber || 'Room Assigned',
+        guestName: o.guestName || 'In-Stay Guest',
+        price: Number(o.totalAmount) || 0,
+        isFree: false,
+        items: itemsList,
+        specialInstructions: o.specialInstructions || '',
+        guestNotes: `${itemNames}${prepTime ? ` (Prep: ${prepTime})` : ''}${o.specialInstructions ? ` | ${o.specialInstructions}` : ''}`,
+        preparationTime: prepTime,
+        status: o.status || 'PLACED',
+        isFulfilled,
+        assignedTo: o.fulfilledBy || '',
+        fulfilledBy: o.fulfilledBy || '',
+        completedAt: o.deliveredAt || (isFulfilled ? o.updatedAt : null),
+        deliveredAt: o.deliveredAt,
+        createdAt: o.createdAt || new Date().toISOString(),
+        hotelId: o.hotelId,
+        propertyId: o.propertyId,
+        stayId: o.stayId,
+        bookingId: o.bookingId,
+        roomId: o.roomId,
+      };
+    });
+
+    // Format standard ServiceRequests (Housekeeping, Front Desk, Concierge, Laundry)
+    const formattedRequests = (allRequests || []).map((r) => {
+      const isFulfilled = r.status === 'COMPLETED' || r.status === 'FULFILLED' || r.status === 'DELIVERED';
+      return {
+        _id: r._id,
+        isFoodOrder: false,
+        requestType: 'SERVICE',
+        orderNumber: `SRV-${String(r._id).slice(-6).toUpperCase()}`,
+        serviceCatalogueId: r.serviceCatalogueId,
+        serviceName: r.serviceName || 'Requested Hotel Amenity',
+        serviceCategory: r.serviceCategory || 'Housekeeping',
+        roomNumber: r.roomNumber || 'Room Assigned',
+        guestName: r.guestName || 'In-Stay Guest',
+        price: Number(r.price) || 0,
+        isFree: Boolean(r.isFree || Number(r.price) === 0),
+        items: [{ name: r.serviceName || 'Requested Hotel Amenity', quantity: 1, price: Number(r.price) || 0 }],
+        specialInstructions: r.guestNotes || '',
+        guestNotes: r.guestNotes || 'Requested via Guest Portal',
+        preparationTime: 'Immediate / Next Available Attendant',
+        status: r.status || 'PENDING',
+        isFulfilled,
+        assignedTo: r.assignedTo || '',
+        fulfilledBy: r.assignedTo || '',
+        staffNotes: r.staffNotes || '',
+        completedAt: r.completedAt,
+        createdAt: r.createdAt || new Date().toISOString(),
+        hotelId: r.hotelId,
+        propertyId: r.propertyId,
+        stayId: r.stayId,
+        roomId: r.roomId,
+      };
+    });
+
+    const combined = [...formattedRequests, ...formattedOrders];
+
+    let filtered = combined.filter((item) => {
+      if (stayId && String(item.stayId) !== String(stayId)) return false;
+      if (!isSuper && hotelId) {
+        const itemHotelId = String(item.hotelId?._id || item.hotelId || '');
+        const targetHotelId = String(hotelId?._id || hotelId);
+        if (itemHotelId && targetHotelId && itemHotelId !== targetHotelId && itemHotelId !== 'DEFAULT') {
+          return false;
+        }
+      }
       return true;
     });
 
-    // Sort newest first
-    requests.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    // Sort newest requests to the top
+    filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
-    return ApiResponse.success(res, 'Service requests fetched', requests);
+    return ApiResponse.success(res, 'Service requests fetched', filtered);
   } catch (err) {
     next(err);
   }
 });
 
 /**
- * PATCH Service Request Status & Assignment
+ * GET Single Service Request or Dining Order Details
+ */
+router.get('/service-requests/:id', authenticate, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // Check FoodOrder
+    const order = await FoodOrder.findById(id).catch(() => null);
+    if (order) {
+      const itemsList = Array.isArray(order.items) ? order.items : [];
+      const itemNames = itemsList.map((it) => `${it.quantity || 1}x ${it.name || 'Dish'}`).join(', ');
+      const prepTime = itemsList.find((it) => it.preparationTime)?.preparationTime || '15-20 mins';
+      const isFulfilled = order.status === 'DELIVERED' || order.status === 'COMPLETED' || order.status === 'FULFILLED';
+
+      return ApiResponse.success(res, 'Dining request details fetched', {
+        _id: order._id,
+        isFoodOrder: true,
+        requestType: 'DINING',
+        orderNumber: order.orderNumber,
+        serviceName: itemNames || 'In-Room Dining Order',
+        serviceCategory: 'Kitchen / In-Room Dining',
+        roomNumber: order.roomNumber || 'Room Assigned',
+        guestName: order.guestName || 'In-Stay Guest',
+        price: Number(order.totalAmount) || 0,
+        isFree: false,
+        items: itemsList,
+        specialInstructions: order.specialInstructions || '',
+        guestNotes: order.specialInstructions || itemNames,
+        preparationTime: prepTime,
+        status: order.status || 'PLACED',
+        isFulfilled,
+        assignedTo: order.fulfilledBy || '',
+        fulfilledBy: order.fulfilledBy || '',
+        deliveredAt: order.deliveredAt,
+        completedAt: order.deliveredAt,
+        createdAt: order.createdAt,
+      });
+    }
+
+    // Check ServiceRequest
+    const srv = await ServiceRequest.findById(id).catch(() => null);
+    if (srv) {
+      const isFulfilled = srv.status === 'COMPLETED' || srv.status === 'FULFILLED' || srv.status === 'DELIVERED';
+      return ApiResponse.success(res, 'Service request details fetched', {
+        _id: srv._id,
+        isFoodOrder: false,
+        requestType: 'SERVICE',
+        orderNumber: `SRV-${String(srv._id).slice(-6).toUpperCase()}`,
+        serviceName: srv.serviceName || 'Requested Hotel Amenity',
+        serviceCategory: srv.serviceCategory || 'Housekeeping',
+        roomNumber: srv.roomNumber || 'Room Assigned',
+        guestName: srv.guestName || 'In-Stay Guest',
+        price: Number(srv.price) || 0,
+        isFree: Boolean(srv.isFree || Number(srv.price) === 0),
+        items: [{ name: srv.serviceName || 'Requested Hotel Amenity', quantity: 1, price: Number(srv.price) || 0 }],
+        specialInstructions: srv.guestNotes || '',
+        guestNotes: srv.guestNotes || '',
+        preparationTime: 'Immediate / Next Available Attendant',
+        status: srv.status || 'PENDING',
+        isFulfilled,
+        assignedTo: srv.assignedTo || '',
+        fulfilledBy: srv.assignedTo || '',
+        staffNotes: srv.staffNotes || '',
+        completedAt: srv.completedAt,
+        createdAt: srv.createdAt,
+      });
+    }
+
+    return ApiResponse.error(res, 'Request not found', 404);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH Service Request or Dining Order Status (Mark Fulfilled / In-Progress)
  */
 router.patch('/service-requests/:id/status', authenticate, async (req, res, next) => {
   try {
-    const { status, assignedTo, staffNotes } = req.body;
-    const updateData = { status };
-    if (assignedTo) updateData.assignedTo = assignedTo;
-    if (staffNotes) updateData.staffNotes = staffNotes;
-    if (status === SERVICE_REQUEST_STATUS.COMPLETED) {
-      updateData.completedAt = new Date().toISOString();
+    const { id } = req.params;
+    const { status, assignedTo, fulfilledBy, staffNotes } = req.body;
+    const actor = fulfilledBy || assignedTo || req.user?.name || 'Staff Member';
+    const nowIso = new Date().toISOString();
+
+    const isFulfillTarget =
+      status === 'COMPLETED' ||
+      status === 'FULFILLED' ||
+      status === 'DELIVERED';
+
+    // 1. Check if target is a FoodOrder
+    const order = await FoodOrder.findById(id).catch(() => null);
+    if (order) {
+      const newStatus = isFulfillTarget ? 'DELIVERED' : (status || 'IN_PROGRESS');
+      const updateData = {
+        status: newStatus,
+        fulfilledBy: actor,
+        updatedAt: nowIso,
+      };
+      if (isFulfillTarget) {
+        updateData.deliveredAt = nowIso;
+      }
+
+      const updated = await FoodOrder.findByIdAndUpdate(id, updateData, { new: true });
+      return ApiResponse.success(res, `Dining order marked as ${newStatus} by ${actor}`, updated);
     }
 
-    const updated = await ServiceRequest.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    if (!updated) return ApiResponse.error(res, 'Service request not found', 404);
+    // 2. Otherwise update ServiceRequest
+    const newStatus = isFulfillTarget ? 'COMPLETED' : (status || 'IN_PROGRESS');
+    const updateData = {
+      status: newStatus,
+      assignedTo: actor,
+      updatedAt: nowIso,
+    };
+    if (staffNotes) updateData.staffNotes = staffNotes;
+    if (isFulfillTarget) {
+      updateData.completedAt = nowIso;
+    }
 
-    return ApiResponse.success(res, `Service request marked as ${status}`, updated);
+    const updated = await ServiceRequest.findByIdAndUpdate(id, updateData, { new: true });
+    if (!updated) return ApiResponse.error(res, 'Service request or food order not found', 404);
+
+    return ApiResponse.success(res, `Service request marked as ${newStatus} by ${actor}`, updated);
   } catch (err) {
     next(err);
   }

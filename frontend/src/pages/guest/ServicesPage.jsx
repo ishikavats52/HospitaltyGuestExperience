@@ -57,11 +57,34 @@ export const ServicesPage = () => {
       setError(null);
       setMessage(null);
 
-      await api.post('/service-requests', {
+      const res = await api.post('/service-requests', {
         stayId,
         serviceCatalogueId: serviceId,
         guestNotes: 'Requested via Guest In-Stay Hub',
       });
+
+      // Instantly notify Hotel Admin and Housekeeping / Front Desk staff across all active devices
+      try {
+        if (typeof window !== 'undefined') {
+          const dispatchPayload = {
+            type: 'SERVICE',
+            requestId: res.data?._id,
+            roomNumber: res.data?.roomNumber || 'Room Assigned',
+            guestName: res.data?.guestName || 'In-Stay Guest',
+            serviceName,
+            category: res.data?.serviceCategory || 'Housekeeping',
+            price: res.data?.price,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem('aura_last_dispatch_event', JSON.stringify(dispatchPayload));
+          window.dispatchEvent(new CustomEvent('aura_live_dispatch', { detail: dispatchPayload }));
+          if ('BroadcastChannel' in window) {
+            const bc = new BroadcastChannel('hospitality_live_dispatches');
+            bc.postMessage(dispatchPayload);
+            bc.close();
+          }
+        }
+      } catch (_) {}
 
       setMessage(`Request for "${serviceName}" placed successfully! Hotel staff notified.`);
       await fetchServicesAndRequests();

@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { QrCode, CalendarCheck, ChefHat, Sparkles, Receipt, LogOut, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { LiveNotificationCenter } from '../common/LiveNotificationCenter.jsx';
 
 export const StaffLayout = () => {
   const { currentUser, logout, isHotelAdmin, isSuperAdmin } = useAuth();
@@ -136,6 +137,17 @@ export const StaffLayout = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <LiveNotificationCenter
+            departmentFilter={
+              isAdmin
+                ? null
+                : role === 'KITCHEN'
+                ? 'KITCHEN'
+                : role === 'HOUSEKEEPING'
+                ? 'HOUSEKEEPING'
+                : 'FRONT_DESK'
+            }
+          />
           {isAdmin && (
             <button
               onClick={() => navigate('/admin/dashboard')}

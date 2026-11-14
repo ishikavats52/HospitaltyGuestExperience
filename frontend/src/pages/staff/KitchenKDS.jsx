@@ -1,27 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChefHat, Clock, CheckCircle2, ArrowRight, Bell, AlertCircle } from 'lucide-react';
+import { ChefHat, Clock, CheckCircle2, ArrowRight, Bell, AlertCircle, Check } from 'lucide-react';
 import api from '../../services/api.js';
-
-const playOrderChime = () => {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  } catch (_) {}
-};
+import { useAuth } from '../../context/AuthContext.jsx';
+import { playHotelChime, playSuccessChime } from '../../utils/audioChime.js';
 
 export const KitchenKDS = () => {
+  const { currentUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState(null);
@@ -36,7 +20,7 @@ export const KitchenKDS = () => {
       // Check if new orders arrived compared to previous state
       if (previousOrdersRef.current.length > 0 && incoming.length > previousOrdersRef.current.length) {
         const latestOrder = incoming[0];
-        playOrderChime();
+        playHotelChime();
         setNewOrderAlert(`Ticket #${latestOrder?.orderNumber || 'New'} (Room ${latestOrder?.roomNumber || 'Assigned'})`);
         setTimeout(() => setNewOrderAlert(null), 8000);
       }
@@ -93,7 +77,28 @@ export const KitchenKDS = () => {
     else if (currentStatus === 'READY') nextStatus = 'DELIVERED';
 
     try {
-      await api.patch(`/orders/${orderId}/status`, { status: nextStatus });
+      const actor = `${currentUser?.name || 'Kitchen Staff'} (KITCHEN)`;
+      await api.patch(`/orders/${orderId}/status`, {
+        status: nextStatus,
+        fulfilledBy: actor,
+      });
+      if (nextStatus === 'DELIVERED') {
+        playSuccessChime();
+      }
+      await fetchOrders(false);
+    } catch (err) {
+      alert(err.message || 'Status update failed');
+    }
+  };
+
+  const handleDeliverDirect = async (orderId) => {
+    try {
+      const actor = `${currentUser?.name || 'Kitchen Staff'} (KITCHEN)`;
+      await api.patch(`/orders/${orderId}/status`, {
+        status: 'DELIVERED',
+        fulfilledBy: actor,
+      });
+      playSuccessChime();
       await fetchOrders(false);
     } catch (err) {
       alert(err.message || 'Status update failed');
@@ -172,8 +177,11 @@ export const KitchenKDS = () => {
                   </span>
                 </div>
 
-                <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: '8px' }}>
+                <div style={{ fontSize: '0.92rem', color: 'var(--text-primary)', marginBottom: '4px' }}>
                   Room: <strong>{order.roomNumber || order.roomId?.roomNumber || 'Room Assigned'}</strong>
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  Guest: <strong style={{ color: 'var(--text-primary)' }}>{order.guestName || 'In-Stay Guest'}</strong>
                 </div>
 
                 {order.specialInstructions && (
@@ -201,16 +209,45 @@ export const KitchenKDS = () => {
 
               <div style={{ marginTop: '16px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
                 {order.status !== 'DELIVERED' ? (
-                  <button
-                    onClick={() => handleNextStatus(order._id, order.status)}
-                    className="btn btn-gold"
-                    style={{ width: '100%', padding: '9px', fontSize: '0.82rem' }}
-                  >
-                    Advance Status ({order.status} →)
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleNextStatus(order._id, order.status)}
+                      className="btn btn-outline"
+                      style={{ flex: 1, padding: '8px', fontSize: '0.78rem' }}
+                    >
+                      {order.status} → Next
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeliverDirect(order._id)}
+                      className="btn btn-gold"
+                      style={{
+                        flex: 1.2,
+                        padding: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        border: 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      <CheckCircle2 size={13} /> Mark Fulfilled
+                    </button>
+                  </div>
                 ) : (
-                  <div style={{ textAlign: 'center', color: 'var(--success)', fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                    <CheckCircle2 size={16} /> Delivered to Room
+                  <div style={{ textAlign: 'center', color: 'var(--success)', fontSize: '0.8rem', fontWeight: 700, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <CheckCircle2 size={16} /> Delivered to Room
+                    </div>
+                    {order.fulfilledBy && (
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                        by {order.fulfilledBy}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

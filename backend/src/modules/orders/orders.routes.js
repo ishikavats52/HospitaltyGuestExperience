@@ -9,12 +9,24 @@ const router = Router();
 
 router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => {
   try {
-    const filter = req.tenant.isSuperAdmin && !req.tenant.hotelId ? {} : { hotelId: req.tenant.hotelId };
-    if (req.query.stayId) filter.stayId = req.query.stayId;
+    const isSuper = req.user?.role === 'SUPER_ADMIN' || req.tenant?.isSuperAdmin;
+    const hotelId = req.tenant?.hotelId || req.user?.hotelId;
+    const stayId = req.query.stayId;
 
-    const orders = await FoodOrder.find(filter)
-      .populate('roomId', 'roomNumber floor')
-      .sort({ createdAt: -1 });
+    const allOrders = await FoodOrder.find();
+    let orders = allOrders.filter((o) => {
+      if (stayId && String(o.stayId) !== String(stayId)) return false;
+      if (!isSuper && hotelId) {
+        const oHotelId = String(o.hotelId?._id || o.hotelId || '');
+        const targetHotelId = String(hotelId?._id || hotelId);
+        if (oHotelId && targetHotelId && oHotelId !== targetHotelId && oHotelId !== 'DEFAULT') {
+          return false;
+        }
+      }
+      return true;
+    });
+
+    orders.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return ApiResponse.success(res, 'Food orders fetched', orders);
   } catch (err) {
     next(err);
@@ -55,16 +67,34 @@ router.post('/', authenticate, async (req, res, next) => {
     }
     if (!finalRoomNumber) finalRoomNumber = 'Assigned Room';
 
+    let guestName = req.user?.guestName || req.user?.name;
+    if (!guestName && stay?.guestId) {
+      try {
+        const { Guest } = await import('../guests/guests.model.js');
+        const g = await Guest.findById(stay.guestId);
+        if (g && g.name) guestName = g.name;
+      } catch (_) {}
+    }
+    if (!guestName && stay?.bookingId) {
+      try {
+        const { Booking } = await import('../bookings/bookings.model.js');
+        const b = await Booking.findById(stay.bookingId);
+        if (b && b.guestName) guestName = b.guestName;
+      } catch (_) {}
+    }
+    if (!guestName) guestName = 'In-Stay Guest';
+
     const totalAmount = items.reduce((acc, it) => acc + it.price * it.quantity, 0);
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
     const order = await FoodOrder.create({
-      hotelId: stay?.hotelId || req.user?.hotelId || 'DEFAULT',
-      propertyId: stay?.propertyId || req.user?.propertyId || 'DEFAULT',
-      stayId: stay?._id || stayId || req.user?.stayId,
-      bookingId: stay?.bookingId || req.user?.bookingId,
-      roomId: stay?.roomId || req.user?.roomId,
+      hotelId: String(stay?.hotelId?._id || stay?.hotelId || req.user?.hotelId || 'DEFAULT'),
+      propertyId: String(stay?.propertyId?._id || stay?.propertyId || req.user?.propertyId || 'DEFAULT'),
+      stayId: String(stay?._id || stayId || req.user?.stayId || ''),
+      bookingId: stay?.bookingId ? String(stay.bookingId) : (req.user?.bookingId ? String(req.user.bookingId) : null),
+      roomId: stay?.roomId ? String(stay.roomId) : (req.user?.roomId ? String(req.user.roomId) : null),
       roomNumber: finalRoomNumber,
+      guestName,
       orderNumber,
       items,
       totalAmount,
@@ -75,8 +105,8 @@ router.post('/', authenticate, async (req, res, next) => {
 
     // Update folio balance on stay
     if (stay) {
-      stay.folioBalance = (stay.folioBalance || 0) + totalAmount;
-      await stay.save();
+      stay.folioBalance = (Number(stay.folioBalance) || 0) + totalAmount;
+      await Stay.findByIdAndUpdate(stay._id, { folioBalance: stay.folioBalance });
     }
 
     return ApiResponse.success(res, 'Food order placed successfully and added to folio', order, 201);
@@ -87,13 +117,20 @@ router.post('/', authenticate, async (req, res, next) => {
 
 router.patch('/:id/status', authenticate, async (req, res, next) => {
   try {
-    const { status } = req.body;
-    if (!Object.values(ORDER_STATUS).includes(status)) {
-      return ApiResponse.error(res, 'Invalid order status transition', 400);
+    const { status, fulfilledBy } = req.body;
+    const actor = fulfilledBy || req.user?.name || 'Staff Member';
+    const nowIso = new Date().toISOString();
+
+    const updateData = { status, fulfilledBy: actor, updatedAt: nowIso };
+    if (status === 'DELIVERED' || status === 'COMPLETED' || status === 'FULFILLED') {
+      updateData.status = 'DELIVERED';
+      updateData.deliveredAt = nowIso;
     }
 
-    const order = await FoodOrder.findByIdAndUpdate(req.params.id, { status }, { new: true });
-    return ApiResponse.success(res, `Order status updated to ${status}`, order);
+    const order = await FoodOrder.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!order) return ApiResponse.error(res, 'Order not found', 404);
+
+    return ApiResponse.success(res, `Order status updated to ${updateData.status}`, order);
   } catch (err) {
     next(err);
   }

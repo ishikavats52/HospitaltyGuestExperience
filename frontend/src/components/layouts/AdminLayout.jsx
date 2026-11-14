@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { LiveNotificationCenter } from '../common/LiveNotificationCenter.jsx';
 
 export const AdminLayout = () => {
   const { currentUser, logout } = useAuth();
@@ -74,6 +75,7 @@ export const AdminLayout = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <LiveNotificationCenter />
           <button
             type="button"
             className="admin-mobile-toggle"
@@ -242,6 +244,46 @@ export const AdminLayout = () => {
 
       {/* Main View Area */}
       <main className="admin-main" style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: '32px 36px' }}>
+        {/* Desktop Top Executive Action & Live Notifications Bar (Hidden on Mobile) */}
+        <div
+          className="admin-desktop-top-header"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '20px',
+            paddingBottom: '14px',
+            borderBottom: '1px solid var(--border-color)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Hospitality Executive Portal</span>
+            <span style={{ color: 'var(--border-color)' }}>•</span>
+            <span style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--gold-primary)' }}>
+              {currentUser?.name || 'Administrator'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <LiveNotificationCenter />
+            <Link
+              to="/admin/services"
+              className="btn btn-outline"
+              style={{
+                padding: '7px 14px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                borderRadius: 'var(--radius-sm)',
+              }}
+            >
+              <Sparkles size={14} />
+              <span>Live Guest Services</span>
+            </Link>
+          </div>
+        </div>
         {/* Guest Session Collision Warning Banner */}
         {currentUser?.role === 'GUEST' && (
           <div

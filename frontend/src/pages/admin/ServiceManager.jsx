@@ -15,9 +15,14 @@ import {
   X,
   Edit3,
   UserCheck,
+  Utensils,
+  FileText,
+  Eye,
+  Filter,
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { playSuccessChime } from '../../utils/audioChime.js';
 
 export const ServiceManager = () => {
   const { currentUser } = useAuth();
@@ -27,6 +32,12 @@ export const ServiceManager = () => {
   const [activeTab, setActiveTab] = useState('SERVICES'); // 'SERVICES' | 'REQUESTS'
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+
+  // Live Requests Filtering & Detail Modal State
+  const [requestFilterDept, setRequestFilterDept] = useState('ALL'); // 'ALL' | 'DINING' | 'HOUSEKEEPING' | 'FRONT_DESK'
+  const [requestFilterStatus, setRequestFilterStatus] = useState('ACTIVE'); // 'ACTIVE' | 'FULFILLED' | 'ALL'
+  const [viewingDetailItem, setViewingDetailItem] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Add Service Modal State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -139,24 +150,36 @@ export const ServiceManager = () => {
     }
   };
 
-  // Advance Service Request Status (PENDING -> IN_PROGRESS -> COMPLETED)
-  const handleUpdateStatus = async (requestId, currentStatus) => {
-    const nextStatus =
-      currentStatus === 'PENDING'
-        ? 'IN_PROGRESS'
-        : currentStatus === 'IN_PROGRESS'
-        ? 'COMPLETED'
-        : 'COMPLETED';
-
+  // Mark Request / Dining Order as Fulfilled
+  const handleMarkFulfilled = async (reqItem) => {
+    if (!reqItem?._id) return;
+    setActionLoading(true);
     try {
-      await api.patch(`/service-requests/${requestId}/status`, {
-        status: nextStatus,
-        assignedTo: currentUser?.name || 'Front Desk Staff',
+      const actor = `${currentUser?.name || 'Hotel Admin'} (${currentUser?.role || 'ADMIN'})`;
+      await api.patch(`/service-requests/${reqItem._id}/status`, {
+        status: 'DELIVERED',
+        fulfilledBy: actor,
       });
-      showToast(`Request marked as ${nextStatus}!`);
+
+      playSuccessChime();
+      showToast(`Request for Room ${reqItem.roomNumber || ''} marked as FULFILLED!`);
+
+      if (viewingDetailItem?._id === reqItem._id) {
+        setViewingDetailItem((prev) => ({
+          ...prev,
+          status: 'DELIVERED',
+          isFulfilled: true,
+          fulfilledBy: actor,
+          completedAt: new Date().toISOString(),
+          deliveredAt: new Date().toISOString(),
+        }));
+      }
+
       await fetchServicesAndRequests();
     } catch (err) {
       alert(err.message || 'Failed to update request');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -421,101 +444,367 @@ export const ServiceManager = () => {
         </div>
       )}
 
-      {/* TAB 2: INCOMING GUEST SERVICE REQUESTS */}
-      {activeTab === 'REQUESTS' && (
-        <div className="glass-panel" style={{ padding: '20px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 16px', color: 'var(--text-primary)' }}>
-            Active Guest Service Queue
-          </h2>
+      {/* TAB 2: INCOMING GUEST SERVICE REQUESTS & DINING TICKETS */}
+      {activeTab === 'REQUESTS' && (() => {
+        const diningRequests = requests.filter((r) => r.requestType === 'DINING' || r.isFoodOrder);
+        const housekeepingRequests = requests.filter(
+          (r) => r.requestType !== 'DINING' && ['Housekeeping', 'Laundry', 'Room Service'].includes(r.serviceCategory)
+        );
+        const frontDeskRequests = requests.filter(
+          (r) => r.requestType !== 'DINING' && !['Housekeeping', 'Laundry', 'Room Service'].includes(r.serviceCategory)
+        );
 
-          {requests.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              <CheckCircle2 size={36} color="var(--success)" style={{ margin: '0 auto 8px' }} />
-              <div>No service requests pending. All in-stay guests are served!</div>
+        const filteredByDept = requests.filter((r) => {
+          if (requestFilterDept === 'DINING') return r.requestType === 'DINING' || r.isFoodOrder;
+          if (requestFilterDept === 'HOUSEKEEPING')
+            return r.requestType !== 'DINING' && ['Housekeeping', 'Laundry', 'Room Service'].includes(r.serviceCategory);
+          if (requestFilterDept === 'FRONT_DESK')
+            return r.requestType !== 'DINING' && !['Housekeeping', 'Laundry', 'Room Service'].includes(r.serviceCategory);
+          return true;
+        });
+
+        const displayedRequests = filteredByDept.filter((r) => {
+          const isDone = r.isFulfilled || r.status === 'DELIVERED' || r.status === 'COMPLETED' || r.status === 'FULFILLED';
+          if (requestFilterStatus === 'ACTIVE') return !isDone;
+          if (requestFilterStatus === 'FULFILLED') return isDone;
+          return true;
+        });
+
+        const activeCount = requests.filter(
+          (r) => !(r.isFulfilled || r.status === 'DELIVERED' || r.status === 'COMPLETED' || r.status === 'FULFILLED')
+        ).length;
+
+        const fulfilledCount = requests.filter(
+          (r) => r.isFulfilled || r.status === 'DELIVERED' || r.status === 'COMPLETED' || r.status === 'FULFILLED'
+        ).length;
+
+        return (
+          <div className="glass-panel" style={{ padding: '24px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '18px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, margin: '0 0 4px', color: 'var(--text-primary)' }}>
+                  Active Guest Request & Dining Queue
+                </h2>
+                <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+                  Live incoming in-stay requests from guests. Real-time updates, immediate fulfillment & audit logs.
+                </p>
+              </div>
+
+              {/* Status Switcher (Active vs Fulfilled) */}
+              <div style={{ display: 'inline-flex', background: '#F3F4F6', padding: '4px', borderRadius: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setRequestFilterStatus('ACTIVE')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: requestFilterStatus === 'ACTIVE' ? 800 : 600,
+                    background: requestFilterStatus === 'ACTIVE' ? '#FFFFFF' : 'transparent',
+                    color: requestFilterStatus === 'ACTIVE' ? '#DC2626' : 'var(--text-secondary)',
+                    boxShadow: requestFilterStatus === 'ACTIVE' ? 'var(--shadow-xs)' : 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>Active / Pending</span>
+                  {activeCount > 0 && (
+                    <span style={{ background: '#DC2626', color: '#FFFFFF', fontSize: '0.7rem', padding: '1px 6px', borderRadius: '9999px', fontWeight: 900 }}>
+                      {activeCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRequestFilterStatus('FULFILLED')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: requestFilterStatus === 'FULFILLED' ? 800 : 600,
+                    background: requestFilterStatus === 'FULFILLED' ? '#FFFFFF' : 'transparent',
+                    color: requestFilterStatus === 'FULFILLED' ? 'var(--success)' : 'var(--text-secondary)',
+                    boxShadow: requestFilterStatus === 'FULFILLED' ? 'var(--shadow-xs)' : 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <span>Fulfilled ({fulfilledCount})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setRequestFilterStatus('ALL')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '0.8rem',
+                    fontWeight: requestFilterStatus === 'ALL' ? 800 : 600,
+                    background: requestFilterStatus === 'ALL' ? '#FFFFFF' : 'transparent',
+                    color: requestFilterStatus === 'ALL' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: requestFilterStatus === 'ALL' ? 'var(--shadow-xs)' : 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  All ({requests.length})
+                </button>
+              </div>
             </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Room & Guest</th>
-                    <th>Requested Service</th>
-                    <th>Category</th>
-                    <th>Billing / Price</th>
-                    <th>Guest Notes</th>
-                    <th>Status</th>
-                    <th>Staff Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {requests.map((req) => (
-                    <tr key={req._id}>
-                      <td>
-                        <strong style={{ color: 'var(--text-primary)', display: 'block' }}>
-                          Room {req.roomNumber || 'Assigned'}
-                        </strong>
-                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                          {req.guestName || 'In-Stay Guest'}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                          {req.serviceName || req.serviceCatalogueId?.name || 'Hotel Service'}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                          {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="badge badge-gold">{req.serviceCategory || 'Service'}</span>
-                      </td>
-                      <td>
-                        <span style={{ fontWeight: 700, color: req.isFree ? 'var(--success)' : 'var(--text-primary)' }}>
-                          {req.isFree ? 'Free' : `₹${req.price}`}
-                        </span>
-                      </td>
-                      <td>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                          {req.guestNotes || '—'}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`badge ${
-                            req.status === 'COMPLETED'
-                              ? 'badge-free'
-                              : req.status === 'IN_PROGRESS'
-                              ? 'badge-blue'
-                              : 'badge-gold'
-                          }`}
-                        >
-                          {req.status}
-                        </span>
-                      </td>
-                      <td>
-                        {req.status !== 'COMPLETED' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateStatus(req._id, req.status)}
-                            className="btn btn-gold"
-                            style={{ padding: '6px 12px', fontSize: '0.76rem' }}
-                          >
-                            {req.status === 'PENDING' ? 'Assign & Start' : 'Mark Completed ✓'}
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: '0.76rem', color: 'var(--success)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <CheckCircle2 size={13} /> Completed
-                          </span>
-                        )}
-                      </td>
+
+            {/* Department Filter Pills */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+              <button
+                type="button"
+                onClick={() => setRequestFilterDept('ALL')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
+                  border: requestFilterDept === 'ALL' ? '1px solid var(--gold-primary)' : '1px solid var(--border-color)',
+                  background: requestFilterDept === 'ALL' ? 'var(--gold-soft)' : '#FFFFFF',
+                  color: requestFilterDept === 'ALL' ? 'var(--gold-dark)' : 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  fontWeight: requestFilterDept === 'ALL' ? 700 : 500,
+                  cursor: 'pointer',
+                }}
+              >
+                All Departments ({requests.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRequestFilterDept('DINING')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
+                  border: requestFilterDept === 'DINING' ? '1px solid #D97706' : '1px solid var(--border-color)',
+                  background: requestFilterDept === 'DINING' ? '#FEF3C7' : '#FFFFFF',
+                  color: requestFilterDept === 'DINING' ? '#B45309' : 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  fontWeight: requestFilterDept === 'DINING' ? 700 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Utensils size={13} /> Culinary & Dining ({diningRequests.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRequestFilterDept('HOUSEKEEPING')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
+                  border: requestFilterDept === 'HOUSEKEEPING' ? '1px solid #2563EB' : '1px solid var(--border-color)',
+                  background: requestFilterDept === 'HOUSEKEEPING' ? '#EFF6FF' : '#FFFFFF',
+                  color: requestFilterDept === 'HOUSEKEEPING' ? '#1D4ED8' : 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  fontWeight: requestFilterDept === 'HOUSEKEEPING' ? 700 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Sparkles size={13} /> Housekeeping & Linen ({housekeepingRequests.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRequestFilterDept('FRONT_DESK')}
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '9999px',
+                  border: requestFilterDept === 'FRONT_DESK' ? '1px solid #7C3AED' : '1px solid var(--border-color)',
+                  background: requestFilterDept === 'FRONT_DESK' ? '#F5F3FF' : '#FFFFFF',
+                  color: requestFilterDept === 'FRONT_DESK' ? '#6D28D9' : 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  fontWeight: requestFilterDept === 'FRONT_DESK' ? 700 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <UserCheck size={13} /> Front Desk & Concierge ({frontDeskRequests.length})
+              </button>
+            </div>
+
+            {displayedRequests.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--text-muted)' }}>
+                <CheckCircle2 size={42} color="var(--success)" style={{ margin: '0 auto 12px' }} />
+                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {requestFilterStatus === 'ACTIVE'
+                    ? 'No Active Requests Pending!'
+                    : 'No requests match this filter.'}
+                </div>
+                <div style={{ fontSize: '0.84rem', marginTop: '4px' }}>
+                  {requestFilterStatus === 'ACTIVE'
+                    ? 'All in-stay guests are served. You will be alerted instantly when a guest makes a new request.'
+                    : 'Try selecting another department or status filter above.'}
+                </div>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Room & Guest</th>
+                      <th>Requested Item / Service</th>
+                      <th>Department</th>
+                      <th>Folio Charge</th>
+                      <th>Notes & Prep Time</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                  </thead>
+                  <tbody>
+                    {displayedRequests.map((req) => {
+                      const isDone =
+                        req.isFulfilled ||
+                        req.status === 'DELIVERED' ||
+                        req.status === 'COMPLETED' ||
+                        req.status === 'FULFILLED';
+
+                      return (
+                        <tr key={req._id}>
+                          <td>
+                            <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.92rem' }}>
+                              Room {req.roomNumber || 'Assigned'}
+                            </strong>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                              {req.guestName || 'In-Stay Guest'}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div
+                                style={{
+                                  width: '32px',
+                                  height: '32px',
+                                  borderRadius: '8px',
+                                  background: req.isFoodOrder ? '#FEF3C7' : '#EFF6FF',
+                                  color: req.isFoodOrder ? '#B45309' : '#1D4ED8',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {req.isFoodOrder ? <Utensils size={16} /> : <Sparkles size={16} />}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+                                  {req.serviceName}
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                                  {req.createdAt ? new Date(req.createdAt).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }) : 'Recently'}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              style={{
+                                fontSize: '0.74rem',
+                                fontWeight: 700,
+                                padding: '3px 8px',
+                                borderRadius: '9999px',
+                                background: req.isFoodOrder ? '#FEF3C7' : '#EFF6FF',
+                                color: req.isFoodOrder ? '#B45309' : '#1D4ED8',
+                                border: req.isFoodOrder ? '1px solid #FDE68A' : '1px solid #BFDBFE',
+                              }}
+                            >
+                              {req.isFoodOrder ? 'Kitchen / Dining' : req.serviceCategory || 'Service'}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 800, color: req.isFree ? 'var(--success)' : 'var(--text-primary)' }}>
+                              {req.isFree ? 'Free' : `₹${req.price}`}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              {req.preparationTime && (
+                                <span style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={11} /> Prep: {req.preparationTime}
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                                {req.specialInstructions || req.guestNotes || '—'}
+                              </span>
+                            </div>
+                          </td>
+                          <td>
+                            <span
+                              className={`badge ${
+                                isDone
+                                  ? 'badge-free'
+                                  : req.status === 'PREPARING' || req.status === 'IN_PROGRESS'
+                                  ? 'badge-blue'
+                                  : 'badge-gold'
+                              }`}
+                            >
+                              {isDone ? 'FULFILLED' : req.status}
+                            </span>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '6px' }}>
+                              <button
+                                type="button"
+                                onClick={() => setViewingDetailItem(req)}
+                                className="btn btn-outline"
+                                style={{ padding: '6px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                title="View Complete Details"
+                              >
+                                <Eye size={13} /> Details
+                              </button>
+
+                              {!isDone ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarkFulfilled(req)}
+                                  disabled={actionLoading}
+                                  className="btn btn-gold"
+                                  style={{
+                                    padding: '6px 12px',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                                    border: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                >
+                                  <CheckCircle2 size={13} /> Mark Fulfilled
+                                </button>
+                              ) : (
+                                <span style={{ fontSize: '0.74rem', color: 'var(--success)', fontWeight: 800, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <CheckCircle2 size={14} /> Fulfilled
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* MODAL: ADD NEW SERVICE */}
       {isAddModalOpen && (
@@ -653,6 +942,208 @@ export const ServiceManager = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* MODAL: COMPLETE REQUEST & FULFILLMENT AUDIT DETAILS */}
+      {viewingDetailItem && (
+        <div
+          className="modal-backdrop"
+          style={{ zIndex: 10000 }}
+          onClick={() => setViewingDetailItem(null)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '580px', borderRadius: '20px', padding: '24px' }}
+          >
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span
+                    style={{
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      background: viewingDetailItem.isFoodOrder ? '#FEF3C7' : '#EFF6FF',
+                      color: viewingDetailItem.isFoodOrder ? '#B45309' : '#1D4ED8',
+                      padding: '2px 8px',
+                      borderRadius: '6px',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {viewingDetailItem.isFoodOrder ? '🍽️ Dining Order' : '🛎️ In-Stay Service'}
+                  </span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    Ticket #{viewingDetailItem.orderNumber || viewingDetailItem._id?.slice(-6)}
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--text-primary)', margin: '6px 0 2px' }}>
+                  Room {viewingDetailItem.roomNumber} • {viewingDetailItem.guestName}
+                </h3>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingDetailItem(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px 0' }}>
+              {/* Itemized List */}
+              <div>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  Requested Items & Specifications
+                </div>
+
+                <div style={{ background: '#F9FAFB', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {viewingDetailItem.items && viewingDetailItem.items.length > 0 ? (
+                    viewingDetailItem.items.map((it, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem' }}>
+                        <div>
+                          <strong style={{ color: 'var(--text-primary)' }}>
+                            {it.quantity || 1}x {it.name}
+                          </strong>
+                          {it.preparationTime && (
+                            <div style={{ fontSize: '0.74rem', color: '#B45309' }}>
+                              ⏱️ Preparation: {it.preparationTime}
+                            </div>
+                          )}
+                        </div>
+                        <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+                          ₹{(Number(it.price) || 0) * (Number(it.quantity) || 1)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong style={{ color: 'var(--text-primary)' }}>{viewingDetailItem.serviceName}</strong>
+                      <span style={{ fontWeight: 700, color: viewingDetailItem.isFree ? 'var(--success)' : 'var(--text-primary)' }}>
+                        {viewingDetailItem.isFree ? 'Complimentary' : `₹${viewingDetailItem.price}`}
+                      </span>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '8px', marginTop: '4px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Total Folio Charge</span>
+                    <span style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--gold-primary)' }}>
+                      ₹{viewingDetailItem.price || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Special Instructions */}
+              {(viewingDetailItem.specialInstructions || viewingDetailItem.guestNotes) && (
+                <div>
+                  <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+                    Guest Notes & Instructions
+                  </div>
+                  <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '10px', padding: '10px 14px', fontSize: '0.85rem', color: '#92400E' }}>
+                    {viewingDetailItem.specialInstructions || viewingDetailItem.guestNotes}
+                  </div>
+                </div>
+              )}
+
+              {/* Status & Fulfillment Audit Timeline */}
+              <div>
+                <div style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>
+                  Fulfillment Status & Audit
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px' }}>
+                  <div style={{ background: '#F9FAFB', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Status</div>
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        color:
+                          viewingDetailItem.isFulfilled ||
+                          viewingDetailItem.status === 'DELIVERED' ||
+                          viewingDetailItem.status === 'COMPLETED'
+                            ? 'var(--success)'
+                            : '#D97706',
+                        fontSize: '0.92rem',
+                      }}
+                    >
+                      {viewingDetailItem.isFulfilled ||
+                      viewingDetailItem.status === 'DELIVERED' ||
+                      viewingDetailItem.status === 'COMPLETED'
+                        ? 'FULFILLED / DELIVERED'
+                        : viewingDetailItem.status}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#F9FAFB', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Placed At</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                      {viewingDetailItem.createdAt ? new Date(viewingDetailItem.createdAt).toLocaleString() : 'N/A'}
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#F9FAFB', border: '1px solid var(--border-color)', borderRadius: '10px', padding: '10px' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Fulfilled By</div>
+                    <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.85rem' }}>
+                      {viewingDetailItem.fulfilledBy || viewingDetailItem.assignedTo || 'Pending Fulfillment'}
+                    </div>
+                  </div>
+
+                  {(viewingDetailItem.deliveredAt || viewingDetailItem.completedAt) && (
+                    <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '10px', padding: '10px' }}>
+                      <div style={{ fontSize: '0.72rem', color: '#166534' }}>Completed At</div>
+                      <div style={{ fontWeight: 700, color: '#15803D', fontSize: '0.85rem' }}>
+                        {new Date(viewingDetailItem.deliveredAt || viewingDetailItem.completedAt).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setViewingDetailItem(null)}
+                className="btn btn-outline"
+                style={{ padding: '9px 18px', fontSize: '0.85rem' }}
+              >
+                Close
+              </button>
+
+              {!(
+                viewingDetailItem.isFulfilled ||
+                viewingDetailItem.status === 'DELIVERED' ||
+                viewingDetailItem.status === 'COMPLETED'
+              ) ? (
+                <button
+                  type="button"
+                  onClick={() => handleMarkFulfilled(viewingDetailItem)}
+                  disabled={actionLoading}
+                  className="btn btn-gold"
+                  style={{
+                    padding: '9px 22px',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <CheckCircle2 size={16} /> Mark as Fulfilled & Delivered ✓
+                </button>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--success)', fontWeight: 800, fontSize: '0.88rem' }}>
+                  <CheckCircle2 size={18} /> Request Successfully Fulfilled
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
