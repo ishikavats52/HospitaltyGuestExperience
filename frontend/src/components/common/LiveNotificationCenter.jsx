@@ -796,3 +796,4 @@ export const LiveNotificationCenter = ({ departmentFilter = null }) => {
 };
 
 export default LiveNotificationCenter;
+
