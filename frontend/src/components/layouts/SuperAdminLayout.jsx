@@ -62,8 +62,15 @@ export const SuperAdminLayout = () => {
       />
 
       {/* Sidebar */}
-      <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 8px 16px', borderBottom: '1px solid var(--border-color)' }}>
+      <aside
+        className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}
+        style={{
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 8px 16px', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--gold-primary)' }}>
               <ShieldCheck size={22} />
@@ -84,7 +91,7 @@ export const SuperAdminLayout = () => {
           </button>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px', flex: 1 }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px', flexShrink: 0 }}>
           <NavLink to="/super-admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <LayoutDashboard size={18} />
             <span>Platform Overview</span>
@@ -106,7 +113,7 @@ export const SuperAdminLayout = () => {
           </NavLink>
         </nav>
 
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: 'auto', flexShrink: 0, paddingBottom: '20px' }}>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{currentUser?.name}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{currentUser?.email}</div>
           <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%', padding: '10px', fontSize: '0.8rem' }}>

@@ -93,7 +93,14 @@ export const AdminLayout = () => {
       />
 
       {/* Sidebar Drawer */}
-      <aside className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}>
+      <aside
+        className={`admin-sidebar ${mobileOpen ? 'open' : ''}`}
+        style={{
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         <div
           style={{
             display: 'flex',
@@ -101,6 +108,7 @@ export const AdminLayout = () => {
             alignItems: 'flex-start',
             padding: '0 8px 18px',
             borderBottom: '1px solid var(--border-color)',
+            flexShrink: 0,
           }}
         >
           <div>
@@ -138,7 +146,7 @@ export const AdminLayout = () => {
         </div>
 
         {/* Admin Navigation Links */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '16px', flex: 1 }}>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '14px', flexShrink: 0 }}>
           <NavLink to="/admin/dashboard" style={navItemStyle} onClick={() => setMobileOpen(false)}>
             <Hotel size={18} />
             <span>Overview & Room Rack</span>
@@ -202,7 +210,18 @@ export const AdminLayout = () => {
         </nav>
 
         {/* User Card & Sign Out */}
-        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div
+          style={{
+            borderTop: '1px solid var(--border-color)',
+            paddingTop: '16px',
+            marginTop: 'auto',
+            flexShrink: 0,
+            paddingBottom: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px',
+          }}
+        >
           <div>
             <div style={{ fontSize: '0.88rem', color: 'var(--text-primary)', fontWeight: 700 }}>
               {currentUser?.name || 'Hotel Admin'}
