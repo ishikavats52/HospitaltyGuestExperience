@@ -5,6 +5,7 @@ import { Hotel } from '../hotels/hotels.model.js';
 import { Property } from '../properties/properties.model.js';
 import { Room, RoomType } from '../rooms/rooms.model.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
+import { EmailService } from '../../services/email.service.js';
 
 const DEFAULT_ROOM_IMAGES = [
   'https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80',
@@ -139,7 +140,9 @@ export class UsersController {
             country: propData.country?.trim() || 'India',
             phone: propData.phone?.trim() || newAdmin.phone || '',
             email: propData.email?.trim() || newAdmin.email || '',
-            totalRooms: Array.isArray(propData.rooms) ? propData.rooms.length : 0,
+            totalRooms: Number(propData.totalRooms) || (Array.isArray(propData.rooms) ? propData.rooms.length : 0),
+            latitude: propData.latitude || null,
+            longitude: propData.longitude || null,
             createdAt: new Date().toISOString(),
           });
 
@@ -280,6 +283,20 @@ export class UsersController {
         status: newAdmin.status,
         createdAt: newAdmin.createdAt,
       };
+
+      // Asynchronously dispatch welcome email with credentials to new Hotel Admin
+      try {
+        await EmailService.sendAdminWelcomeEmail({
+          email: newAdmin.email,
+          name: newAdmin.name,
+          password: password.trim(),
+          hotelName: assignedHotel.name,
+          propertiesCount: createdProperties.length,
+          loginUrl: `${req.protocol}://${req.get('host')}/staff/login`,
+        });
+      } catch (mailErr) {
+        console.warn('[EMAIL WARNING] Failed to send admin welcome email:', mailErr.message);
+      }
 
       return ApiResponse.success(
         res,
@@ -622,6 +639,24 @@ export class UsersController {
         createdBy: currentUserId,
         createdAt: new Date().toISOString(),
       });
+
+      // Asynchronously dispatch welcome credentials email to new Staff member
+      try {
+        const hotel = await Hotel.findById(hotelId);
+        const prop = propertyId ? await Property.findById(propertyId) : null;
+        await EmailService.sendEmployeeWelcomeEmail({
+          email: newStaff.email,
+          name: newStaff.name,
+          password: password.trim(),
+          hotelName: hotel?.name || 'AURA Partner Hotel',
+          department: department || assignedRole,
+          subDepartment: subDepartment || '',
+          propertyName: prop?.name || 'Main Property',
+          loginUrl: `${req.protocol}://${req.get('host')}/staff/login`,
+        });
+      } catch (mailErr) {
+        console.warn('[EMAIL WARNING] Failed to send staff welcome email:', mailErr.message);
+      }
 
       return ApiResponse.success(res, `Staff member '${newStaff.name}' created successfully`, newStaff, 201);
     } catch (err) {

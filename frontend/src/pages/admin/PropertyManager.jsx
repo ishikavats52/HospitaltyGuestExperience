@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { AddressAutocomplete } from '../../components/common/AddressAutocomplete.jsx';
 
 export const PropertyManager = () => {
   const { currentUser } = useAuth();
@@ -789,14 +790,18 @@ export const PropertyManager = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Street Address
+                    Street Address (Map Autocomplete)
                   </label>
-                  <input
-                    type="text"
-                    className="input-control"
+                  <AddressAutocomplete
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Enter full street address..."
+                    onSelectLocation={(loc) => {
+                      setAddress(loc.address);
+                      if (loc.city) setCity(loc.city);
+                      if (loc.state) setState(loc.state);
+                      if (loc.country) setCountry(loc.country);
+                    }}
+                    placeholder="Search address, landmark or city..."
                   />
                 </div>
 
@@ -971,18 +976,25 @@ export const PropertyManager = () => {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                    Street Address
+                    Street Address (Map Autocomplete)
                   </label>
-                  <input
-                    type="text"
-                    className="input-control"
+                  <AddressAutocomplete
                     value={editingProperty.address || ''}
                     onChange={(e) => setEditingProperty({ ...editingProperty, address: e.target.value })}
-                    placeholder="Street address..."
+                    onSelectLocation={(loc) => {
+                      setEditingProperty({
+                        ...editingProperty,
+                        address: loc.address,
+                        city: loc.city || editingProperty.city,
+                        state: loc.state || editingProperty.state,
+                        country: loc.country || editingProperty.country,
+                      });
+                    }}
+                    placeholder="Search address or location..."
                   />
                 </div>
 
-                <div className="responsive-form-grid-2">
+                <div className="responsive-form-grid-3">
                   <div>
                     <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                       City
@@ -1005,6 +1017,19 @@ export const PropertyManager = () => {
                       value={editingProperty.phone || ''}
                       onChange={(e) => setEditingProperty({ ...editingProperty, phone: e.target.value })}
                       placeholder="Phone number..."
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                      Total Room Capacity
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="input-control"
+                      value={editingProperty.totalRooms || ''}
+                      onChange={(e) => setEditingProperty({ ...editingProperty, totalRooms: Number(e.target.value) || '' })}
+                      placeholder="e.g. 50"
                     />
                   </div>
                 </div>

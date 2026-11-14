@@ -1976,9 +1976,13 @@ Login URL: ${createdCredentials.loginUrl}`;
             <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: '0 0 6px 0', color: 'var(--text-primary)' }}>
               Employee Profile Provisioned!
             </h3>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
               Account has been committed to DynamoDB. Share these credentials with the employee.
             </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--success)', background: 'var(--success-bg)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', border: '1px solid rgba(28, 108, 67, 0.2)' }}>
+              <Mail size={14} /> Credentials and login link sent to: <strong>{createdCredentials.email}</strong>
+            </div>
 
             <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.84rem', marginBottom: '20px' }}>
               <div>

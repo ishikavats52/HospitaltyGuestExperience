@@ -139,7 +139,7 @@ export default function App() {
             <Route path="rooms" element={<RoomManager />} />
             <Route path="staff" element={<StaffManager />} />
             <Route path="menu" element={<MenuManager />} />
-            <Route path="services" element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="services" element={<ServiceManager />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="billing" element={<BillingPage />} />
           </Route>
@@ -152,8 +152,8 @@ export default function App() {
             <Route path="kitchen" element={<KitchenKDS />} />
             <Route path="housekeeping" element={<HousekeepingView />} />
             <Route path="accounts" element={<AccountsFolio />} />
-            {/* Backward compatibility aliases */}
-            <Route path="services" element={<HousekeepingView />} />
+            {/* Staff Services Management */}
+            <Route path="services" element={<ServiceManager />} />
             <Route path="billing" element={<AccountsFolio />} />
           </Route>
 

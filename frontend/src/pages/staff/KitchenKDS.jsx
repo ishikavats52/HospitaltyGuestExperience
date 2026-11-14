@@ -184,10 +184,15 @@ export const KitchenKDS = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
                   {order.items.map((it, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.86rem' }}>
-                      <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                        {it.quantity}x {it.name}
-                      </span>
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.86rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                          {it.quantity}x {it.name}
+                        </span>
+                        <span style={{ fontSize: '0.7rem', color: '#B45309', background: '#FEF3C7', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                          ⏱️ {it.preparationTime || '15-20 mins'}
+                        </span>
+                      </div>
                       <span style={{ color: 'var(--text-secondary)' }}>₹{it.price * it.quantity}</span>
                     </div>
                   ))}

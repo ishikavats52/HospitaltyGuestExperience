@@ -2,17 +2,76 @@ import { Router } from 'express';
 import { HotelService, ServiceRequest, SERVICE_REQUEST_STATUS } from './services.model.js';
 import { ServiceCatalogue } from '../serviceCatalogue/serviceCatalogue.model.js';
 import { Hotel } from '../hotels/hotels.model.js';
-import { HotelSubscription } from '../subscriptions/subscriptions.model.js';
-import { ServiceAvailabilityService } from '../serviceAvailability/serviceAvailability.service.js';
 import { Stay } from '../stays/stays.model.js';
+import { Room } from '../rooms/rooms.model.js';
 import { ApiResponse } from '../../utils/apiResponse.js';
 import { authenticate } from '../../middleware/auth.middleware.js';
 import { enforceTenantIsolation } from '../../middleware/tenant.middleware.js';
 
 const router = Router();
 
+// Standard default starter services if hotel hasn't added any yet
+const DEFAULT_HOTEL_SERVICES = [
+  {
+    name: 'Daily Housekeeping & Turndown',
+    category: 'Housekeeping',
+    description: 'Fresh linen, vacuuming, dusting, and luxury turndown amenity setup.',
+    price: 0,
+    isComplimentary: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Extra Cotton Towels & Pillows',
+    category: 'Housekeeping',
+    description: 'Additional plush Egyptian cotton bath towels, hand towels, and hypoallergenic pillows.',
+    price: 0,
+    isComplimentary: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Laundry & Express Dry Cleaning',
+    category: 'Laundry',
+    description: 'Same-day laundry, wash, steam iron, and fold service delivered to your wardrobe.',
+    price: 350,
+    isComplimentary: false,
+    isAvailable: true,
+  },
+  {
+    name: 'Luggage Assistance & Bellboy',
+    category: 'Front Desk',
+    description: 'Valet luggage handling, check-in baggage delivery, and checkout cart transfer.',
+    price: 0,
+    isComplimentary: true,
+    isAvailable: true,
+  },
+  {
+    name: 'Airport Cab & City Transfer',
+    category: 'Concierge',
+    description: 'Private chauffeur airport pickup and drop-off in a luxury sedan.',
+    price: 1500,
+    isComplimentary: false,
+    isAvailable: true,
+  },
+  {
+    name: 'Doctor on Call / Medical First Aid',
+    category: 'Front Desk',
+    description: 'Emergency first aid kit, prescription medicine dispatch, and certified doctor visit.',
+    price: 500,
+    isComplimentary: false,
+    isAvailable: true,
+  },
+  {
+    name: 'Ironing Board & Kit Delivery',
+    category: 'Housekeeping',
+    description: 'High-temperature steam iron and heavy-duty folding board delivered to your room.',
+    price: 0,
+    isComplimentary: true,
+    isAvailable: true,
+  },
+];
+
 /**
- * GET Hotel Services (Location & Plan Eligible + Hotel Configured)
+ * GET Hotel Services (Available to Guests and Staff)
  */
 router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => {
   try {
@@ -21,54 +80,65 @@ router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => 
     if (!targetHotelId || targetHotelId === 'undefined' || targetHotelId === 'null') {
       targetHotelId = req.user?.hotelId;
     }
-    let hotel = (targetHotelId && targetHotelId !== 'undefined') ? await Hotel.findById(targetHotelId) : null;
+    let hotel = targetHotelId && targetHotelId !== 'undefined' ? await Hotel.findById(targetHotelId) : null;
     if (!hotel) {
       hotel = await Hotel.findOne();
     }
     if (!hotel) return ApiResponse.error(res, 'Hotel not found', 404);
-    const resolvedHotelId = hotel._id;
+    const resolvedHotelId = String(hotel._id);
 
-    const subscription = await HotelSubscription.findOne({ hotelId: resolvedHotelId }).populate('planId');
-    const planCode = subscription?.planId?.code || 'FREE';
+    // 1. Fetch hotel-level services created in database
+    const allHotelServices = await HotelService.find();
+    let hotelServices = allHotelServices.filter(
+      (s) => String(s.hotelId) === resolvedHotelId || !s.hotelId
+    );
 
-    // 1. Get location-eligible & subscription-eligible services from Super Admin rules
-    const eligibleList = await ServiceAvailabilityService.getEligibleServicesForHotel({
-      country: hotel.locationHierarchy?.country || '',
-      state: hotel.locationHierarchy?.state || '',
-      city: hotel.locationHierarchy?.city || '',
-      localArea: hotel.locationHierarchy?.localArea || null,
-      planCode,
-    });
-
-    // 2. Fetch hotel-level configurations
-    const hotelConfigs = await HotelService.find({ hotelId: resolvedHotelId });
-    const configMap = new Map();
-    hotelConfigs.forEach((c) => {
-      if (c.serviceId) {
-        configMap.set(c.serviceId.toString(), c);
-      }
-    });
-
-    // 3. Merge eligible catalogue services with hotel admin settings
-    const result = eligibleList.map((item) => {
-      const serviceIdStr = item.service?._id ? item.service._id.toString() : null;
-      const config = serviceIdStr ? configMap.get(serviceIdStr) : null;
-      return {
-        serviceCatalogue: item.service,
-        isFreeEntitlement: item.isFree,
-        hotelConfig: config || {
-          enabled: false,
-          price: item.isFree ? 0 : 500,
-          isComplimentary: item.isFree,
-          operatingHours: { open: '06:00', close: '23:00' },
+    // Auto-seed default services for this hotel if none exist yet
+    if (hotelServices.length === 0) {
+      const seeded = [];
+      for (const def of DEFAULT_HOTEL_SERVICES) {
+        const created = await HotelService.create({
+          ...def,
+          hotelId: resolvedHotelId,
+          enabled: true,
           status: 'ACTIVE',
-        },
-      };
-    });
+          createdAt: new Date().toISOString(),
+          createdByRole: 'HOTEL_ADMIN',
+        });
+        seeded.push(created);
+      }
+      hotelServices = seeded;
+    }
 
-    return ApiResponse.success(res, 'Hotel eligible & configured services fetched', {
+    // 2. Format unified service list
+    const result = hotelServices.map((s) => ({
+      _id: s._id,
+      name: s.name,
+      category: s.category || 'General',
+      description: s.description || '',
+      price: Number(s.price) || 0,
+      isComplimentary: s.isComplimentary !== undefined ? Boolean(s.isComplimentary) : (Number(s.price) === 0),
+      isAvailable: s.isAvailable !== undefined ? Boolean(s.isAvailable) : (s.enabled !== false),
+      enabled: s.enabled !== undefined ? Boolean(s.enabled) : true,
+      operatingHours: s.operatingHours || { open: '06:00', close: '23:00' },
+      createdByRole: s.createdByRole || 'HOTEL_ADMIN',
+      createdByName: s.createdByName || 'Management',
+      hotelConfig: {
+        enabled: s.enabled !== false,
+        price: Number(s.price) || 0,
+        isComplimentary: Boolean(s.isComplimentary),
+        isAvailable: s.isAvailable !== false,
+      },
+      serviceCatalogue: {
+        _id: s._id,
+        name: s.name,
+        category: s.category || 'General',
+        description: s.description || '',
+      },
+    }));
+
+    return ApiResponse.success(res, 'Hotel services fetched successfully', {
       hotel: { id: hotel._id, name: hotel.name, location: hotel.locationHierarchy },
-      planCode,
       services: result,
     });
   } catch (err) {
@@ -77,28 +147,87 @@ router.get('/hotels/:hotelId/services', authenticate, async (req, res, next) => 
 });
 
 /**
- * PATCH Hotel Admin Service Enablement, Custom Pricing & Operating Hours
+ * POST /api/v1/hotels/:hotelId/services
+ * Create a new service for the hotel (Hotel Admin, Front Desk Staff, Booking Staff)
+ */
+router.post('/hotels/:hotelId/services', authenticate, async (req, res, next) => {
+  try {
+    const { hotelId } = req.params;
+    const { name, category, description, price, isComplimentary, isAvailable, propertyId } = req.body;
+
+    if (!name || !name.trim()) {
+      return ApiResponse.error(res, 'Service name is required', 400);
+    }
+
+    const resolvedHotelId = hotelId || req.user?.hotelId;
+    const userRole = req.user?.role || 'HOTEL_ADMIN';
+    const userName = req.user?.name || 'Staff Member';
+
+    const numPrice = isComplimentary ? 0 : Number(price) || 0;
+
+    const newService = await HotelService.create({
+      hotelId: String(resolvedHotelId),
+      propertyId: propertyId ? String(propertyId) : null,
+      name: name.trim(),
+      category: category?.trim() || 'General',
+      description: description?.trim() || '',
+      price: numPrice,
+      isComplimentary: Boolean(isComplimentary || numPrice === 0),
+      isAvailable: isAvailable !== undefined ? Boolean(isAvailable) : true,
+      enabled: true,
+      status: 'ACTIVE',
+      createdByRole: userRole,
+      createdByName: userName,
+      createdAt: new Date().toISOString(),
+    });
+
+    return ApiResponse.success(res, `Service '${newService.name}' added successfully`, newService, 201);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/v1/hotels/:hotelId/services/:serviceId
+ * Update service or toggle availability (Hotel Admin, Front Desk Staff, Booking Staff)
  */
 router.patch('/hotels/:hotelId/services/:serviceId', authenticate, async (req, res, next) => {
   try {
-    const { hotelId, serviceId } = req.params;
-    const { enabled, price, isComplimentary, operatingHours, propertyId } = req.body;
+    const { serviceId } = req.params;
+    const { name, category, description, price, isComplimentary, isAvailable, enabled } = req.body;
 
-    const updated = await HotelService.findOneAndUpdate(
-      { hotelId, serviceId },
-      {
-        hotelId,
-        propertyId: propertyId || req.tenant?.propertyId,
-        serviceId,
-        enabled: enabled !== undefined ? enabled : true,
-        price: price !== undefined ? price : 0,
-        isComplimentary: isComplimentary || false,
-        operatingHours: operatingHours || { open: '06:00', close: '23:00' },
-      },
-      { upsert: true, new: true }
-    ).populate('serviceId');
+    const service = await HotelService.findById(serviceId);
+    if (!service) {
+      return ApiResponse.error(res, 'Service not found', 404);
+    }
 
-    return ApiResponse.success(res, 'Hotel service configuration updated', updated);
+    const updateData = {};
+    if (name !== undefined) updateData.name = name.trim();
+    if (category !== undefined) updateData.category = category.trim();
+    if (description !== undefined) updateData.description = description.trim();
+    if (price !== undefined) updateData.price = Number(price);
+    if (isComplimentary !== undefined) updateData.isComplimentary = Boolean(isComplimentary);
+    if (isAvailable !== undefined) updateData.isAvailable = Boolean(isAvailable);
+    if (enabled !== undefined) updateData.enabled = Boolean(enabled);
+    updateData.updatedAt = new Date().toISOString();
+
+    const updated = await HotelService.findByIdAndUpdate(serviceId, updateData, { new: true });
+    return ApiResponse.success(res, 'Service updated successfully', updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * DELETE /api/v1/hotels/:hotelId/services/:serviceId
+ * Delete a service
+ */
+router.delete('/hotels/:hotelId/services/:serviceId', authenticate, async (req, res, next) => {
+  try {
+    const { serviceId } = req.params;
+    const deleted = await HotelService.findByIdAndDelete(serviceId);
+    if (!deleted) return ApiResponse.error(res, 'Service not found', 404);
+    return ApiResponse.success(res, 'Service deleted successfully');
   } catch (err) {
     next(err);
   }
@@ -106,28 +235,30 @@ router.patch('/hotels/:hotelId/services/:serviceId', authenticate, async (req, r
 
 /**
  * POST /api/v1/service-requests
- * Guest Service Request creation with FULL 5-TIER BACKEND VALIDATION
+ * Guest Service Request creation
  */
 router.post('/service-requests', authenticate, async (req, res, next) => {
   try {
-    let { stayId, serviceCatalogueId, guestNotes } = req.body;
+    let { stayId, serviceCatalogueId, serviceId, guestNotes } = req.body;
+    const targetServiceId = serviceCatalogueId || serviceId;
+
     if (!stayId || stayId === 'undefined' || stayId === 'null' || stayId === 'default-stay') {
       stayId = req.user?.stayId;
     }
-    if (!serviceCatalogueId || serviceCatalogueId === 'undefined' || serviceCatalogueId === 'null') {
-      return ApiResponse.error(res, 'Valid serviceCatalogueId is required', 400);
+    if (!targetServiceId || targetServiceId === 'undefined' || targetServiceId === 'null') {
+      return ApiResponse.error(res, 'Valid service ID is required', 400);
     }
 
-    let stay = (stayId && stayId !== 'default-stay') ? await Stay.findById(stayId).populate('hotelId') : null;
+    let stay = stayId && stayId !== 'default-stay' ? await Stay.findById(stayId) : null;
     if (!stay && req.user?.bookingId) {
-      stay = await Stay.findOne({ bookingId: req.user.bookingId }).populate('hotelId');
+      stay = await Stay.findOne({ bookingId: req.user.bookingId });
     }
     if (!stay) {
-      stay = await Stay.findOne().populate('hotelId');
+      stay = await Stay.findOne();
     }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
-    // Enforce check-in authentication & KYC verification
+    // Enforce check-in authentication & verification
     if (stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
       return ApiResponse.error(
         res,
@@ -135,70 +266,61 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
         403
       );
     }
-    let hotel = stay.hotelId;
-    if (!hotel || typeof hotel === 'string' || !hotel.locationHierarchy) {
-      hotel = await Hotel.findById(hotel?._id || hotel) || await Hotel.findOne();
+
+    // Locate requested service
+    let service = await HotelService.findById(targetServiceId);
+    if (!service) {
+      service = await ServiceCatalogue.findById(targetServiceId);
     }
-    const resolvedHotelId = hotel?._id || (typeof stay.hotelId === 'string' ? stay.hotelId : stay.hotelId?._id);
-    const subscription = await HotelSubscription.findOne({ hotelId: resolvedHotelId }).populate('planId');
-    const planCode = subscription?.planId?.code || 'FREE';
+    if (!service) {
+      const allServices = await HotelService.find();
+      service = allServices.find((s) => String(s._id) === String(targetServiceId));
+    }
 
-    // Tier 1 - 4: Check Super Admin Location and Plan Eligibility
-    const eligibleServices = await ServiceAvailabilityService.getEligibleServicesForHotel({
-      country: hotel?.locationHierarchy?.country || 'India',
-      state: hotel?.locationHierarchy?.state || 'Delhi',
-      city: hotel?.locationHierarchy?.city || 'Delhi',
-      localArea: hotel?.locationHierarchy?.localArea || null,
-      planCode,
-    });
+    if (!service) {
+      return ApiResponse.error(res, 'Requested service was not found', 404);
+    }
 
-    const isCatalogueEligible = eligibleServices.find(
-      (e) => e.service._id.toString() === serviceCatalogueId.toString()
-    );
-
-    if (!isCatalogueEligible) {
+    // Check availability
+    if (service.isAvailable === false || service.enabled === false) {
       return ApiResponse.error(
         res,
-        'SECURITY REJECTION: Service is not eligible for this hotel geographic location or subscription plan',
-        403
+        `Service "${service.name}" is currently unavailable or under maintenance. Please contact the front desk.`,
+        400
       );
     }
 
-    // Tier 5: Check Hotel Admin Enablement
-    const hotelConfig = await HotelService.findOne({
-      hotelId: resolvedHotelId,
-      serviceId: serviceCatalogueId,
-      enabled: true,
-    });
+    const isFree = Boolean(service.isComplimentary) || Number(service.price) === 0;
+    const finalPrice = isFree ? 0 : Number(service.price) || 0;
 
-    if (!hotelConfig) {
-      return ApiResponse.error(
-        res,
-        'Service is currently not enabled or offered by this hotel property',
-        403
-      );
+    // Resolve Room number
+    let roomNumber = stay.roomNumber;
+    if (!roomNumber && stay.roomId) {
+      const room = await Room.findById(stay.roomId);
+      roomNumber = room?.roomNumber;
     }
-
-    const isFree = isCatalogueEligible.isFree || hotelConfig.isComplimentary;
-    const finalPrice = isFree ? 0 : hotelConfig.price;
 
     const request = await ServiceRequest.create({
-      hotelId: resolvedHotelId,
-      propertyId: stay.propertyId,
-      stayId: stay._id,
-      roomId: stay.roomId,
-      serviceCatalogueId,
-      hotelServiceId: hotelConfig._id,
+      hotelId: String(stay.hotelId || req.user?.hotelId || 'HOTEL-DELHI-01'),
+      propertyId: stay.propertyId ? String(stay.propertyId) : null,
+      stayId: String(stay._id),
+      roomId: stay.roomId ? String(stay.roomId) : null,
+      roomNumber: roomNumber || 'Assigned Room',
+      guestName: req.user?.guestName || req.user?.name || 'Hotel Guest',
+      serviceCatalogueId: String(service._id),
+      serviceName: service.name,
+      serviceCategory: service.category || 'General',
       price: finalPrice,
       isFree,
-      guestNotes,
+      guestNotes: guestNotes || 'Requested via Guest Services Portal',
       status: SERVICE_REQUEST_STATUS.PENDING,
+      createdAt: new Date().toISOString(),
     });
 
     // If paid service, charge to guest stay folio
     if (finalPrice > 0) {
-      stay.folioBalance = (stay.folioBalance || 0) + finalPrice;
-      await stay.save();
+      stay.folioBalance = (Number(stay.folioBalance) || 0) + finalPrice;
+      await Stay.findByIdAndUpdate(stay._id, { folioBalance: stay.folioBalance });
     }
 
     return ApiResponse.success(res, 'Guest service request successfully created', request, 201);
@@ -208,18 +330,29 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
 });
 
 /**
- * GET Service Requests (Staff Operational Queue)
+ * GET Service Requests (Staff Operational Queue & Guest In-Stay History)
  */
-router.get('/service-requests', authenticate, enforceTenantIsolation, async (req, res, next) => {
+router.get('/service-requests', authenticate, async (req, res, next) => {
   try {
-    const filter = req.tenant.isSuperAdmin && !req.tenant.hotelId ? {} : { hotelId: req.tenant.hotelId };
-    if (req.query.stayId) filter.stayId = req.query.stayId;
+    const isSuper = req.user?.role === 'SUPER_ADMIN';
+    const hotelId = req.user?.hotelId;
+    const filter = {};
 
-    const requests = await ServiceRequest.find(filter)
-      .populate('serviceCatalogueId', 'name category icon')
-      .populate('roomId', 'roomNumber floor')
-      .populate('assignedTo', 'name role')
-      .sort({ createdAt: -1 });
+    if (req.query.stayId) {
+      filter.stayId = req.query.stayId;
+    } else if (!isSuper && hotelId) {
+      filter.hotelId = hotelId;
+    }
+
+    const allRequests = await ServiceRequest.find();
+    let requests = allRequests.filter((r) => {
+      if (filter.stayId && String(r.stayId) !== String(filter.stayId)) return false;
+      if (filter.hotelId && r.hotelId && String(r.hotelId) !== String(filter.hotelId)) return false;
+      return true;
+    });
+
+    // Sort newest first
+    requests.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
     return ApiResponse.success(res, 'Service requests fetched', requests);
   } catch (err) {
@@ -232,16 +365,16 @@ router.get('/service-requests', authenticate, enforceTenantIsolation, async (req
  */
 router.patch('/service-requests/:id/status', authenticate, async (req, res, next) => {
   try {
-    const { status, assignedTo } = req.body;
+    const { status, assignedTo, staffNotes } = req.body;
     const updateData = { status };
     if (assignedTo) updateData.assignedTo = assignedTo;
+    if (staffNotes) updateData.staffNotes = staffNotes;
     if (status === SERVICE_REQUEST_STATUS.COMPLETED) {
-      updateData.completedAt = new Date();
+      updateData.completedAt = new Date().toISOString();
     }
 
-    const updated = await ServiceRequest.findByIdAndUpdate(req.params.id, updateData, { new: true })
-      .populate('serviceCatalogueId')
-      .populate('assignedTo', 'name');
+    const updated = await ServiceRequest.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!updated) return ApiResponse.error(res, 'Service request not found', 404);
 
     return ApiResponse.success(res, `Service request marked as ${status}`, updated);
   } catch (err) {

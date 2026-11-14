@@ -54,7 +54,7 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
 
 router.post('/items', authenticate, enforceTenantIsolation, async (req, res, next) => {
   try {
-    const { name, categoryId, price, description, isVegetarian, isAvailable, image, imageUrl } = req.body;
+    const { name, categoryId, price, description, isVegetarian, isAvailable, image, imageUrl, preparationTime } = req.body;
     const finalImage = image || imageUrl || '';
     const hotelId = req.tenant.hotelId || req.user?.hotelId;
     const item = await MenuItem.create({
@@ -64,6 +64,7 @@ router.post('/items', authenticate, enforceTenantIsolation, async (req, res, nex
       name,
       price: Number(price) || 0,
       description: description || '',
+      preparationTime: preparationTime?.trim() || '15-20 mins',
       isVegetarian: isVegetarian !== undefined ? isVegetarian : true,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       image: finalImage,

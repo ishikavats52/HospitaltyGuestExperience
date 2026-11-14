@@ -1,30 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Check, Clock, AlertCircle, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
+import { Sparkles, CheckCircle2, AlertCircle, Clock, ArrowRight, RefreshCw, XCircle } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const ServicesPage = () => {
   const { currentUser } = useAuth();
+  const [hotelInfo, setHotelInfo] = useState(null);
   const [services, setServices] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
-  const [hotelInfo, setHotelInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requestingId, setRequestingId] = useState(null);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
-  const hotelId = currentUser?.hotelId || currentUser?.stay?.hotelId || currentUser?.booking?.hotelId?._id || currentUser?.booking?.hotelId;
-  const stayId = currentUser?.stay?._id || currentUser?.stayId || (typeof currentUser?.stay === 'string' ? currentUser?.stay : null);
+  const hotelId = currentUser?.hotelId?._id || currentUser?.hotelId || 'HOTEL-DELHI-01';
+  const stayId = currentUser?.stay?._id || currentUser?.stayId;
 
   const fetchServicesAndRequests = async () => {
     try {
       setLoading(true);
       const res = await api.get(`/hotels/${hotelId}/services`);
       setHotelInfo(res.data.hotel);
-      // Only show services that are enabled by Hotel Admin
-      const enabledServices = (res.data.services || []).filter((s) => s.hotelConfig?.enabled);
-      setServices(enabledServices);
+      // Show all configured hotel services, retaining availability status
+      setServices(res.data.services || []);
 
       // Fetch guest's own requests
       if (stayId) {
@@ -46,15 +45,21 @@ export const ServicesPage = () => {
     }
   }, [hotelId, stayId]);
 
-  const handleRequestService = async (serviceCatalogueId, serviceName) => {
+  const handleRequestService = async (serviceId, serviceName, isAvailable) => {
+    if (isAvailable === false) {
+      setError(`"${serviceName}" is temporarily unavailable.`);
+      setTimeout(() => setError(null), 3500);
+      return;
+    }
+
     try {
-      setRequestingId(serviceCatalogueId);
+      setRequestingId(serviceId);
       setError(null);
       setMessage(null);
 
       await api.post('/service-requests', {
         stayId,
-        serviceCatalogueId,
+        serviceCatalogueId: serviceId,
         guestNotes: 'Requested via Guest In-Stay Hub',
       });
 
@@ -97,13 +102,13 @@ export const ServicesPage = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div>
         <div style={{ fontSize: '0.7rem', color: 'var(--gold-primary)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>
-          {hotelInfo?.name || 'Hotel Grand'} • {hotelInfo?.location?.city || 'Delhi'}
+          {hotelInfo?.name || 'Hotel Grand'}
         </div>
         <h2 className="title-gold page-title" style={{ fontSize: '1.9rem', margin: '4px 0' }}>
-          Available Guest Services
+          Hotel Guest Services
         </h2>
         <p className="page-subtitle" style={{ margin: 0 }}>
-          Curated amenities based on your hotel's geolocation and active subscription entitlements.
+          Request in-room amenities, housekeeping, and concierge assistance directly to your room.
         </p>
       </div>
 
@@ -166,7 +171,7 @@ export const ServicesPage = () => {
               >
                 <div>
                   <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                    {req.serviceCatalogueId?.name || 'Hotel Service'}
+                    {req.serviceName || req.serviceCatalogueId?.name || 'Hotel Service'}
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                     Requested: {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -183,54 +188,110 @@ export const ServicesPage = () => {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-          Evaluating 5-Tier Location & Plan Availability...
+          Loading available hotel services...
         </div>
       ) : services.length === 0 ? (
         <div className="glass-panel" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)', backgroundColor: '#FFFFFF' }}>
-          No services currently enabled for this property.
+          No services currently available for this property.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {services.map(({ serviceCatalogue, isFreeEntitlement, hotelConfig }) => (
-            <div key={serviceCatalogue._id} className="glass-panel" style={{ padding: '18px', backgroundColor: '#FFFFFF', borderRadius: 'var(--radius-md)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ flex: '1 1 200px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
-                      {serviceCatalogue.name}
-                    </span>
-                    {isFreeEntitlement || hotelConfig.isComplimentary ? (
-                      <span className="badge badge-free">Complimentary</span>
-                    ) : (
-                      <span className="badge badge-gold">₹{hotelConfig.price}</span>
-                    )}
-                  </div>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: '4px 0 0' }}>
-                    {serviceCatalogue.description}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
-                    <Clock size={13} color="var(--gold-primary)" /> Hours: {hotelConfig.operatingHours?.open || '06:00'} - {hotelConfig.operatingHours?.close || '23:00'}
-                  </div>
-                </div>
+          {services.map((item) => {
+            const isAvail = item.isAvailable !== false;
+            const isComp = item.isComplimentary || item.price === 0;
 
-                <button
-                  type="button"
-                  onClick={() => handleRequestService(serviceCatalogue._id, serviceCatalogue.name)}
-                  className="btn btn-gold"
-                  style={{ padding: '8px 18px', fontSize: '0.82rem', whiteSpace: 'nowrap', alignSelf: 'flex-start' }}
-                  disabled={requestingId === serviceCatalogue._id}
-                >
-                  {requestingId === serviceCatalogue._id ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <RefreshCw size={13} className="animate-spin" /> Placing Request...
-                    </span>
-                  ) : (
-                    'Request Service'
-                  )}
-                </button>
+            return (
+              <div
+                key={item._id}
+                className="glass-panel"
+                style={{
+                  padding: '18px',
+                  backgroundColor: isAvail ? '#FFFFFF' : '#FAFAFA',
+                  borderRadius: 'var(--radius-md)',
+                  opacity: isAvail ? 1 : 0.85,
+                  border: isAvail ? '1px solid var(--border-color)' : '1px dashed #E5E7EB',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.98rem', color: 'var(--text-primary)' }}>
+                        {item.name}
+                      </span>
+
+                      {/* Availability Tag */}
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 7px',
+                          borderRadius: '9999px',
+                          fontSize: '0.7rem',
+                          fontWeight: 800,
+                          letterSpacing: '0.04em',
+                          textTransform: 'uppercase',
+                          background: isAvail ? '#DCFCE7' : '#FEE2E2',
+                          color: isAvail ? '#166534' : '#991B1B',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            backgroundColor: isAvail ? '#16A34A' : '#DC2626',
+                          }}
+                        />
+                        {isAvail ? 'Available' : 'Unavailable'}
+                      </span>
+
+                      {/* Price Badge */}
+                      {isComp ? (
+                        <span className="badge badge-free">Complimentary</span>
+                      ) : (
+                        <span className="badge badge-gold">₹{item.price}</span>
+                      )}
+                    </div>
+
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: '4px 0 0' }}>
+                      {item.description}
+                    </p>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                      <Clock size={13} color="var(--gold-primary)" /> Hours: {item.operatingHours?.open || '06:00'} - {item.operatingHours?.close || '23:00'}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleRequestService(item._id, item.name, isAvail)}
+                    className={isAvail ? 'btn btn-gold' : 'btn btn-outline'}
+                    style={{
+                      padding: '8px 18px',
+                      fontSize: '0.82rem',
+                      whiteSpace: 'nowrap',
+                      alignSelf: 'flex-start',
+                      cursor: isAvail ? 'pointer' : 'not-allowed',
+                      opacity: isAvail ? 1 : 0.6,
+                    }}
+                    disabled={!isAvail || requestingId === item._id}
+                    title={!isAvail ? 'This service is currently unavailable' : 'Request Service to Room'}
+                  >
+                    {requestingId === item._id ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <RefreshCw size={13} className="animate-spin" /> Placing Request...
+                      </span>
+                    ) : isAvail ? (
+                      'Request Service'
+                    ) : (
+                      'Temporarily Unavailable'
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

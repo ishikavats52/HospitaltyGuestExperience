@@ -481,25 +481,24 @@ export const CheckinPage = () => {
                   </div>
                 </div>
               ) : (
-                <label
+                <div
                   style={{
-                    cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
+                    gap: '12px',
                     padding: '24px 16px',
                     border: '2px dashed var(--border-active)',
                     borderRadius: 'var(--radius-sm)',
                     background: 'var(--bg-primary)',
-                    transition: 'all 0.2s ease',
+                    textAlign: 'center',
                   }}
                 >
                   <div
                     style={{
-                      width: '42px',
-                      height: '42px',
+                      width: '46px',
+                      height: '46px',
                       borderRadius: '50%',
                       background: 'var(--gold-soft)',
                       display: 'flex',
@@ -508,16 +507,65 @@ export const CheckinPage = () => {
                       color: 'var(--gold-primary)',
                     }}
                   >
-                    <Upload size={20} />
+                    <FileText size={22} />
                   </div>
-                  <div style={{ fontSize: '0.86rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Click or tap to upload {idType === 'AADHAAR' ? 'Aadhaar Card' : 'ID Document'}
+                  <div>
+                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      Attach {idType === 'AADHAAR' ? 'Aadhaar Card' : 'Government ID'} Document
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Clear front photo of your physical card or digital e-Aadhaar
+                    </div>
                   </div>
-                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                    Supports JPG, PNG, WEBP (front photo of card)
+
+                  {/* Dual Upload Options: Gallery Upload and Camera Capture */}
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '6px' }}>
+                    <label
+                      className="btn btn-gold"
+                      style={{
+                        padding: '9px 16px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        borderRadius: 'var(--radius-full)',
+                      }}
+                    >
+                      <Upload size={15} /> Upload from Gallery / Files
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleIdFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
+
+                    <label
+                      className="btn btn-outline"
+                      style={{
+                        padding: '9px 16px',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        borderRadius: 'var(--radius-full)',
+                      }}
+                    >
+                      <Camera size={15} /> Take Photo (Camera)
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleIdFileUpload}
+                        style={{ display: 'none' }}
+                      />
+                    </label>
                   </div>
-                  <input type="file" accept="image/*" onChange={handleIdFileUpload} style={{ display: 'none' }} />
-                </label>
+                </div>
               )}
             </div>
           </div>

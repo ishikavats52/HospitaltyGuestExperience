@@ -37,9 +37,6 @@ export const GuestLayout = () => {
           <span style={{ fontSize: '1.05rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
             {currentUser?.guestName || 'Distinguished Guest'}
           </span>
-          <span style={{ fontSize: '0.68rem', color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginTop: '1px' }}>
-            {currentUser?.roomNumber ? `Room ${currentUser.roomNumber}` : 'Hotel Guest'}
-          </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

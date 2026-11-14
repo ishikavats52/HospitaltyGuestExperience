@@ -35,16 +35,20 @@ export const StaffLayout = () => {
 
   // Restrict staff to their own operational portal unless they are an admin
   const currentPath = location.pathname;
+  const isServicesAllowed = ['HOTEL_ADMIN', 'SUPER_ADMIN', 'RECEPTION', 'BOOKING_DESK'].includes(role);
+
   if (!isAdmin && role) {
     const allowedPath = getRoleDefaultPath(role);
-    // If staff is trying to access another department's sub-path, redirect to their allowed portal
-    if (currentPath !== allowedPath && currentPath.startsWith('/staff/')) {
+    if (currentPath === '/staff/services' && isServicesAllowed) {
+      // Allowed access to Guest Services & Requests
+    } else if (currentPath !== allowedPath && currentPath.startsWith('/staff/')) {
       return <Navigate to={allowedPath} replace />;
     }
   }
 
-  // Navigation items: Admins see all departments to govern everything;
-  // Individual staff members see only their dedicated department.
+  // Navigation items: Admins see all departments;
+  // Front Desk and Booking Staff have access to their desk + Guest Services;
+  // Other staff see their dedicated department.
   const allNavTabs = [
     { to: '/staff/reception', label: 'Reception Desk', icon: QrCode, role: 'RECEPTION' },
     { to: '/staff/bookings', label: 'Booking Desk', icon: CalendarCheck, role: 'BOOKING_DESK' },
@@ -53,9 +57,25 @@ export const StaffLayout = () => {
     { to: '/staff/accounts', label: 'Accounts Folio', icon: Receipt, role: 'ACCOUNTS' },
   ];
 
-  const visibleTabs = isAdmin
-    ? allNavTabs
-    : allNavTabs.filter((t) => t.role === role);
+  let visibleTabs = [];
+  if (isAdmin) {
+    visibleTabs = [
+      ...allNavTabs,
+      { to: '/staff/services', label: 'Guest Services & Requests', icon: Sparkles, role: 'SERVICES' },
+    ];
+  } else if (role === 'RECEPTION') {
+    visibleTabs = [
+      { to: '/staff/reception', label: 'Reception Desk', icon: QrCode, role: 'RECEPTION' },
+      { to: '/staff/services', label: 'Guest Services & Requests', icon: Sparkles, role: 'SERVICES' },
+    ];
+  } else if (role === 'BOOKING_DESK') {
+    visibleTabs = [
+      { to: '/staff/bookings', label: 'Booking Desk', icon: CalendarCheck, role: 'BOOKING_DESK' },
+      { to: '/staff/services', label: 'Guest Services & Requests', icon: Sparkles, role: 'SERVICES' },
+    ];
+  } else {
+    visibleTabs = allNavTabs.filter((t) => t.role === role);
+  }
 
   const navTabStyle = ({ isActive }) => ({
     display: 'inline-flex',

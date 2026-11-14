@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, Plus, Check, RefreshCw, Power, DollarSign, CheckCircle2, Trash2, Tag, X, Image as ImageIcon, Upload } from 'lucide-react';
+import { Utensils, Plus, Check, RefreshCw, Power, DollarSign, CheckCircle2, Trash2, Tag, X, Image as ImageIcon, Upload, Camera, Clock } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -31,6 +31,7 @@ export const MenuManager = () => {
   const [categoryId, setCategoryId] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
+  const [preparationTime, setPreparationTime] = useState('15-20 mins');
   const [isVegetarian, setIsVegetarian] = useState(true);
   const [image, setImage] = useState('');
   const [imageUrlInput, setImageUrlInput] = useState('');
@@ -151,6 +152,7 @@ export const MenuManager = () => {
         categoryId: categoryId || (categories[0]?._id),
         price: Number(price),
         description,
+        preparationTime: preparationTime.trim() || '15-20 mins',
         isVegetarian,
         isAvailable: true,
         image: image || imageUrlInput || '',
@@ -160,6 +162,7 @@ export const MenuManager = () => {
       setName('');
       setPrice('');
       setDescription('');
+      setPreparationTime('15-20 mins');
       setImage('');
       setImageUrlInput('');
       setIsAddModalOpen(false);
@@ -328,8 +331,13 @@ export const MenuManager = () => {
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.94rem' }}>
                             {item.name}
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                            {item.description}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                              {item.description}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: '#B45309', background: '#FEF3C7', padding: '1px 6px', borderRadius: '4px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <Clock size={11} /> {item.preparationTime || '15-20 mins'}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -436,7 +444,7 @@ export const MenuManager = () => {
                   />
                 </div>
 
-                <div className="responsive-form-grid-2">
+                <div className="responsive-form-grid-3">
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
@@ -510,6 +518,19 @@ export const MenuManager = () => {
                       required
                     />
                   </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      Prep Time Target *
+                    </label>
+                    <input
+                      type="text"
+                      className="input-control"
+                      value={preparationTime}
+                      onChange={(e) => setPreparationTime(e.target.value)}
+                      placeholder="e.g. 15-20 mins"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -537,6 +558,7 @@ export const MenuManager = () => {
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {/* Gallery / File Picker */}
                     <input
                       type="file"
                       id="dish-image-file-input"
@@ -554,13 +576,43 @@ export const MenuManager = () => {
                         }
                       }}
                     />
+
+                    {/* Camera Capture Input */}
+                    <input
+                      type="file"
+                      id="dish-camera-file-input"
+                      accept="image/*"
+                      capture="environment"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setImage(reader.result);
+                            setImageUrlInput('');
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => document.getElementById('dish-camera-file-input').click()}
+                      className="btn btn-outline"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '7px 14px' }}
+                    >
+                      <Camera size={14} /> Take Photo (Camera)
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => document.getElementById('dish-image-file-input').click()}
                       className="btn btn-outline"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '7px 14px' }}
                     >
-                      <Upload size={14} /> Upload from Gallery / Files
+                      <Upload size={14} /> Upload from Gallery
                     </button>
 
                     {(image || imageUrlInput) && (

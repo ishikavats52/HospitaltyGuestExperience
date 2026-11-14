@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { AddressAutocomplete } from '../../components/common/AddressAutocomplete.jsx';
 
 export const SuperDashboard = () => {
   const { logout } = useAuth();
@@ -168,6 +169,7 @@ export const SuperDashboard = () => {
         city: '',
         state: '',
         country: '',
+        totalRooms: '',
         phone: '',
         email: '',
         rooms: [],
@@ -188,6 +190,7 @@ export const SuperDashboard = () => {
         city: '',
         state: '',
         country: '',
+        totalRooms: '',
         phone: '',
         email: '',
         rooms: [],
@@ -1214,17 +1217,27 @@ export const SuperDashboard = () => {
                       </div>
 
                       <div>
-                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>Street Address</label>
-                        <input
-                          type="text"
-                          className="input-control"
-                          placeholder="e.g. 10 Marine Drive"
+                        <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <MapPin size={13} style={{ color: 'var(--gold-primary)' }} /> Location / Street Address (Interactive Map Autocomplete)
+                        </label>
+                        <AddressAutocomplete
                           value={prop.address}
                           onChange={(e) => {
                             const updated = [...wizardProperties];
                             updated[pIdx].address = e.target.value;
                             setWizardProperties(updated);
                           }}
+                          onSelectLocation={(loc) => {
+                            const updated = [...wizardProperties];
+                            updated[pIdx].address = loc.address;
+                            if (loc.city) updated[pIdx].city = loc.city;
+                            if (loc.state) updated[pIdx].state = loc.state;
+                            if (loc.country) updated[pIdx].country = loc.country;
+                            updated[pIdx].latitude = loc.lat;
+                            updated[pIdx].longitude = loc.lon;
+                            setWizardProperties(updated);
+                          }}
+                          placeholder="Search address, landmark, or city (e.g. Connaught Place, Mumbai)..."
                         />
                       </div>
 
@@ -1267,6 +1280,42 @@ export const SuperDashboard = () => {
                             onChange={(e) => {
                               const updated = [...wizardProperties];
                               updated[pIdx].country = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="responsive-form-grid-2-1">
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                            Total Room Inventory Capacity *
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="input-control"
+                            placeholder="e.g. 50 (Total room count)"
+                            value={prop.totalRooms || ''}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].totalRooms = e.target.value;
+                              setWizardProperties(updated);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px', display: 'block' }}>
+                            Property Contact Phone
+                          </label>
+                          <input
+                            type="text"
+                            className="input-control"
+                            placeholder="+91..."
+                            value={prop.phone || ''}
+                            onChange={(e) => {
+                              const updated = [...wizardProperties];
+                              updated[pIdx].phone = e.target.value;
                               setWizardProperties(updated);
                             }}
                           />
@@ -1520,9 +1569,13 @@ export const SuperDashboard = () => {
             <h2 style={{ fontSize: '1.45rem', fontWeight: 800, margin: '0 0 6px', color: 'var(--text-primary)' }}>
               Hotel Admin Profile Created!
             </h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '20px' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '14px' }}>
               The administrator can now log in using these provisioned credentials.
             </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--success)', background: 'var(--success-bg)', padding: '8px 12px', borderRadius: 'var(--radius-sm)', marginBottom: '16px', border: '1px solid rgba(28, 108, 67, 0.2)' }}>
+              <Mail size={14} /> Welcome credentials automatically dispatched to: <strong>{createdCredentials.email}</strong>
+            </div>
 
             <div style={{ padding: '18px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.84rem', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
               <div><span style={{ color: 'var(--text-muted)' }}>Hotel Group: </span><strong>{createdCredentials.hotelName}</strong></div>

@@ -533,7 +533,35 @@ router.get('/magic/:ref', async (req, res, next) => {
       roomNumber: room?.roomNumber || booking?.roomNumber || stay?.roomNumber || 'Assigned',
     });
 
-    const isStayActive = stay?.status === 'STAY_ACTIVE' || stay?.status === 'CHECKED_IN';
+    const isCheckedInAtDesk =
+      booking?.status === 'CHECKED_IN' ||
+      booking?.isWalkInCheckedIn === true ||
+      stay?.status === 'STAY_ACTIVE' ||
+      stay?.status === 'CHECKED_IN';
+
+    // If checked in at front desk, guarantee stay status is CHECKED_IN
+    if (isCheckedInAtDesk) {
+      if (stay && stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
+        stay.status = 'CHECKED_IN';
+        await Stay.findByIdAndUpdate(stay._id, { status: 'CHECKED_IN' });
+      } else if (!stay && booking) {
+        stay = await Stay.create({
+          hotelId,
+          propertyId,
+          bookingId: booking._id,
+          guestId: guest._id,
+          roomId: room?._id || booking.roomId || null,
+          roomNumber: room?.roomNumber || booking.roomNumber || 'Assigned',
+          status: 'CHECKED_IN',
+          checkInDate: new Date().toISOString(),
+          checkInTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
+          folioBalance: 0,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    const isStayActive = isCheckedInAtDesk;
     const redirectUrl = isStayActive ? '/guest/dashboard' : '/guest/checkin';
 
     return ApiResponse.success(res, 'Guest session authenticated via Magic Link', {

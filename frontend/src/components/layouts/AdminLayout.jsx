@@ -174,6 +174,11 @@ export const AdminLayout = () => {
             <span>6. Billing</span>
           </NavLink>
 
+          <NavLink to="/admin/services" style={navItemStyle} onClick={() => setMobileOpen(false)}>
+            <Sparkles size={18} />
+            <span>7. Settings & Services</span>
+          </NavLink>
+
           {/* Additional Quick Hubs */}
           <div style={{ margin: '12px 0 6px', padding: '0 8px', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             Live Staff Operations

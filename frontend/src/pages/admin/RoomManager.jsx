@@ -1895,9 +1895,21 @@ export const RoomManager = () => {
 
                   <div className="responsive-form-grid-2" style={{ marginBottom: '14px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                        Target Property *
-                      </label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                          Target Property *
+                        </label>
+                        {(() => {
+                          const targetProp = properties.find((p) => String(p._id) === String(targetPropertyId));
+                          const currentInProp = rooms.filter((r) => String(r.propertyId?._id || r.propertyId) === String(targetPropertyId)).length;
+                          const totalCap = targetProp?.totalRooms || targetProp?.roomCapacity || 0;
+                          return (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--gold-dark)', fontWeight: 700 }}>
+                              Total Room Capacity: {totalCap > 0 ? `${currentInProp} / ${totalCap} Rooms` : `${currentInProp} Created`}
+                            </span>
+                          );
+                        })()}
+                      </div>
                       <select
                         className="input-control"
                         value={targetPropertyId}
@@ -1906,7 +1918,7 @@ export const RoomManager = () => {
                       >
                         {properties.map((p) => (
                           <option key={p._id} value={p._id}>
-                            {p.name} ({p.city || 'Main'})
+                            {p.name} ({p.city || 'Main'}) {p.totalRooms ? `— Max ${p.totalRooms} Rooms` : ''}
                           </option>
                         ))}
                       </select>

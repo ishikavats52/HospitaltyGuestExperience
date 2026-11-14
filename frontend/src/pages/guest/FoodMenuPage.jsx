@@ -96,6 +96,7 @@ export const FoodMenuPage = () => {
         name: item.name,
         quantity,
         price: item.price,
+        preparationTime: item.preparationTime || '15-20 mins',
       }));
 
       const res = await api.post('/orders', {
@@ -270,6 +271,9 @@ export const FoodMenuPage = () => {
                     />
                     <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--secondary-accent)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {item.categoryId?.name || "Chef's Special"}
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontWeight: 700, color: '#B45309', background: '#FEF3C7', padding: '1px 6px', borderRadius: '4px', marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      ⏱️ {item.preparationTime || '15-20 mins'}
                     </span>
                   </div>
 
