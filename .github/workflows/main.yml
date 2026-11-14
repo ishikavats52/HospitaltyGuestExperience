@@ -16,6 +16,6 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           cd backend
-          npm ci --omit=dev
-          pm2 restart hospitality-backend
+          npm ci --omit=dev || npm install --omit=dev
+          pm2 restart hospitality-backend || pm2 start src/server.js --name hospitality-backend
           pm2 save
