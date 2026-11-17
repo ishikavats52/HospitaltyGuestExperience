@@ -498,7 +498,7 @@ export const BillingPage = () => {
 
                       <td style={{ padding: '18px 20px' }}>
                         <span style={{ fontSize: '0.82rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>
-                          {g.bookingNumber || 'BK-DELHI-101'}
+                          {g.bookingNumber || g.bookingId || '—'}
                         </span>
                       </td>
 
@@ -682,7 +682,7 @@ export const BillingPage = () => {
                   </div>
                   <div>
                     <span style={{ color: 'var(--text-muted)' }}>Booking Ref: </span>
-                    <strong>{folioData.bookingNumber || 'BK-DELHI-101'}</strong>
+                    <strong>{folioData.bookingNumber || folioData._id || '—'}</strong>
                   </div>
                 </div>
 

@@ -20,6 +20,13 @@ export const connectDB = async () => {
     console.warn(`[Database] Auto-seeding notice: ${seedErr.message}`);
   }
 
+  try {
+    const { cleanupSeededGuests } = await import('../seeds/cleanupSeededGuests.js');
+    await cleanupSeededGuests();
+  } catch (cleanupErr) {
+    console.warn(`[Database] Seeded guests cleanup notice: ${cleanupErr.message}`);
+  }
+
   console.log(`[Database] AWS DynamoDB Dedicated Entity Engine Active: 20 separate dedicated tables initialized & persistent.`);
 };
 

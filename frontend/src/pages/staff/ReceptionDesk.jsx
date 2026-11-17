@@ -238,7 +238,7 @@ export const ReceptionDesk = () => {
 
       const res = await api.get(`/qr/stay-360/${stayId || token || 'default-stay'}`);
       setGuest360(res.data);
-      setSuccessMsg('Guest Profile Loaded: ' + (res.data.guest?.name || 'Aarav Mehta'));
+      setSuccessMsg('Guest Profile Loaded: ' + (res.data.guest?.name || 'In-Stay Guest'));
     } catch (err) {
       setError(err.message || 'Failed to retrieve stay details for this QR pass');
     } finally {
@@ -775,7 +775,7 @@ export const ReceptionDesk = () => {
                   Guest 360 Real-Time Profile
                 </div>
                 <h2 className="title-gold page-title" style={{ fontSize: '2rem', margin: '4px 0' }}>
-                  {guest360.guest?.name || 'Aarav Mehta'}
+                  {guest360.guest?.name || 'In-Stay Guest'}
                 </h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', flexWrap: 'wrap' }}>
                   <span>Booking: <strong>{guest360.booking?.bookingNumber}</strong></span>

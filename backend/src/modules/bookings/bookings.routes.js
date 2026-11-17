@@ -31,116 +31,7 @@ function generateGuestToken(payload) {
   );
 }
 
-/**
- * Helper to ensure today's bookings are always available for demonstration & live operations
- */
-async function ensureTodayBookings(hotelId, propertyId) {
-  const existingBookings = await Booking.find();
-  if (existingBookings.length > 0) return existingBookings;
-
-  const todayStr = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-
-  const hId = hotelId || 'HOTEL-DELHI-01';
-  const pId = propertyId || 'PROP-DELHI-01';
-
-  // Seed sample guest 1
-  let guest1 = await Guest.findOne({ email: 'aarav.mehta@gmail.com' });
-  if (!guest1) {
-    guest1 = await Guest.create({
-      hotelId: hId,
-      name: 'Aarav Mehta',
-      phone: '+91 98765 43210',
-      email: 'aarav.mehta@gmail.com',
-      idType: 'AADHAAR',
-      idNumber: '4126-3082-2252',
-      isVerified: true,
-    });
-  }
-
-  // Seed sample guest 2
-  let guest2 = await Guest.findOne({ email: 'priya.sharma@example.com' });
-  if (!guest2) {
-    guest2 = await Guest.create({
-      hotelId: hId,
-      name: 'Priya Sharma',
-      phone: '+91 98112 34567',
-      email: 'priya.sharma@example.com',
-      idType: 'PASSPORT',
-      idNumber: 'Z9821453',
-      isVerified: false,
-    });
-  }
-
-  // Seed sample guest 3
-  let guest3 = await Guest.findOne({ email: 'rohan.gupta@corp.in' });
-  if (!guest3) {
-    guest3 = await Guest.create({
-      hotelId: hId,
-      name: 'Rohan Gupta',
-      phone: '+91 99201 88472',
-      email: 'rohan.gupta@corp.in',
-      idType: 'DRIVING_LICENSE',
-      idNumber: 'DL-042019001234',
-      isVerified: true,
-    });
-  }
-
-  // Find rooms
-  const rooms = await Room.find();
-  const room302 = rooms.find((r) => r.roomNumber === '302') || rooms[0];
-  const room303 = rooms.find((r) => r.roomNumber === '303') || rooms[1] || rooms[0];
-
-  const booking1 = await Booking.create({
-    bookingNumber: 'BK-DELHI-101',
-    hotelId: hId,
-    propertyId: pId,
-    guestId: guest1._id,
-    roomId: room302?._id,
-    roomNumber: room302?.roomNumber || '302',
-    roomTypeName: room302?.roomTypeName || 'Deluxe Suite',
-    checkInDate: todayStr,
-    checkOutDate: tomorrow,
-    totalAmount: 4500,
-    status: 'CHECKED_IN',
-    source: 'WEB_DIRECT',
-    createdAt: new Date().toISOString(),
-  });
-
-  const booking2 = await Booking.create({
-    bookingNumber: 'BK-DELHI-102',
-    hotelId: hId,
-    propertyId: pId,
-    guestId: guest2._id,
-    roomId: room303?._id,
-    roomNumber: room303?.roomNumber || '303',
-    roomTypeName: room303?.roomTypeName || 'Luxury King Bedroom',
-    checkInDate: todayStr,
-    checkOutDate: tomorrow,
-    totalAmount: 6200,
-    status: 'CONFIRMED',
-    source: 'OTA_MAKEMYTRIP',
-    createdAt: new Date().toISOString(),
-  });
-
-  const booking3 = await Booking.create({
-    bookingNumber: 'BK-DELHI-103',
-    hotelId: hId,
-    propertyId: pId,
-    guestId: guest3._id,
-    roomId: null,
-    roomNumber: 'Unassigned',
-    roomTypeName: 'Executive Suite',
-    checkInDate: todayStr,
-    checkOutDate: tomorrow,
-    totalAmount: 8500,
-    status: 'CONFIRMED',
-    source: 'CORPORATE',
-    createdAt: new Date().toISOString(),
-  });
-
-  return [booking1, booking2, booking3];
-}
+import { cleanupSeededGuests } from '../../seeds/cleanupSeededGuests.js';
 
 /**
  * GET /api/v1/bookings
@@ -151,10 +42,7 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
     const isSuper = req.tenant.isSuperAdmin && !req.tenant.hotelId;
     const filter = isSuper ? {} : { hotelId: req.tenant.hotelId };
 
-    let bookings = await Booking.find(filter);
-    if (bookings.length === 0) {
-      bookings = await ensureTodayBookings(req.tenant.hotelId, req.tenant.propertyId);
-    }
+    const bookings = await Booking.find(filter);
 
     const [allGuests, allRooms, allStays, allProperties] = await Promise.all([
       Guest.find(),
@@ -203,10 +91,7 @@ router.get('/today', authenticate, enforceTenantIsolation, async (req, res, next
     const isSuper = req.tenant.isSuperAdmin && !req.tenant.hotelId;
     const filter = isSuper ? {} : { hotelId: req.tenant.hotelId };
 
-    let bookings = await Booking.find(filter);
-    if (bookings.length === 0) {
-      bookings = await ensureTodayBookings(req.tenant.hotelId, req.tenant.propertyId);
-    }
+    const bookings = await Booking.find(filter);
 
     const [allGuests, allRooms, allStays, allProperties] = await Promise.all([
       Guest.find(),
@@ -481,15 +366,6 @@ router.get('/magic/:ref', async (req, res, next) => {
       }
     }
 
-    // Fallback if not found: find active demo stay
-    if (!stay && !booking) {
-      const fallbackBookings = await ensureTodayBookings('HOTEL-DELHI-01', 'PROP-DELHI-01');
-      booking = fallbackBookings[0];
-      if (booking) {
-        stay = await Stay.findOne({ bookingId: booking._id });
-      }
-    }
-
     if (!booking && !stay) {
       return ApiResponse.error(res, `Booking reference '${ref}' not found. Please verify with reception desk.`, 404);
     }
@@ -709,5 +585,23 @@ router.delete('/:id', authenticate, enforceTenantIsolation, requireHotelAdmin, a
     next(err);
   }
 });
+
+/**
+ * POST /api/v1/bookings/cleanup-seeded-guests
+ * DELETE /api/v1/bookings/seeded-guests
+ * Explicit admin utility to purge all seeded demo guests, bookings, and stays
+ */
+const handleCleanupSeeded = async (req, res, next) => {
+  try {
+    const purgeAll = req.query.all === 'true' || req.body?.purgeAllGuests === true;
+    const result = await cleanupSeededGuests({ purgeAllGuests: purgeAll });
+    return ApiResponse.success(res, 'Seeded demo guests and bookings have been purged successfully', result);
+  } catch (err) {
+    next(err);
+  }
+};
+
+router.post('/cleanup-seeded-guests', authenticate, handleCleanupSeeded);
+router.delete('/seeded-guests', authenticate, handleCleanupSeeded);
 
 export default router;
