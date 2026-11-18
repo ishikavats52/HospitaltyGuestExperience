@@ -250,12 +250,12 @@ router.post('/service-requests', authenticate, async (req, res, next) => {
       return ApiResponse.error(res, 'Valid service ID is required', 400);
     }
 
-    let stay = stayId && stayId !== 'default-stay' ? await Stay.findById(stayId) : null;
+    let stay = stayId && stayId !== 'default-stay' && stayId !== 'STAY-ACTIVE' ? await Stay.findById(stayId) : null;
     if (!stay && req.user?.bookingId) {
       stay = await Stay.findOne({ bookingId: req.user.bookingId });
     }
-    if (!stay) {
-      stay = await Stay.findOne();
+    if (!stay && req.user?.guestId) {
+      stay = await Stay.findOne({ guestId: req.user.guestId });
     }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 

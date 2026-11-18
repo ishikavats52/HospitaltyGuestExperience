@@ -25,33 +25,48 @@ router.post('/submit', authenticate, async (req, res, next) => {
     }
 
     let stay = null;
-    if (targetStayId && targetStayId !== 'undefined' && targetStayId !== 'null' && targetStayId !== 'default-stay') {
+    if (targetStayId && targetStayId !== 'undefined' && targetStayId !== 'null' && targetStayId !== 'default-stay' && targetStayId !== 'STAY-ACTIVE') {
       stay = await Stay.findById(targetStayId);
     }
 
     const bookingId = req.user?.bookingId || req.guest?.bookingId;
     if (!stay && bookingId) {
       stay = await Stay.findOne({ bookingId });
+      if (!stay) {
+        // Look up by bookingNumber if string reference passed
+        const bk = await Booking.findOne({ bookingNumber: bookingId });
+        if (bk) stay = await Stay.findOne({ bookingId: bk._id });
+      }
+    }
+
+    const guestId = req.user?.guestId || req.guest?.guestId;
+    if (!stay && guestId) {
+      stay = await Stay.findOne({ guestId });
+    }
+
+    if (!stay && bookingId) {
+      // Find booking to create corresponding stay
+      let bk = await Booking.findById(bookingId).catch(() => null);
+      if (!bk) bk = await Booking.findOne({ bookingNumber: bookingId }).catch(() => null);
+      if (bk) {
+        stay = await Stay.create({
+          hotelId: bk.hotelId || req.user?.hotelId || req.guest?.hotelId || 'HOTEL-DELHI-01',
+          propertyId: bk.propertyId || req.user?.propertyId || req.guest?.propertyId || 'PROP-DELHI-01',
+          bookingId: bk._id,
+          guestId: bk.guestId || guestId,
+          roomId: bk.roomId || null,
+          roomNumber: bk.roomNumber || 'Assigned',
+          status: GUEST_JOURNEY_STATES.BOOKING_CONFIRMED,
+        });
+      }
     }
 
     if (!stay) {
-      stay = await Stay.findOne();
-    }
-
-    if (!stay) {
-      stay = await Stay.create({
-        hotelId: req.user?.hotelId || req.guest?.hotelId || 'HOTEL-DELHI-01',
-        propertyId: req.user?.propertyId || req.guest?.propertyId || 'PROP-DELHI-01',
-        bookingId: bookingId || 'BK-DELHI-101',
-        guestId: req.user?.guestId || req.guest?.guestId || 'GUEST-AARAV-01',
-        roomId: null,
-        roomNumber: 'Assigned',
-        status: GUEST_JOURNEY_STATES.BOOKING_CONFIRMED,
-      });
+      return ApiResponse.error(res, 'Active reservation or stay record not found. Please verify with reception desk.', 404);
     }
 
     // Safely retrieve booking number
-    let bookingNumber = 'BK-DELHI-101';
+    let bookingNumber = 'BK-STAY';
     if (stay.bookingId) {
       const bId = typeof stay.bookingId === 'object' ? stay.bookingId._id || stay.bookingId : stay.bookingId;
       const b = await Booking.findById(bId);
@@ -63,7 +78,7 @@ router.post('/submit', authenticate, async (req, res, next) => {
     const verifiedTimestamp = new Date().toISOString();
     const verifiedTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
     const finalIdType = idType || 'AADHAAR';
-    const finalIdNumber = idNumber || '412630822252';
+    const finalIdNumber = idNumber || '';
 
     // Update Guest record if guestId exists
     if (stay.guestId) {
@@ -162,14 +177,11 @@ router.post('/checkout', authenticate, async (req, res, next) => {
     }
 
     let stay = null;
-    if (targetStayId) {
+    if (targetStayId && targetStayId !== 'default-stay' && targetStayId !== 'STAY-ACTIVE') {
       stay = await Stay.findById(targetStayId);
     }
     if (!stay && (req.user?.bookingId || req.guest?.bookingId)) {
       stay = await Stay.findOne({ bookingId: req.user?.bookingId || req.guest?.bookingId });
-    }
-    if (!stay) {
-      stay = await Stay.findOne();
     }
 
     if (!stay) {

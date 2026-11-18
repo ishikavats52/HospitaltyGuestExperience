@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Sparkles, ShieldCheck, AlertCircle, ArrowRight, Hotel, CheckCircle2 } from 'lucide-react';
 import api from '../../services/api.js';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export const MagicStayResolver = () => {
   const { bookingRef } = useParams();
   const navigate = useNavigate();
+  const { setGuestSession, clearGuestSession, currentUser } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [bookingDetails, setBookingDetails] = useState(null);
@@ -17,48 +19,56 @@ export const MagicStayResolver = () => {
       return;
     }
 
+    const cleanRef = bookingRef.trim().toUpperCase();
+
+    // If current session is for a different booking, clear stale session immediately
+    if (
+      currentUser?.bookingNumber &&
+      currentUser.bookingNumber.toUpperCase() !== cleanRef &&
+      currentUser?.booking?.bookingNumber?.toUpperCase() !== cleanRef
+    ) {
+      clearGuestSession();
+    }
+
     const resolveMagicLink = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const res = await api.get(`/bookings/magic/${encodeURIComponent(bookingRef.trim())}`);
+        const res = await api.get(`/bookings/magic/${encodeURIComponent(cleanRef)}`);
         const data = res.data;
 
-        // Auto authenticate guest (in isolated guest namespace)
-        if (data.token) {
-          localStorage.setItem('aura_guest_token', data.token);
+        const derivedStayId = data.stay?._id || data.booking?._id;
+        const derivedHotelId =
+          data.booking?.hotelId?._id || data.booking?.hotelId || data.stay?.hotelId || null;
+        const derivedPropertyId =
+          data.booking?.propertyId?._id || data.booking?.propertyId || data.stay?.propertyId || null;
 
-          // Only set aura_token if no active admin session is present
-          const existingAdminToken = localStorage.getItem('aura_admin_token');
-          if (!existingAdminToken) {
-            localStorage.setItem('aura_token', data.token);
-          }
+        const guestPayload = {
+          ...data.guest,
+          id: data.guest?._id,
+          _id: data.guest?._id,
+          guestId: data.guest?._id,
+          name: data.guest?.name || data.booking?.guestName || 'Guest User',
+          guestName: data.guest?.name || data.booking?.guestName || 'Guest User',
+          role: 'GUEST',
+          isGuest: true,
+          hotelId: derivedHotelId,
+          propertyId: derivedPropertyId,
+          stayId: derivedStayId,
+          stay: data.stay,
+          booking: data.booking,
+          bookingId: data.booking?._id,
+          bookingNumber: data.booking?.bookingNumber || cleanRef,
+          roomNumber: data.room?.roomNumber || data.booking?.roomNumber || data.stay?.roomNumber,
+          isStayActive: data.isStayActive,
+        };
 
-          if (data.guest) {
-            const guestPayload = JSON.stringify({
-              ...data.guest,
-              role: 'GUEST',
-              isGuest: true,
-              stayId: data.stay?._id || data.booking?._id,
-              stay: data.stay,
-              booking: data.booking,
-              bookingId: data.booking?._id,
-              bookingNumber: data.booking?.bookingNumber,
-              roomNumber: data.room?.roomNumber || data.booking?.roomNumber,
-              isStayActive: data.isStayActive,
-            });
-
-            localStorage.setItem('aura_guest_user', guestPayload);
-            if (!existingAdminToken) {
-              localStorage.setItem('aura_user', guestPayload);
-            }
-          }
-        }
-
+        // Instantly synchronize AuthContext React state and localStorage
+        setGuestSession(data.token, guestPayload);
         setBookingDetails(data);
 
-        // Seamless transition after brief luxury welcome
+        // Responsive transition after brief luxury welcome
         setTimeout(() => {
           if (data.redirectUrl) {
             navigate(data.redirectUrl, { replace: true });
@@ -67,7 +77,7 @@ export const MagicStayResolver = () => {
           } else {
             navigate('/guest/checkin', { replace: true });
           }
-        }, 1200);
+        }, 350);
       } catch (err) {
         setError(err.message || 'Invalid or expired magic link. Please check with the front desk.');
         setLoading(false);
@@ -75,7 +85,7 @@ export const MagicStayResolver = () => {
     };
 
     resolveMagicLink();
-  }, [bookingRef, navigate]);
+  }, [bookingRef, navigate, setGuestSession, clearGuestSession]);
 
   return (
     <div

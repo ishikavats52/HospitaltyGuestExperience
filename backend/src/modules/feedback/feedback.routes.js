@@ -10,9 +10,9 @@ const router = Router();
 router.post('/', async (req, res, next) => {
   try {
     const { stayId, ratingOverall, ratingCleanliness, ratingFood, ratingStaff, npsScore, comments, guestName } = req.body;
-    let stay = stayId ? await Stay.findById(stayId) : await Stay.findOne();
+    let stay = (stayId && stayId !== 'default-stay' && stayId !== 'STAY-ACTIVE') ? await Stay.findById(stayId) : null;
     if (!stay) {
-      stay = { _id: 'STAY-ARCHIVED', hotelId: 'HOTEL-DELHI-01', guestId: 'GUEST-01' };
+      stay = { _id: 'STAY-RESOLVED', hotelId: 'HOTEL-DELHI-01', guestId: 'GUEST-01' };
     }
 
     const feedback = await Feedback.create({

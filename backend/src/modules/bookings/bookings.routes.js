@@ -394,11 +394,56 @@ router.get('/magic/:ref', async (req, res, next) => {
       room = await Room.findById(resolvedRId);
     }
 
-    // 5. Generate Guest Token
-    const stayId = stay?._id || 'STAY-ACTIVE';
-    const hotelId = booking?.hotelId || stay?.hotelId || 'HOTEL-DELHI-01';
-    const propertyId = booking?.propertyId || stay?.propertyId || 'PROP-DELHI-01';
+    // 5. Ensure Stay record exists and is synchronized
+    const hotelId = String(booking?.hotelId || stay?.hotelId || 'HOTEL-DELHI-01');
+    const propertyId = String(booking?.propertyId || stay?.propertyId || 'PROP-DELHI-01');
+    const isCheckedInAtDesk =
+      booking?.status === 'CHECKED_IN' ||
+      booking?.isWalkInCheckedIn === true ||
+      stay?.status === 'STAY_ACTIVE' ||
+      stay?.status === 'CHECKED_IN';
 
+    const nowIso = new Date().toISOString();
+    const nowTimeStr = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+    if (!stay && booking) {
+      const rawQrToken = crypto.randomBytes(16).toString('hex');
+      const qrTokenHash = crypto.createHash('sha256').update(rawQrToken).digest('hex');
+
+      stay = await Stay.create({
+        hotelId,
+        propertyId,
+        bookingId: booking._id,
+        guestId: guest._id,
+        roomId: room?._id || booking.roomId || null,
+        roomNumber: room?.roomNumber || booking.roomNumber || 'Assigned',
+        status: isCheckedInAtDesk ? GUEST_JOURNEY_STATES.STAY_ACTIVE : GUEST_JOURNEY_STATES.BOOKING_CONFIRMED,
+        checkInToken: rawQrToken,
+        qrTokenHash,
+        checkedInAt: isCheckedInAtDesk ? nowIso : null,
+        checkInTime: isCheckedInAtDesk ? nowTimeStr : null,
+        idType: guest.idType || 'AADHAAR',
+        idNumber: guest.idNumber || '',
+        isVerified: Boolean(isCheckedInAtDesk || guest.idNumber),
+        createdAt: nowIso,
+      });
+    } else if (stay && isCheckedInAtDesk) {
+      if (stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
+        stay.status = 'CHECKED_IN';
+        stay.isVerified = true;
+        if (!stay.checkedInAt) stay.checkedInAt = nowIso;
+        if (!stay.checkInTime) stay.checkInTime = nowTimeStr;
+        await Stay.findByIdAndUpdate(stay._id, {
+          status: 'CHECKED_IN',
+          isVerified: true,
+          checkedInAt: stay.checkedInAt,
+          checkInTime: stay.checkInTime,
+        });
+      }
+    }
+
+    // 6. Generate Guest Token with genuine Stay ID
+    const stayId = stay?._id || booking?._id;
     const token = generateGuestToken({
       stayId,
       bookingId: booking?._id || booking?.bookingNumber,
@@ -409,35 +454,7 @@ router.get('/magic/:ref', async (req, res, next) => {
       roomNumber: room?.roomNumber || booking?.roomNumber || stay?.roomNumber || 'Assigned',
     });
 
-    const isCheckedInAtDesk =
-      booking?.status === 'CHECKED_IN' ||
-      booking?.isWalkInCheckedIn === true ||
-      stay?.status === 'STAY_ACTIVE' ||
-      stay?.status === 'CHECKED_IN';
-
-    // If checked in at front desk, guarantee stay status is CHECKED_IN
-    if (isCheckedInAtDesk) {
-      if (stay && stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
-        stay.status = 'CHECKED_IN';
-        await Stay.findByIdAndUpdate(stay._id, { status: 'CHECKED_IN' });
-      } else if (!stay && booking) {
-        stay = await Stay.create({
-          hotelId,
-          propertyId,
-          bookingId: booking._id,
-          guestId: guest._id,
-          roomId: room?._id || booking.roomId || null,
-          roomNumber: room?.roomNumber || booking.roomNumber || 'Assigned',
-          status: 'CHECKED_IN',
-          checkInDate: new Date().toISOString(),
-          checkInTime: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-          folioBalance: 0,
-          createdAt: new Date().toISOString(),
-        });
-      }
-    }
-
-    const isStayActive = isCheckedInAtDesk;
+    const isStayActive = Boolean(isCheckedInAtDesk);
     const redirectUrl = isStayActive ? '/guest/dashboard' : '/guest/checkin';
 
     return ApiResponse.success(res, 'Guest session authenticated via Magic Link', {

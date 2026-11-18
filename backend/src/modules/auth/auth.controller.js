@@ -62,12 +62,12 @@ export class AuthController {
         const { Booking } = await import('../bookings/bookings.model.js');
 
         const stayId = userData.stayId || (typeof userData.stay === 'string' ? userData.stay : userData.stay?._id);
-        let stay = stayId ? await Stay.findById(stayId) : null;
+        let stay = (stayId && stayId !== 'STAY-ACTIVE' && stayId !== 'default-stay') ? await Stay.findById(stayId) : null;
         if (!stay && userData.bookingId) {
           stay = await Stay.findOne({ bookingId: userData.bookingId });
         }
-        if (!stay) {
-          stay = await Stay.findOne();
+        if (!stay && userData.guestId) {
+          stay = await Stay.findOne({ guestId: userData.guestId });
         }
 
         if (stay) {
@@ -78,25 +78,38 @@ export class AuthController {
         let guest = null;
         if (userData.guestId) {
           guest = await Guest.findById(userData.guestId);
-        } else if (stay?.guestId) {
+        }
+        if (!guest && stay?.guestId) {
           const gId = typeof stay.guestId === 'object' ? stay.guestId._id || stay.guestId : stay.guestId;
           guest = await Guest.findById(gId);
         }
         if (guest) {
           userData.guest = guest;
           userData.guestName = guest.name;
+          userData.name = guest.name;
         }
 
         let booking = null;
         if (userData.bookingId) {
           booking = await Booking.findById(userData.bookingId);
-        } else if (stay?.bookingId) {
+          if (!booking) {
+            booking = await Booking.findOne({ bookingNumber: userData.bookingId });
+          }
+        }
+        if (!booking && stay?.bookingId) {
           const bId = typeof stay.bookingId === 'object' ? stay.bookingId._id || stay.bookingId : stay.bookingId;
           booking = await Booking.findById(bId);
         }
         if (booking) {
           userData.booking = booking;
+          userData.bookingNumber = booking.bookingNumber;
         }
+
+        userData.isStayActive = Boolean(
+          stay?.status === 'CHECKED_IN' ||
+          stay?.status === 'STAY_ACTIVE' ||
+          booking?.status === 'CHECKED_IN'
+        );
       } catch (_) {}
     }
 

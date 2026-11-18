@@ -14,6 +14,12 @@ export const AuthProvider = ({ children }) => {
       const isStaffOrAdmin = pathname.startsWith('/admin') || pathname.startsWith('/super-admin') || pathname.startsWith('/staff');
       const isGuestPath = pathname.startsWith('/guest') || pathname.startsWith('/stay');
 
+      if (pathname.startsWith('/stay/')) {
+        // Express magic link resolver handles authentication for this explicit booking
+        setLoading(false);
+        return;
+      }
+
       let activeToken = null;
       if (isStaffOrAdmin) {
         // Look for dedicated admin or staff token first
@@ -109,6 +115,40 @@ export const AuthProvider = ({ children }) => {
     return guestUser;
   };
 
+  const setGuestSession = (newToken, guestData) => {
+    if (newToken) {
+      localStorage.setItem('aura_guest_token', newToken);
+    }
+    const existingAdminToken = localStorage.getItem('aura_admin_token');
+    if (!existingAdminToken && newToken) {
+      localStorage.setItem('aura_token', newToken);
+    }
+
+    if (guestData) {
+      const payloadStr = typeof guestData === 'string' ? guestData : JSON.stringify(guestData);
+      localStorage.setItem('aura_guest_user', payloadStr);
+      if (!existingAdminToken) {
+        localStorage.setItem('aura_user', payloadStr);
+      }
+      const parsedObj = typeof guestData === 'string' ? JSON.parse(guestData) : guestData;
+      setCurrentUser(parsedObj);
+    }
+    if (newToken) {
+      setToken(newToken);
+    }
+  };
+
+  const clearGuestSession = () => {
+    localStorage.removeItem('aura_guest_token');
+    localStorage.removeItem('aura_guest_user');
+    const existingAdminToken = localStorage.getItem('aura_admin_token');
+    if (!existingAdminToken) {
+      localStorage.removeItem('aura_token');
+      localStorage.removeItem('aura_user');
+    }
+    setCurrentUser(null);
+  };
+
   const refreshSession = async () => {
     const pathname = window.location.pathname || '';
     const isStaffOrAdmin = pathname.startsWith('/admin') || pathname.startsWith('/super-admin') || pathname.startsWith('/staff');
@@ -159,6 +199,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         loginStaff,
         verifyGuestOtp,
+        setGuestSession,
+        clearGuestSession,
         refreshSession,
         logout,
         isAuthenticated: !!currentUser,

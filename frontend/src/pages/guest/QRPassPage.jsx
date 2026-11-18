@@ -22,7 +22,12 @@ export const QRPassPage = () => {
     fetchStay();
   }, [stayId]);
 
-  const isCheckedIn = stayData?.status === 'CHECKED_IN' || stayData?.status === 'STAY_ACTIVE';
+  const isCheckedIn = Boolean(
+    stayData?.status === 'CHECKED_IN' ||
+    stayData?.status === 'STAY_ACTIVE' ||
+    currentUser?.isStayActive ||
+    currentUser?.booking?.status === 'CHECKED_IN'
+  );
 
   if (!isCheckedIn) {
     return (
@@ -78,10 +83,10 @@ export const QRPassPage = () => {
       >
         <div style={{ marginBottom: '16px' }}>
           <div className="font-serif" style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-            {currentUser?.guestName || 'Aarav Mehta'}
+            {currentUser?.guestName || currentUser?.name || 'In-Stay Guest'}
           </div>
           <div style={{ fontSize: '0.82rem', color: 'var(--gold-primary)', fontWeight: 500 }}>
-            Booking: {currentUser?.booking?.bookingNumber || 'BK-DELHI-101'}
+            Booking: {currentUser?.booking?.bookingNumber || currentUser?.bookingNumber || '—'}
           </div>
         </div>
 

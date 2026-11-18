@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, Plus, Minus, Check, ShoppingBag, ArrowRight, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Utensils, Plus, Minus, Check, ShoppingBag, ArrowRight, AlertCircle, Lock } from 'lucide-react';
 import api from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
@@ -225,7 +226,18 @@ export const FoodMenuPage = () => {
         </div>
       )}
 
-      {loading ? (
+      {/* Dishes Container with Lockdown Blur if Not Checked In */}
+      <div style={{ position: 'relative' }}>
+        <div
+          style={{
+            filter: isCheckedIn ? 'none' : 'blur(6px)',
+            pointerEvents: isCheckedIn ? 'auto' : 'none',
+            userSelect: isCheckedIn ? 'auto' : 'none',
+            opacity: isCheckedIn ? 1 : 0.65,
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {loading ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
           Loading gourmet menu...
         </div>
@@ -364,6 +376,84 @@ export const FoodMenuPage = () => {
           })}
         </div>
       )}
+        </div>
+
+        {/* Floating Locked Modal / Overlay when NOT Checked In */}
+        {!isCheckedIn && (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px',
+              zIndex: 15,
+            }}
+          >
+            <div
+              className="glass-panel animate-fade-in"
+              style={{
+                maxWidth: '430px',
+                width: '100%',
+                backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                borderRadius: 'var(--radius-lg, 16px)',
+                padding: '30px 24px',
+                textAlign: 'center',
+                boxShadow: '0 24px 50px rgba(0, 0, 0, 0.15)',
+                border: '1.5px solid var(--border-active)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '14px',
+              }}
+            >
+              <div
+                style={{
+                  width: '58px',
+                  height: '58px',
+                  borderRadius: '50%',
+                  background: 'var(--gold-soft)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--gold-primary)',
+                }}
+              >
+                <Lock size={28} />
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 6px', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  In-Room Dining Locked
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  Culinary in-room dining orders require verified guest check-in. Please upload your Aadhaar card and selfie to unlock instant dining delivery to your room.
+                </p>
+              </div>
+              <Link
+                to="/guest/checkin"
+                className="btn btn-gold"
+                style={{
+                  width: '100%',
+                  padding: '12px 18px',
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  marginTop: '4px',
+                  textDecoration: 'none',
+                  boxShadow: 'var(--shadow-sm)',
+                }}
+              >
+                <span>Complete Check-In (Aadhaar & Selfie)</span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Floating Cart Settlement Bar */}
       {Object.keys(cart).length > 0 && (

@@ -61,8 +61,14 @@ export const DashboardPage = () => {
   })();
 
   // Real-time status determination
-  const isCheckedIn = stay?.status === 'CHECKED_IN' || stay?.status === 'STAY_ACTIVE';
-  const isCheckedOut = stay?.status === 'CHECKED_OUT';
+  const isCheckedIn = Boolean(
+    stay?.status === 'CHECKED_IN' ||
+    stay?.status === 'STAY_ACTIVE' ||
+    currentUser?.isStayActive ||
+    booking?.status === 'CHECKED_IN' ||
+    currentUser?.booking?.status === 'CHECKED_IN'
+  );
+  const isCheckedOut = stay?.status === 'CHECKED_OUT' || booking?.status === 'CHECKED_OUT';
   const isPendingCheckin = !isCheckedIn && !isCheckedOut;
 
   // Auto sync live stay from server on mount

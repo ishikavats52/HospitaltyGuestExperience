@@ -66,90 +66,65 @@ export class AuthService {
   }
 
   static async sendGuestOtp({ bookingNumber, phone }) {
-    return { bookingNumber: bookingNumber || 'BK-DELHI-101', phone, message: 'Direct access active (OTP disabled)' };
+    return { bookingNumber: bookingNumber?.trim(), phone, message: 'Direct access active' };
   }
 
   static async verifyGuestOtp({ bookingNumber }) {
-    const formattedBk = bookingNumber ? bookingNumber.trim().toUpperCase() : 'BK-DELHI-101';
+    if (!bookingNumber || !bookingNumber.trim()) {
+      throw new Error('Booking reference or room allocation number is required');
+    }
 
-    let booking = await Booking.findOne({
-      $or: [
-        { bookingNumber: formattedBk },
-        { bookingNumber: 'BK-DELHI-101' },
-      ],
-    })
+    const formattedBk = bookingNumber.trim().toUpperCase();
+
+    let booking = await Booking.findOne({ bookingNumber: formattedBk })
       .populate('guestId')
       .populate('hotelId')
       .populate('propertyId');
 
     if (!booking) {
-      booking = await Booking.findOne();
-      if (!booking) {
-        try {
-          const { Hotel } = await import('../hotels/hotels.model.js');
-          const { Property } = await import('../properties/properties.model.js');
-          const { Room } = await import('../rooms/rooms.model.js');
-          const { Guest } = await import('../guests/guests.model.js');
-
-          const defaultHotel = await Hotel.findOne();
-          const defaultProp = await Property.findOne();
-          const defaultRoom = await Room.findOne();
-          let defaultGuest = await Guest.findOne();
-          if (!defaultGuest) {
-            defaultGuest = await Guest.create({
-              name: 'Aarav Mehta',
-              email: 'aarav.mehta@example.com',
-              phone: '+919876543210',
-            });
-          }
-
-          booking = await Booking.create({
-            bookingNumber: formattedBk || 'BK-DELHI-101',
-            guestId: defaultGuest._id,
-            hotelId: defaultHotel?._id || 'hotel-royal-blue',
-            propertyId: defaultProp?._id || 'prop-wing-01',
-            roomId: defaultRoom?._id || 'room-101',
-            roomNumber: defaultRoom?.roomNumber || '101',
-            checkInDate: new Date().toISOString(),
-            checkOutDate: new Date(Date.now() + 86400000 * 3).toISOString(),
-            totalAmount: 4500,
-            status: 'CHECKED_IN',
-          });
-        } catch (e) {
-          console.warn('[AuthService] Fallback booking creation error:', e.message);
-        }
-      }
+      booking = await Booking.findById(bookingNumber.trim()).catch(() => null);
     }
 
-    let stay = booking ? await Stay.findOne({ bookingId: booking._id }) : await Stay.findOne();
+    if (!booking) {
+      const allBk = await Booking.find().catch(() => []);
+      booking = allBk.find((b) => b.bookingNumber && b.bookingNumber.toUpperCase() === formattedBk);
+    }
 
-    if (!stay && booking) {
+    if (!booking) {
+      throw new Error(`Reservation '${bookingNumber}' not found. Please verify your reference with the reception desk.`);
+    }
+
+    let stay = await Stay.findOne({ bookingId: booking._id });
+
+    if (!stay) {
       stay = await Stay.create({
         hotelId: booking.hotelId?._id || booking.hotelId || 'HOTEL-DELHI-01',
         propertyId: booking.propertyId?._id || booking.propertyId || 'PROP-DELHI-01',
         bookingId: booking._id,
-        guestId: booking.guestId?._id || booking.guestId || 'GUEST-AARAV-01',
+        guestId: booking.guestId?._id || booking.guestId,
         roomId: booking.roomId || null,
         roomNumber: booking.roomNumber || 'Assigned',
         status: booking.status === 'CHECKED_IN' ? 'CHECKED_IN' : 'BOOKING_CONFIRMED',
+        isVerified: booking.status === 'CHECKED_IN',
+        createdAt: new Date().toISOString(),
       });
     }
 
-    const finalStayId = stay?._id || 'STAY-ACTIVE';
-    const finalHotelId = booking?.hotelId?._id || booking?.hotelId || stay?.hotelId || 'HOTEL-DELHI-01';
+    const finalStayId = stay._id;
+    const finalHotelId = booking.hotelId?._id || booking.hotelId || stay.hotelId;
 
     const token = this.generateToken({
       isGuest: true,
       role: 'GUEST',
-      bookingId: booking?._id || 'BK-DELHI-101',
+      bookingId: booking._id,
       stayId: finalStayId,
-      guestId: booking?.guestId?._id || 'GUEST-AARAV-01',
+      guestId: booking.guestId?._id || booking.guestId,
       hotelId: finalHotelId,
-      propertyId: booking?.propertyId?._id || stay?.propertyId || 'PROP-DELHI-01',
-      guestName: booking?.guestId?.name || booking?.guestName || 'Valued Guest',
-      roomNumber: booking?.roomNumber || stay?.roomNumber || 'Assigned',
-    }, '24h');
+      propertyId: booking.propertyId?._id || stay?.propertyId,
+      guestName: booking.guestName || booking.guestId?.name || 'In-Stay Guest',
+      roomNumber: booking.roomNumber || stay?.roomNumber || 'Assigned',
+    }, '7d');
 
-    return { token, booking, stay: stay || { _id: finalStayId, hotelId: finalHotelId, roomNumber: booking?.roomNumber || 'Assigned' } };
+    return { token, booking, stay };
   }
 }

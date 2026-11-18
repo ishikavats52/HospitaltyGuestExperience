@@ -50,6 +50,14 @@ router.post('/', authenticate, async (req, res, next) => {
       stay = await Stay.findOne({ roomNumber: String(req.user.roomNumber) });
     }
 
+    if (stay && stay.status !== 'CHECKED_IN' && stay.status !== 'STAY_ACTIVE') {
+      return ApiResponse.error(
+        res,
+        'Check-In verification required: Please complete contactless check-in with your Aadhaar card and selfie before ordering food.',
+        403
+      );
+    }
+
     let finalRoomNumber = stay?.roomNumber || req.user?.roomNumber;
     if (!finalRoomNumber && stay?.roomId) {
       try {

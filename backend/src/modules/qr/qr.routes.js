@@ -44,14 +44,11 @@ const staffOrDemoAuth = (req, res, next) => {
  */
 export async function compileGuest360(stayId) {
   let stay = null;
-  if (stayId && stayId !== 'undefined' && stayId !== 'null' && stayId !== 'default-stay') {
+  if (stayId && stayId !== 'undefined' && stayId !== 'null' && stayId !== 'default-stay' && stayId !== 'STAY-ACTIVE') {
     stay = await Stay.findById(stayId);
   }
   if (!stay && stayId) {
     stay = await Stay.findOne({ bookingId: stayId });
-  }
-  if (!stay) {
-    stay = await Stay.findOne();
   }
   if (!stay) return null;
 
@@ -61,9 +58,6 @@ export async function compileGuest360(stayId) {
     const gId = typeof stay.guestId === 'object' ? stay.guestId._id || stay.guestId : stay.guestId;
     guest = await Guest.findById(gId);
   }
-  if (!guest) {
-    guest = await Guest.findOne();
-  }
 
   // Booking details
   let booking = null;
@@ -71,18 +65,12 @@ export async function compileGuest360(stayId) {
     const bId = typeof stay.bookingId === 'object' ? stay.bookingId._id || stay.bookingId : stay.bookingId;
     booking = await Booking.findById(bId);
   }
-  if (!booking) {
-    booking = await Booking.findOne();
-  }
 
   // Room details
   let room = null;
   if (stay.roomId) {
     const rId = typeof stay.roomId === 'object' ? stay.roomId._id || stay.roomId : stay.roomId;
     room = await Room.findById(rId);
-  }
-  if (!room) {
-    room = await Room.findOne();
   }
 
   // Food orders
@@ -92,7 +80,7 @@ export async function compileGuest360(stayId) {
   const serviceRequests = await ServiceRequest.find({ stayId: stay._id }).populate('serviceCatalogueId');
 
   // Calculate bill / folio
-  const roomTariff = booking?.totalAmount || 4500;
+  const roomTariff = booking?.totalAmount || 0;
   const foodTotal = foodOrders.reduce((sum, ord) => sum + (ord.totalAmount || 0), 0);
   const servicesTotal = serviceRequests.reduce((sum, req) => sum + (req.price || 0), 0);
   const subtotal = roomTariff + foodTotal + servicesTotal;
@@ -107,19 +95,19 @@ export async function compileGuest360(stayId) {
     qrPassUrl: stay.qrPassUrl || null,
     guest: {
       id: guest?._id,
-      name: guest?.name || 'Aarav Mehta',
-      phone: guest?.phone || '9876543210',
-      email: guest?.email || 'aarav.mehta@example.com',
-      idType: guest?.idType || 'AADHAAR',
-      idNumber: guest?.idNumber || '412630822252',
-      isVerified: guest?.isVerified ?? true,
-      idDocumentUrl: guest?.idDocumentUrl || null,
-      selfieUrl: guest?.selfieUrl || null,
-      signatureUrl: guest?.signatureUrl || null,
+      name: guest?.name || booking?.guestName || 'In-Stay Guest',
+      phone: guest?.phone || booking?.guestPhone || '',
+      email: guest?.email || booking?.guestEmail || '',
+      idType: guest?.idType || stay?.idType || 'AADHAAR',
+      idNumber: guest?.idNumber || stay?.idNumber || '',
+      isVerified: guest?.isVerified ?? stay?.isVerified ?? false,
+      idDocumentUrl: guest?.idDocumentUrl || stay?.idDocumentUrl || null,
+      selfieUrl: guest?.selfieUrl || stay?.selfieUrl || null,
+      signatureUrl: guest?.signatureUrl || stay?.signatureUrl || null,
     },
     booking: {
       id: booking?._id,
-      bookingNumber: booking?.bookingNumber || 'BK-DELHI-101',
+      bookingNumber: booking?.bookingNumber || '—',
       checkInDate: booking?.checkInDate || new Date().toISOString(),
       checkOutDate: booking?.checkOutDate || new Date(Date.now() + 2 * 86400000).toISOString(),
       totalAmount: roomTariff,
@@ -199,15 +187,12 @@ router.post('/validate', staffOrDemoAuth, async (req, res, next) => {
     const { token, stayId, roomId } = req.body;
 
     let stay = null;
-    if (stayId && stayId !== 'undefined' && stayId !== 'null' && stayId !== 'default-stay') {
+    if (stayId && stayId !== 'undefined' && stayId !== 'null' && stayId !== 'default-stay' && stayId !== 'STAY-ACTIVE') {
       stay = await Stay.findById(stayId);
     }
     if (!stay && token) {
       const computedHash = crypto.createHash('sha256').update(token).digest('hex');
       stay = await Stay.findOne({ qrTokenHash: computedHash });
-    }
-    if (!stay) {
-      stay = await Stay.findOne();
     }
     if (!stay) return ApiResponse.error(res, 'Invalid QR code: Stay not found', 404);
 
@@ -244,7 +229,7 @@ router.post('/validate', staffOrDemoAuth, async (req, res, next) => {
 router.post('/checkout', staffOrDemoAuth, async (req, res, next) => {
   try {
     const { stayId } = req.body;
-    let stay = (stayId && stayId !== 'default-stay') ? await Stay.findById(stayId) : await Stay.findOne();
+    let stay = (stayId && stayId !== 'default-stay' && stayId !== 'STAY-ACTIVE') ? await Stay.findById(stayId) : null;
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
     stay.status = 'CHECKED_OUT';

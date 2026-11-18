@@ -35,7 +35,7 @@ export const GuestLayout = () => {
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', lineHeight: 1.1, fontWeight: 500 }}>Welcome,</span>
           <span style={{ fontSize: '1.05rem', color: 'var(--gold-primary)', fontWeight: 800, lineHeight: 1.25, letterSpacing: '-0.01em' }}>
-            {currentUser?.guestName || 'Distinguished Guest'}
+            {currentUser?.guestName || currentUser?.name || 'Distinguished Guest'}
           </span>
         </div>
 

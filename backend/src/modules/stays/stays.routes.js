@@ -24,9 +24,6 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
           const gId = typeof stay.guestId === 'object' ? stay.guestId._id || stay.guestId : stay.guestId;
           guest = await Guest.findById(gId);
         }
-        if (!guest) {
-          guest = await Guest.findOne();
-        }
 
         let room = null;
         if (stay.roomId) {
@@ -54,7 +51,7 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
           booking,
           kyc: {
             idType: stay.idType || guest?.idType || 'AADHAAR',
-            idNumber: stay.idNumber || guest?.idNumber || '412630822252',
+            idNumber: stay.idNumber || guest?.idNumber || '',
             idDocumentUrl: stay.idDocumentUrl || guest?.idDocumentUrl || null,
             selfieUrl: stay.selfieUrl || guest?.selfieUrl || null,
             signatureUrl: stay.signatureUrl || guest?.signatureUrl || null,
@@ -73,9 +70,11 @@ router.get('/', authenticate, enforceTenantIsolation, async (req, res, next) => 
 
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
-    let stay = await Stay.findById(req.params.id);
-    if (!stay && req.params.id === 'default-stay') {
-      stay = await Stay.findOne();
+    let stay = (req.params.id && req.params.id !== 'default-stay' && req.params.id !== 'STAY-ACTIVE')
+      ? await Stay.findById(req.params.id)
+      : null;
+    if (!stay && req.user?.bookingId) {
+      stay = await Stay.findOne({ bookingId: req.user.bookingId });
     }
     if (!stay) return ApiResponse.error(res, 'Stay not found', 404);
 
